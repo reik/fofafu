@@ -10,6 +10,7 @@ team: engineering
 ## Review
 
 ## Done
+- [x] [[features/auth-email]] @engineering
 - [x] [[features/user-profile]] @engineering
 
 ## Blocked

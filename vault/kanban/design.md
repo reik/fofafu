@@ -10,6 +10,7 @@ team: design
 ## Review
 
 ## Done
+- [x] [[features/auth-email]] @design
 - [x] [[features/user-profile]] @design
 
 ## Blocked
