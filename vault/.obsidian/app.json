@@ -1,0 +1,8 @@
+{
+  "alwaysUpdateLinks": true,
+  "newLinkFormat": "shortest",
+  "useMarkdownLinks": false,
+  "promptDelete": false,
+  "showLineNumber": true,
+  "showFrontmatter": true
+}

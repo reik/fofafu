@@ -1,0 +1,14 @@
+node_modules/
+dist/
+build/
+coverage/
+.env
+.env.local
+.DS_Store
+*.log
+
+# Obsidian transient state (kept out so collaborators don't fight over pane layouts).
+# Everything else under vault/ (logs, standups, kanban, features) IS tracked — that's the point.
+vault/.obsidian/workspace.json
+vault/.obsidian/workspace-mobile.json
+vault/.obsidian/workspaces.json

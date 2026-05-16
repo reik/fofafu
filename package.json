@@ -1,0 +1,14 @@
+{
+  "name": "fofafu",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Foster Families community platform — rewrite driven by a multi-agent company structure with an Obsidian-vault source of truth.",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "echo 'Phase 2: backend & frontend workspaces not yet scaffolded. Run /dispatch [[features/backend-bootstrap]] to begin.' && exit 0",
+    "test": "echo 'Phase 2+: no test runners wired yet.' && exit 0"
+  }
+}
