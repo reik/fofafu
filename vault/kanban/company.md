@@ -10,6 +10,7 @@ team: company
 ## Review
 
 ## Done
+- [x] [[features/messaging-dms]] — private DMs between families; thread listing with unread counts; 7/7 feature tests, 41/41 full backend.
 - [x] [[features/announcements-feed]] — core product loop: posts + comments + 5-type reaction toggle; 11/11 feature tests, 34/34 full backend.
 - [x] [[features/family-profiles]] — real version of the Phase 1 worked example; auto-create on register; 23/23 backend tests.
 - [x] [[features/auth-password-reset]] — closes out the auth surface; 16/16 backend tests passing.

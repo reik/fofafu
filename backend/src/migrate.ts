@@ -82,6 +82,19 @@ export function runMigrations(): void {
     );
 
     CREATE INDEX IF NOT EXISTS idx_reactions_announcement ON reactions(announcement_id);
+
+    CREATE TABLE IF NOT EXISTS messages (
+      id          TEXT PRIMARY KEY,
+      sender_id   TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      receiver_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      content     TEXT NOT NULL,
+      read        INTEGER NOT NULL DEFAULT 0,
+      created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_messages_sender   ON messages(sender_id);
+    CREATE INDEX IF NOT EXISTS idx_messages_receiver ON messages(receiver_id);
+    CREATE INDEX IF NOT EXISTS idx_messages_pair     ON messages(sender_id, receiver_id, created_at);
   `);
 }
 
