@@ -19,3 +19,20 @@ export const VerifyQuery = z.object({
   token: z.string().uuid(),
 });
 export type VerifyQuery = z.infer<typeof VerifyQuery>;
+
+export const ForgotPasswordInput = z.object({
+  email: z.string().email().max(254),
+});
+export type ForgotPasswordInput = z.infer<typeof ForgotPasswordInput>;
+
+export const ResetPasswordInput = z.object({
+  token: z.string().uuid(),
+  password: z.string().min(8).max(200),
+});
+export type ResetPasswordInput = z.infer<typeof ResetPasswordInput>;
+
+export const ChangePasswordInput = z.object({
+  currentPassword: z.string().min(1).max(200),
+  newPassword: z.string().min(8).max(200),
+});
+export type ChangePasswordInput = z.infer<typeof ChangePasswordInput>;

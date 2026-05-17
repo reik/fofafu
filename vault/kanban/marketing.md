@@ -10,6 +10,7 @@ team: marketing
 ## Review
 
 ## Done
+- [x] [[features/auth-password-reset]] @marketing
 - [x] [[features/auth-email]] @marketing
 - [x] [[features/user-profile]] @marketing
 

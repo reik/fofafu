@@ -8,8 +8,8 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "migrate": "tsx src/migrate.ts",
-    "test": "node --import tsx --test tests/**/*.test.ts",
-    "test:run": "DB_PATH=:memory: NODE_ENV=test JWT_SECRET=test-secret-please-rotate node --import tsx --test tests/**/*.test.ts",
+    "test": "node --import tsx --test --test-force-exit tests/**/*.test.ts",
+    "test:run": "DB_PATH=:memory: NODE_ENV=test JWT_SECRET=test-secret-please-rotate node --import tsx --test --test-force-exit tests/**/*.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

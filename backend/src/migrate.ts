@@ -25,6 +25,17 @@ export function runMigrations(): void {
 
     CREATE INDEX IF NOT EXISTS idx_email_tokens_token ON email_tokens(token);
     CREATE INDEX IF NOT EXISTS idx_email_tokens_user  ON email_tokens(user_id);
+
+    CREATE TABLE IF NOT EXISTS password_reset_tokens (
+      id          TEXT PRIMARY KEY,
+      user_id     TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      token       TEXT UNIQUE NOT NULL,
+      expires_at  TEXT NOT NULL,
+      used        INTEGER NOT NULL DEFAULT 0,
+      created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_token ON password_reset_tokens(token);
   `);
 }
 

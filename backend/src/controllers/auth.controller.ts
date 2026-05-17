@@ -3,8 +3,16 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { randomUUID } from 'node:crypto';
 import { db } from '../db.js';
-import { sendVerificationEmail } from '../services/email.service.js';
-import type { RegisterInput, LoginInput, VerifyQuery } from '../schemas/auth.schemas.js';
+import { sendVerificationEmail, sendPasswordResetEmail } from '../services/email.service.js';
+import type { AuthRequest } from '../middleware/auth.middleware.js';
+import type {
+  RegisterInput,
+  LoginInput,
+  VerifyQuery,
+  ForgotPasswordInput,
+  ResetPasswordInput,
+  ChangePasswordInput,
+} from '../schemas/auth.schemas.js';
 
 const TOKEN_EXPIRY_HOURS = 24;
 
@@ -107,4 +115,74 @@ export async function login(req: Request, res: Response): Promise<void> {
       state: user.state,
     },
   });
+}
+
+const RESET_TOKEN_EXPIRY_HOURS = 1;
+
+export async function forgotPassword(req: Request, res: Response): Promise<void> {
+  const { email } = req.body as ForgotPasswordInput;
+  const normalised = email.toLowerCase();
+  const genericResponse = { message: 'If that email exists, a reset link has been sent.' };
+
+  const user = db().prepare('SELECT id, email, name FROM users WHERE email = ?').get(normalised) as { id: string; email: string; name: string } | undefined;
+  if (!user) {
+    res.json(genericResponse);
+    return;
+  }
+
+  const token = randomUUID();
+  const expiresAt = new Date(Date.now() + RESET_TOKEN_EXPIRY_HOURS * 3600 * 1000).toISOString();
+  db().prepare(
+    'INSERT INTO password_reset_tokens (id, user_id, token, expires_at) VALUES (?, ?, ?, ?)'
+  ).run(randomUUID(), user.id, token, expiresAt);
+
+  await sendPasswordResetEmail({ to: user.email, name: user.name, token });
+  res.json(genericResponse);
+}
+
+export async function resetPassword(req: Request, res: Response): Promise<void> {
+  const { token, password } = req.body as ResetPasswordInput;
+
+  const row = db().prepare(
+    `SELECT id, user_id FROM password_reset_tokens
+     WHERE token = ? AND used = 0 AND datetime(expires_at) > datetime('now')`
+  ).get(token) as { id: string; user_id: string } | undefined;
+
+  if (!row) {
+    res.status(400).json({ error: 'Invalid or expired reset link' });
+    return;
+  }
+
+  const hashed = await bcrypt.hash(password, 12);
+  db().transaction(() => {
+    db().prepare('UPDATE users SET password = ? WHERE id = ?').run(hashed, row.user_id);
+    db().prepare('UPDATE password_reset_tokens SET used = 1 WHERE id = ?').run(row.id);
+  })();
+
+  res.json({ message: 'Password reset successfully' });
+}
+
+export async function changePassword(req: AuthRequest, res: Response): Promise<void> {
+  const userId = req.userId;
+  if (!userId) {
+    res.status(401).json({ error: 'Not authenticated' });
+    return;
+  }
+  const { currentPassword, newPassword } = req.body as ChangePasswordInput;
+
+  const user = db().prepare('SELECT password FROM users WHERE id = ?').get(userId) as { password: string } | undefined;
+  if (!user) {
+    res.status(404).json({ error: 'User not found' });
+    return;
+  }
+
+  const valid = await bcrypt.compare(currentPassword, user.password);
+  if (!valid) {
+    res.status(400).json({ error: 'Current password is incorrect' });
+    return;
+  }
+
+  const hashed = await bcrypt.hash(newPassword, 12);
+  db().prepare('UPDATE users SET password = ? WHERE id = ?').run(hashed, userId);
+  res.json({ message: 'Password changed successfully' });
 }

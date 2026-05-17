@@ -142,3 +142,93 @@ describe('auth-email feature', () => {
     assert.equal(res.status, 401);
   });
 });
+
+describe('auth-password-reset feature', () => {
+  beforeEach(() => {
+    resetDb();
+  });
+
+  async function registerAndVerify(): Promise<{ jwt: string }> {
+    await call('POST', '/api/auth/register', validRegister);
+    const verifyToken = testInbox[0]?.url.split('token=')[1] as string;
+    await call('GET', `/api/auth/verify?token=${verifyToken}`);
+    testInbox.length = 0;
+    const login = await call('POST', '/api/auth/login', { email: validRegister.email, password: validRegister.password });
+    return { jwt: login.body['token'] as string };
+  }
+
+  it('forgot-password for a known email queues a reset email and returns 200', async () => {
+    await registerAndVerify();
+    const res = await call('POST', '/api/auth/forgot-password', { email: validRegister.email });
+    assert.equal(res.status, 200);
+    assert.match(res.body['message'] as string, /reset link/i);
+    assert.equal(testInbox.length, 1);
+    assert.equal(testInbox[0]?.to, 'jane@example.com');
+    const tokenRow = db().prepare('SELECT used FROM password_reset_tokens').get();
+    assert.deepEqual(tokenRow, { used: 0 });
+  });
+
+  it('forgot-password for an unknown email returns the same 200 with no row and no email', async () => {
+    const res = await call('POST', '/api/auth/forgot-password', { email: 'ghost@example.com' });
+    assert.equal(res.status, 200);
+    assert.match(res.body['message'] as string, /reset link/i);
+    assert.equal(testInbox.length, 0);
+    const count = db().prepare('SELECT COUNT(*) as n FROM password_reset_tokens').get() as { n: number };
+    assert.equal(count.n, 0);
+  });
+
+  it('reset-password with a valid token rotates the password and burns the token', async () => {
+    await registerAndVerify();
+    await call('POST', '/api/auth/forgot-password', { email: validRegister.email });
+    const resetToken = testInbox[0]?.url.split('token=')[1] as string;
+
+    const res = await call('POST', '/api/auth/reset-password', { token: resetToken, password: 'a-brand-new-passphrase' });
+    assert.equal(res.status, 200);
+
+    const burned = db().prepare('SELECT used FROM password_reset_tokens').get() as { used: number };
+    assert.equal(burned.used, 1);
+
+    const oldLogin = await call('POST', '/api/auth/login', { email: validRegister.email, password: validRegister.password });
+    assert.equal(oldLogin.status, 401);
+    const newLogin = await call('POST', '/api/auth/login', { email: validRegister.email, password: 'a-brand-new-passphrase' });
+    assert.equal(newLogin.status, 200);
+  });
+
+  it('reset-password rejects a token reused after rotation', async () => {
+    await registerAndVerify();
+    await call('POST', '/api/auth/forgot-password', { email: validRegister.email });
+    const resetToken = testInbox[0]?.url.split('token=')[1] as string;
+    await call('POST', '/api/auth/reset-password', { token: resetToken, password: 'first-new-pass-1234' });
+    const second = await call('POST', '/api/auth/reset-password', { token: resetToken, password: 'second-attempt-5678' });
+    assert.equal(second.status, 400);
+  });
+
+  it('change-password rotates the password when current matches', async () => {
+    const { jwt } = await registerAndVerify();
+    const res = await call('POST', '/api/auth/change-password',
+      { currentPassword: validRegister.password, newPassword: 'totally-different-now' },
+      { authorization: `Bearer ${jwt}` }
+    );
+    assert.equal(res.status, 200);
+    const login = await call('POST', '/api/auth/login', { email: validRegister.email, password: 'totally-different-now' });
+    assert.equal(login.status, 200);
+  });
+
+  it('change-password rejects a wrong current password with 400', async () => {
+    const { jwt } = await registerAndVerify();
+    const res = await call('POST', '/api/auth/change-password',
+      { currentPassword: 'not-my-password', newPassword: 'whatever-new-pass' },
+      { authorization: `Bearer ${jwt}` }
+    );
+    assert.equal(res.status, 400);
+  });
+
+  it('change-password without a JWT returns 401', async () => {
+    await registerAndVerify();
+    const res = await call('POST', '/api/auth/change-password', {
+      currentPassword: validRegister.password,
+      newPassword: 'whatever-new-pass',
+    });
+    assert.equal(res.status, 401);
+  });
+});
