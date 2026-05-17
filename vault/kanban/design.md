@@ -10,6 +10,7 @@ team: design
 ## Review
 
 ## Done
+- [x] [[features/auth-pages]] @design
 - [x] [[features/messaging-dms]] @design
 - [x] [[features/announcements-feed]] @design
 - [x] [[features/family-profiles]] @design

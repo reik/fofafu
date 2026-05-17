@@ -10,6 +10,7 @@ team: marketing
 ## Review
 
 ## Done
+- [x] [[features/auth-pages]] @marketing
 - [x] [[features/messaging-dms]] @marketing
 - [x] [[features/announcements-feed]] @marketing
 - [x] [[features/family-profiles]] @marketing
