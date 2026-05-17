@@ -46,6 +46,7 @@ export async function register(req: Request, res: Response): Promise<void> {
   const token = randomUUID();
   const expiresAt = new Date(Date.now() + TOKEN_EXPIRY_HOURS * 3600 * 1000).toISOString();
 
+  const familyId = randomUUID();
   db().transaction(() => {
     db().prepare(
       'INSERT INTO users (id, email, password, name, city, state) VALUES (?, ?, ?, ?, ?, ?)'
@@ -53,6 +54,9 @@ export async function register(req: Request, res: Response): Promise<void> {
     db().prepare(
       'INSERT INTO email_tokens (id, user_id, token, expires_at) VALUES (?, ?, ?, ?)'
     ).run(randomUUID(), userId, token, expiresAt);
+    db().prepare(
+      "INSERT INTO families (id, user_id, name, bio) VALUES (?, ?, ?, '')"
+    ).run(familyId, userId, name);
   })();
 
   await sendVerificationEmail({ to: normalised, name, token });

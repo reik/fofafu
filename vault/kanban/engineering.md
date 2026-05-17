@@ -10,6 +10,7 @@ team: engineering
 ## Review
 
 ## Done
+- [x] [[features/family-profiles]] @engineering
 - [x] [[features/auth-password-reset]] @engineering
 - [x] [[features/auth-email]] @engineering
 - [x] [[features/user-profile]] @engineering

@@ -36,6 +36,18 @@ export function runMigrations(): void {
     );
 
     CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_token ON password_reset_tokens(token);
+
+    CREATE TABLE IF NOT EXISTS families (
+      id          TEXT PRIMARY KEY,
+      user_id     TEXT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+      name        TEXT NOT NULL,
+      bio         TEXT NOT NULL DEFAULT '',
+      kid_count   INTEGER,
+      created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_families_user ON families(user_id);
   `);
 }
 
