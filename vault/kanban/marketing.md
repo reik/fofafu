@@ -10,6 +10,7 @@ team: marketing
 ## Review
 
 ## Done
+- [x] [[features/uploads-images]] @marketing
 - [x] [[features/messages-pages]] @marketing
 - [x] [[features/feed-pages]] @marketing
 - [x] [[features/profile-pages]] @marketing

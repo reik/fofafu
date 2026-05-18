@@ -21,6 +21,13 @@ export function AnnouncementCard({ announcement }: Props) {
         </Link>
       </header>
       <p className="whitespace-pre-line text-ink-lead">{announcement.content}</p>
+      {announcement.mediaUrl && announcement.mediaType === 'image' && (
+        <img
+          src={announcement.mediaUrl}
+          alt=""
+          className="max-h-96 w-full rounded object-cover"
+        />
+      )}
       <ReactionBar announcement={announcement} />
     </article>
   );

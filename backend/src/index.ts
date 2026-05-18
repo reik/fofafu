@@ -5,14 +5,17 @@ import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import { apiRouter } from './routes/index.js';
 import { runMigrations } from './migrate.js';
+import { UPLOAD_DIR_ABSOLUTE } from './services/uploads.service.js';
 
 export function buildApp(): express.Express {
   const app = express();
-  app.use(helmet());
+  // helmet's CSP blocks cross-origin <img> by default; relax for static uploads in dev.
+  app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
   app.use(cors({ origin: process.env.FRONTEND_URL ?? 'http://localhost:5173' }));
   app.use(express.json({ limit: '1mb' }));
   app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 200, standardHeaders: true, legacyHeaders: false }));
   app.get('/health', (_req, res) => { res.json({ ok: true }); });
+  app.use('/uploads', express.static(UPLOAD_DIR_ABSOLUTE, { maxAge: '7d', fallthrough: false }));
   app.use('/api', apiRouter);
   app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     console.error('[unhandled]', err);

@@ -64,7 +64,13 @@ export async function getAnnouncement(id: string): Promise<AnnouncementDTO> {
   return AnnouncementDTO.parse(data);
 }
 
-export async function createAnnouncement(input: { content: string }): Promise<AnnouncementDTO> {
+export interface CreateAnnouncementInput {
+  content: string;
+  mediaUrl?: string;
+  mediaType?: 'image' | 'video';
+}
+
+export async function createAnnouncement(input: CreateAnnouncementInput): Promise<AnnouncementDTO> {
   const data = await apiRequest<unknown>('/announcements', { method: 'POST', body: input });
   return AnnouncementDTO.parse(data);
 }

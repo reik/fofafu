@@ -49,6 +49,9 @@ export default function AnnouncementDetailPage() {
           {new Date(post.createdAt).toLocaleString()}
         </time>
         <p className="whitespace-pre-line text-ink-lead">{post.content}</p>
+        {post.mediaUrl && post.mediaType === 'image' && (
+          <img src={post.mediaUrl} alt="" className="max-h-96 w-full rounded object-cover" />
+        )}
         <ReactionBar announcement={post} />
       </article>
 

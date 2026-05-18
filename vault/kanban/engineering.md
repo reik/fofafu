@@ -10,6 +10,7 @@ team: engineering
 ## Review
 
 ## Done
+- [x] [[features/uploads-images]] @engineering
 - [x] [[features/messages-pages]] @engineering
 - [x] [[features/feed-pages]] @engineering
 - [x] [[features/profile-pages]] @engineering
