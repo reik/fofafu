@@ -7,6 +7,8 @@ import FamilyMePage from '@/pages/FamilyMe';
 import FamilyViewPage from '@/pages/FamilyView';
 import FeedPage from '@/pages/Feed';
 import AnnouncementDetailPage from '@/pages/AnnouncementDetail';
+import MessagesPage from '@/pages/Messages';
+import MessageThreadPage from '@/pages/MessageThread';
 import { RequireAuth } from '@/components/RequireAuth';
 
 export function App() {
@@ -52,6 +54,22 @@ export function App() {
         element={
           <RequireAuth>
             <AnnouncementDetailPage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/messages"
+        element={
+          <RequireAuth>
+            <MessagesPage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/messages/:userId"
+        element={
+          <RequireAuth>
+            <MessageThreadPage />
           </RequireAuth>
         }
       />

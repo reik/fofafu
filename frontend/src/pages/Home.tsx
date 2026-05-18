@@ -28,6 +28,13 @@ export default function HomePage() {
           <span className="block font-semibold">Announcements feed</span>
           <span className="block text-sm text-ink-muted">See what other foster families are sharing.</span>
         </Link>
+        <Link
+          to="/messages"
+          className="block rounded-lg bg-surface-card px-4 py-3 shadow-lift hover:bg-surface-warm"
+        >
+          <span className="block font-semibold">Messages</span>
+          <span className="block text-sm text-ink-muted">Private conversations with other families.</span>
+        </Link>
       </nav>
 
       <button

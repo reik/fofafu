@@ -10,6 +10,7 @@ team: design
 ## Review
 
 ## Done
+- [x] [[features/messages-pages]] @design
 - [x] [[features/feed-pages]] @design
 - [x] [[features/profile-pages]] @design
 - [x] [[features/auth-pages]] @design
