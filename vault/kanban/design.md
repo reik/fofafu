@@ -10,6 +10,7 @@ team: design
 ## Review
 
 ## Done
+- [x] [[features/polish-edit-delete]] @design
 - [x] [[features/uploads-images]] @design
 - [x] [[features/messages-pages]] @design
 - [x] [[features/feed-pages]] @design

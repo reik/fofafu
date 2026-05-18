@@ -96,3 +96,22 @@ export const feedKeys = {
   byId: (id: string) => ['feed', 'byId', id] as const,
   comments: (id: string) => ['feed', 'comments', id] as const,
 };
+
+export interface PatchAnnouncementInput {
+  content?: string;
+  mediaUrl?: string | null;
+  mediaType?: 'image' | 'video' | null;
+}
+
+export async function patchAnnouncement(id: string, input: PatchAnnouncementInput): Promise<AnnouncementDTO> {
+  const data = await apiRequest<unknown>(`/announcements/${id}`, { method: 'PATCH', body: input });
+  return AnnouncementDTO.parse(data);
+}
+
+export async function deleteAnnouncement(id: string): Promise<void> {
+  await apiRequest<unknown>(`/announcements/${id}`, { method: 'DELETE' });
+}
+
+export async function deleteComment(id: string): Promise<void> {
+  await apiRequest<unknown>(`/comments/${id}`, { method: 'DELETE' });
+}

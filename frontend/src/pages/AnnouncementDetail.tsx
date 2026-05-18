@@ -1,13 +1,25 @@
-import { Link, useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { getAnnouncement, listComments, feedKeys } from '@/api/announcements';
+import { useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getAnnouncement, listComments, deleteAnnouncement, feedKeys } from '@/api/announcements';
 import { Layout } from '@/components/Layout';
 import { ReactionBar } from '@/features/feed/components/ReactionBar';
 import { CommentList } from '@/features/feed/components/CommentList';
 import { CommentForm } from '@/features/feed/components/CommentForm';
+import { AnnouncementEditForm } from '@/features/feed/components/AnnouncementEditForm';
 
 export default function AnnouncementDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const [editing, setEditing] = useState(false);
+  const del = useMutation({
+    mutationFn: () => deleteAnnouncement(id!),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: feedKeys.page });
+      navigate('/feed');
+    },
+  });
 
   const postQuery = useQuery({
     queryKey: feedKeys.byId(id ?? ''),
@@ -45,14 +57,41 @@ export default function AnnouncementDetailPage() {
   return (
     <Layout>
       <article className="space-y-3 rounded-lg bg-surface-card p-5 shadow-lift">
-        <time className="font-mono uppercase tracking-wide text-xs text-ink-muted">
-          {new Date(post.createdAt).toLocaleString()}
-        </time>
-        <p className="whitespace-pre-line text-ink-lead">{post.content}</p>
-        {post.mediaUrl && post.mediaType === 'image' && (
-          <img src={post.mediaUrl} alt="" className="max-h-96 w-full rounded object-cover" />
+        <header className="flex items-center justify-between text-xs">
+          <time className="font-mono uppercase tracking-wide text-ink-muted">
+            {new Date(post.createdAt).toLocaleString()}
+          </time>
+          {post.isAuthor && !editing && (
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setEditing(true)}
+                className="text-ink-muted underline-offset-4 hover:underline"
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                onClick={() => { if (window.confirm('Delete this post?')) del.mutate(); }}
+                disabled={del.isPending}
+                className="text-feedback-error underline-offset-4 hover:underline disabled:opacity-60"
+              >
+                {del.isPending ? 'Deleting…' : 'Delete'}
+              </button>
+            </div>
+          )}
+        </header>
+        {editing ? (
+          <AnnouncementEditForm announcement={post} onDone={() => setEditing(false)} />
+        ) : (
+          <>
+            <p className="whitespace-pre-line text-ink-lead">{post.content}</p>
+            {post.mediaUrl && post.mediaType === 'image' && (
+              <img src={post.mediaUrl} alt="" className="max-h-96 w-full rounded object-cover" />
+            )}
+            <ReactionBar announcement={post} />
+          </>
         )}
-        <ReactionBar announcement={post} />
       </article>
 
       <section className="mt-8 space-y-4">
