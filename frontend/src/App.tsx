@@ -3,6 +3,8 @@ import LoginPage from '@/pages/Login';
 import RegisterPage from '@/pages/Register';
 import VerifyEmailPage from '@/pages/VerifyEmail';
 import HomePage from '@/pages/Home';
+import FamilyMePage from '@/pages/FamilyMe';
+import FamilyViewPage from '@/pages/FamilyView';
 import { RequireAuth } from '@/components/RequireAuth';
 
 export function App() {
@@ -16,6 +18,22 @@ export function App() {
         element={
           <RequireAuth>
             <HomePage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/family/me"
+        element={
+          <RequireAuth>
+            <FamilyMePage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/family/:id"
+        element={
+          <RequireAuth>
+            <FamilyViewPage />
           </RequireAuth>
         }
       />
