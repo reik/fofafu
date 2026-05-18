@@ -9,12 +9,22 @@ interface VerificationParams {
 // In test mode we collect emails in-memory so tests can assert on them.
 export const testInbox: { to: string; subject: string; url: string }[] = [];
 
+function shouldUseFakeMailer(): boolean {
+  if (process.env.NODE_ENV === 'test') return true;
+  // No SMTP creds → dev/CI fallback: log the link to stdout instead of crashing.
+  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) return true;
+  return false;
+}
+
 export async function sendVerificationEmail({ to, name, token }: VerificationParams): Promise<void> {
   const url = `${process.env.FRONTEND_URL ?? 'http://localhost:5173'}/verify-email?token=${token}`;
   const subject = 'Welcome to fofafu — verify your email';
 
-  if (process.env.NODE_ENV === 'test') {
+  if (shouldUseFakeMailer()) {
     testInbox.push({ to, subject, url });
+    if (process.env.NODE_ENV !== 'test') {
+      console.log(`[email:fake] verify ${to} (${name}) -> ${url}`);
+    }
     return;
   }
 
@@ -67,8 +77,11 @@ export async function sendPasswordResetEmail({ to, name, token }: ResetParams): 
   const url = `${process.env.FRONTEND_URL ?? 'http://localhost:5173'}/reset-password?token=${token}`;
   const subject = 'fofafu — reset your password';
 
-  if (process.env.NODE_ENV === 'test') {
+  if (shouldUseFakeMailer()) {
     testInbox.push({ to, subject, url });
+    if (process.env.NODE_ENV !== 'test') {
+      console.log(`[email:fake] reset ${to} (${name}) -> ${url}`);
+    }
     return;
   }
 

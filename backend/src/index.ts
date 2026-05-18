@@ -14,6 +14,10 @@ export function buildApp(): express.Express {
   app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 200, standardHeaders: true, legacyHeaders: false }));
   app.get('/health', (_req, res) => { res.json({ ok: true }); });
   app.use('/api', apiRouter);
+  app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    console.error('[unhandled]', err);
+    if (!res.headersSent) res.status(500).json({ error: 'Something went wrong on our end.' });
+  });
   return app;
 }
 
