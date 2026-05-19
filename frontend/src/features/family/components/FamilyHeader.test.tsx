@@ -3,8 +3,8 @@ import { screen } from '@testing-library/react';
 import { renderWithProviders } from '@/tests/render';
 import { FamilyHeader } from './FamilyHeader';
 
-const ownerFamily = { id: 'f1', ownerId: 'u1', name: 'Garcia', bio: 'caring for three teens', kidCount: 3, isOwner: true,  updatedAt: '2026-05-17' };
-const otherFamily = { id: 'f2', ownerId: 'u2', name: 'Lee',    bio: 'family of four',        kidCount: 2, isOwner: false, updatedAt: '2026-05-17' };
+const ownerFamily = { id: 'f1', ownerId: 'u1', name: 'Garcia', bio: 'caring for three teens', kidCount: 3, avatarUrl: null, isOwner: true,  updatedAt: '2026-05-17' };
+const otherFamily = { id: 'f2', ownerId: 'u2', name: 'Lee',    bio: 'family of four',        kidCount: 2, avatarUrl: null, isOwner: false, updatedAt: '2026-05-17' };
 
 describe('FamilyHeader', () => {
   it('shows the kid-count chip when viewer is the owner', () => {

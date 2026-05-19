@@ -43,6 +43,7 @@ export function runMigrations(): void {
       name        TEXT NOT NULL,
       bio         TEXT NOT NULL DEFAULT '',
       kid_count   INTEGER,
+      avatar_url  TEXT,
       created_at  TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
     );
@@ -96,6 +97,17 @@ export function runMigrations(): void {
     CREATE INDEX IF NOT EXISTS idx_messages_receiver ON messages(receiver_id);
     CREATE INDEX IF NOT EXISTS idx_messages_pair     ON messages(sender_id, receiver_id, created_at);
   `);
+
+  // Defensive backfill for columns added after the initial schema. SQLite has
+  // no ADD COLUMN IF NOT EXISTS, so we check pragma table_info first.
+  ensureColumn('families', 'avatar_url', 'TEXT');
+}
+
+function ensureColumn(table: string, column: string, type: string): void {
+  const rows = db().prepare(`PRAGMA table_info(${table})`).all() as { name: string }[];
+  if (!rows.some((r) => r.name === column)) {
+    db().prepare(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`).run();
+  }
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

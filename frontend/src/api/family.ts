@@ -7,6 +7,7 @@ export const FamilyDTO = z.object({
   name: z.string(),
   bio: z.string(),
   kidCount: z.number().nullable(),
+  avatarUrl: z.string().nullable(),
   isOwner: z.boolean(),
   updatedAt: z.string(),
 });
@@ -16,6 +17,7 @@ export const FamilyPatchInput = z.object({
   name: z.string().min(1, 'Tell us a name.').max(80).optional(),
   bio: z.string().max(2000, 'Keep it under 2000 characters.').optional(),
   kidCount: z.number().int().min(0).max(20, 'Up to 20.').nullable().optional(),
+  avatarUrl: z.string().max(2048).nullable().optional(),
 });
 export type FamilyPatchInput = z.infer<typeof FamilyPatchInput>;
 

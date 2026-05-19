@@ -10,6 +10,7 @@ team: design
 ## Review
 
 ## Done
+- [x] [[features/family-avatar]] @design
 - [x] [[features/family-owner-link]] @design
 - [x] [[features/polish-edit-delete]] @design
 - [x] [[features/uploads-images]] @design

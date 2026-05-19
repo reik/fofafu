@@ -10,6 +10,7 @@ team: marketing
 ## Review
 
 ## Done
+- [x] [[features/family-avatar]] @marketing
 - [x] [[features/family-owner-link]] @marketing
 - [x] [[features/polish-edit-delete]] @marketing
 - [x] [[features/uploads-images]] @marketing

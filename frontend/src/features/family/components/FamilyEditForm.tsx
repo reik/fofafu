@@ -3,8 +3,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
-import { patchFamily, familyKeys, type FamilyDTO } from '@/api/family';
+import { patchFamily, familyKeys, type FamilyDTO, type FamilyPatchInput } from '@/api/family';
 import { ApiError } from '@/api/client';
+import type { UploadResult } from '@/api/uploads';
+import { ImagePicker } from '@/features/feed/components/ImagePicker';
 
 const FormSchema = z.object({
   name: z.string().min(1, 'Tell us a name.').max(80),
@@ -25,6 +27,9 @@ interface Props {
 export function FamilyEditForm({ family, onCancel, onSaved }: Props) {
   const qc = useQueryClient();
   const [serverError, setServerError] = useState<string | null>(null);
+  const [avatar, setAvatar] = useState<UploadResult | null>(
+    family.avatarUrl ? { url: family.avatarUrl, mediaType: 'image' } : null,
+  );
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormValues>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -50,15 +55,25 @@ export function FamilyEditForm({ family, onCancel, onSaved }: Props) {
     <form
       onSubmit={handleSubmit((data) => {
         setServerError(null);
-        mutation.mutate({
+        const patch: FamilyPatchInput = {
           name: data.name,
           bio: data.bio,
           kidCount: data.kidCount === '' ? null : Number(data.kidCount),
-        });
+        };
+        // Send avatarUrl only when it changed (set / replaced / removed).
+        const currentUrl = family.avatarUrl ?? null;
+        const nextUrl = avatar?.url ?? null;
+        if (nextUrl !== currentUrl) patch.avatarUrl = nextUrl;
+        mutation.mutate(patch);
       })}
       className="space-y-4"
       noValidate
     >
+      <div className="space-y-1">
+        <span className="block text-sm font-medium">Family avatar (optional)</span>
+        <ImagePicker attached={avatar} onAttached={setAvatar} />
+      </div>
+
       <div className="space-y-1">
         <label htmlFor="family-name" className="block text-sm font-medium">Family name</label>
         <input id="family-name" {...register('name')} className={inputCls} />

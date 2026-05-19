@@ -47,7 +47,7 @@ async function register(): Promise<string> {
 async function postMultipart(path: string, fileBytes: Buffer, mime: string, filename: string, jwt?: string): Promise<{ status: number; body: Json }> {
   const port = await listen();
   const form = new FormData();
-  const blob = new Blob([fileBytes], { type: mime });
+  const blob = new Blob([new Uint8Array(fileBytes)], { type: mime });
   form.append('file', blob, filename);
   const init: RequestInit = { method: 'POST', body: form };
   if (jwt) init.headers = { authorization: `Bearer ${jwt}` };

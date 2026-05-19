@@ -9,6 +9,7 @@ interface FamilyRow {
   name: string;
   bio: string;
   kid_count: number | null;
+  avatar_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -21,6 +22,7 @@ function toFamilyDTO(row: FamilyRow, viewerUserId: string | undefined): Record<s
     name: row.name,
     bio: row.bio,
     kidCount: isOwner ? row.kid_count : null,
+    avatarUrl: row.avatar_url,
     isOwner,
     updatedAt: row.updated_at,
   };
@@ -68,13 +70,14 @@ export function patchFamily(req: AuthRequest, res: Response): void {
     name: patch.name ?? row.name,
     bio: patch.bio ?? row.bio,
     kid_count: patch.kidCount === undefined ? row.kid_count : patch.kidCount,
+    avatar_url: patch.avatarUrl === undefined ? row.avatar_url : patch.avatarUrl,
   };
 
   db().prepare(
     `UPDATE families
-     SET name = ?, bio = ?, kid_count = ?, updated_at = datetime('now')
+     SET name = ?, bio = ?, kid_count = ?, avatar_url = ?, updated_at = datetime('now')
      WHERE id = ?`
-  ).run(next.name, next.bio, next.kid_count, row.id);
+  ).run(next.name, next.bio, next.kid_count, next.avatar_url, row.id);
 
   const updated = db().prepare('SELECT * FROM families WHERE id = ?').get(row.id) as FamilyRow;
   res.json(toFamilyDTO(updated, userId));

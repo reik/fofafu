@@ -9,13 +9,29 @@ export function FamilyHeader({ family, onEdit }: Props) {
   return (
     <header className="space-y-4">
       <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight">
-            {family.isOwner ? 'Your family page' : `The ${family.name} family`}
-          </h1>
-          {family.isOwner && (
-            <p className="text-ink-muted mt-1 text-sm">{family.name}</p>
+        <div className="flex items-center gap-4">
+          {family.avatarUrl ? (
+            <img
+              src={family.avatarUrl}
+              alt=""
+              className="h-16 w-16 rounded-full object-cover shadow-lift"
+            />
+          ) : (
+            <div
+              aria-hidden="true"
+              className="h-16 w-16 rounded-full bg-brand-primary/15 text-brand-primary shadow-lift flex items-center justify-center text-2xl font-semibold"
+            >
+              {family.name.charAt(0).toUpperCase()}
+            </div>
           )}
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight">
+              {family.isOwner ? 'Your family page' : `The ${family.name} family`}
+            </h1>
+            {family.isOwner && (
+              <p className="text-ink-muted mt-1 text-sm">{family.name}</p>
+            )}
+          </div>
         </div>
         {onEdit && family.isOwner && (
           <button

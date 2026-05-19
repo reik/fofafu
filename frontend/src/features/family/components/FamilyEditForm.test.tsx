@@ -6,7 +6,7 @@ import { renderWithProviders } from '@/tests/render';
 import { server } from '@/tests/msw-server';
 import { FamilyEditForm } from './FamilyEditForm';
 
-const family = { id: 'f1', ownerId: 'u1', name: 'Garcia', bio: '', kidCount: null, isOwner: true, updatedAt: '2026-05-17' };
+const family = { id: 'f1', ownerId: 'u1', name: 'Garcia', bio: '', kidCount: null, avatarUrl: null, isOwner: true, updatedAt: '2026-05-17' };
 
 describe('FamilyEditForm', () => {
   it('submits the patch and calls onSaved', async () => {
