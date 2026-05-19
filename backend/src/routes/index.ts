@@ -4,6 +4,7 @@ import { familyRouter } from "./family.routes.js";
 import { announcementRouter, commentRouter } from "./announcement.routes.js";
 import { messageRouter } from "./message.routes.js";
 import { uploadsRouter } from "./uploads.routes.js";
+import { searchRouter } from "./search.routes.js";
 
 export const apiRouter = Router();
 apiRouter.use("/auth", authRouter);
@@ -12,3 +13,4 @@ apiRouter.use("/announcements", announcementRouter);
 apiRouter.use("/comments", commentRouter);
 apiRouter.use("/messages", messageRouter);
 apiRouter.use("/uploads", uploadsRouter);
+apiRouter.use("/search", searchRouter);

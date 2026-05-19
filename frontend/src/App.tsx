@@ -9,6 +9,7 @@ import FeedPage from '@/pages/Feed';
 import AnnouncementDetailPage from '@/pages/AnnouncementDetail';
 import MessagesPage from '@/pages/Messages';
 import MessageThreadPage from '@/pages/MessageThread';
+import SearchPage from '@/pages/Search';
 import { RequireAuth } from '@/components/RequireAuth';
 
 export function App() {
@@ -70,6 +71,14 @@ export function App() {
         element={
           <RequireAuth>
             <MessageThreadPage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/search"
+        element={
+          <RequireAuth>
+            <SearchPage />
           </RequireAuth>
         }
       />

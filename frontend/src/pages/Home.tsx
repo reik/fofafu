@@ -35,6 +35,13 @@ export default function HomePage() {
           <span className="block font-semibold">Messages</span>
           <span className="block text-sm text-ink-muted">Private conversations with other families.</span>
         </Link>
+        <Link
+          to="/search"
+          className="block rounded-lg bg-surface-card px-4 py-3 shadow-lift hover:bg-surface-warm"
+        >
+          <span className="block font-semibold">Find a family</span>
+          <span className="block text-sm text-ink-muted">Search by name, bio, or location.</span>
+        </Link>
       </nav>
 
       <button
