@@ -10,6 +10,7 @@ team: engineering
 ## Review
 
 ## Done
+- [x] [[features/a11y-audit]] @engineering
 - [x] [[features/community-search]] @engineering
 - [x] [[features/family-avatar]] @engineering
 - [x] [[features/family-owner-link]] @engineering

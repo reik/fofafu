@@ -10,6 +10,7 @@ team: design
 ## Review
 
 ## Done
+- [x] [[features/a11y-audit]] @design
 - [x] [[features/community-search]] @design
 - [x] [[features/family-avatar]] @design
 - [x] [[features/family-owner-link]] @design
