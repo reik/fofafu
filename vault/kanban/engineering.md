@@ -10,6 +10,7 @@ team: engineering
 ## Review
 
 ## Done
+- [x] [[features/family-owner-link]] @engineering
 - [x] [[features/polish-edit-delete]] @engineering
 - [x] [[features/uploads-images]] @engineering
 - [x] [[features/messages-pages]] @engineering

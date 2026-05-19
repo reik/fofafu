@@ -17,6 +17,7 @@ function toFamilyDTO(row: FamilyRow, viewerUserId: string | undefined): Record<s
   const isOwner = viewerUserId === row.user_id;
   return {
     id: row.id,
+    ownerId: row.user_id,
     name: row.name,
     bio: row.bio,
     kidCount: isOwner ? row.kid_count : null,

@@ -3,6 +3,7 @@ import { apiRequest } from './client';
 
 export const FamilyDTO = z.object({
   id: z.string(),
+  ownerId: z.string(),
   name: z.string(),
   bio: z.string(),
   kidCount: z.number().nullable(),
