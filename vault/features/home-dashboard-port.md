@@ -3,7 +3,7 @@ slug: home-dashboard-port
 title: Port fofa's 3-column home dashboard (and the missing top nav)
 owner: engineering
 collaborators: [design]
-status: review
+status: shipped
 priority: P0
 created: 2026-05-19
 target: 2026-05-19

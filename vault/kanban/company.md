@@ -15,9 +15,9 @@ team: company
 ## In Progress
 
 ## Review
-- [ ] [[features/home-dashboard-port]] — Port fofa's 3-column dashboard + navbar; backend community endpoint + frontend dashboard + Navbar + tests all green awaiting commit.
 
 ## Done
+- [x] [[features/home-dashboard-port]] — 3-column dashboard (family card | composer+feed | community rail) + persistent Navbar (desktop top + mobile bottom tabs) + GET /api/community/recent; 56/56 backend, 38/38 frontend.
 - [x] [[features/a11y-audit]] — axe-core sweep across all 11 pages: 0 violations; skip-link + main landmark; manual contrast pass.
 - [x] [[features/community-search]] — GET /api/search/families + /search page; matches name/bio/city/state; 53/53 backend, 21/21 frontend.
 - [x] [[features/family-avatar]] — families.avatar_url + avatar circle in FamilyHeader + ImagePicker in FamilyEditForm; closes the polish trio.

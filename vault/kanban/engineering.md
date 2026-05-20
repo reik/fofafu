@@ -15,9 +15,9 @@ team: engineering
 ## In Progress
 
 ## Review
-- [ ] [[features/home-dashboard-port]] @engineering
 
 ## Done
+- [x] [[features/home-dashboard-port]] @engineering
 - [x] [[features/a11y-audit]] @engineering
 - [x] [[features/community-search]] @engineering
 - [x] [[features/family-avatar]] @engineering
