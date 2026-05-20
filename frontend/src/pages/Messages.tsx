@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { listThreads, messageKeys } from '@/api/messages';
 import { Layout } from '@/components/Layout';
+import { cn } from '@/utils/cn';
+import { formatAuthor } from '@/utils/formatAuthor';
 
 export default function MessagesPage() {
   const { data, isPending, isError, error } = useQuery({
@@ -25,7 +27,9 @@ export default function MessagesPage() {
             className="block rounded-lg bg-surface-card px-4 py-3 shadow-lift hover:bg-surface-warm"
           >
             <div className="flex items-baseline justify-between gap-3">
-              <span className="font-semibold truncate">{t.partnerId.slice(0, 8)}…</span>
+              <span className={cn('font-semibold truncate', !t.partnerName && 'italic text-ink-muted')}>
+                {formatAuthor(t.partnerName)}
+              </span>
               <time className="text-xs font-mono text-ink-muted">
                 {new Date(t.lastAt).toLocaleString()}
               </time>

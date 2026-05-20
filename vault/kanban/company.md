@@ -5,7 +5,6 @@ team: company
 
 ## Backlog
 - [ ] [[features/focus-reset-on-route-change]] — a11y follow-up
-- [ ] [[features/author-display-names]] — UX gap: UUIDs everywhere
 - [ ] [[features/edit-comment]] — parity with edit-announcement
 - [ ] [[features/family-recent-posts]] — surface a family's posts on their page
 - [ ] [[features/moderation-report-block]] — community safety
@@ -15,6 +14,7 @@ team: company
 ## In Progress
 
 ## Review
+- [ ] [[features/author-display-names]] — Server-hydrated authorName/partnerName/fromName/toName via LEFT JOIN families; frontend renders linked family names with "A former member" fallback; 70/70 backend, 46/46 frontend.
 
 ## Done
 - [x] [[features/home-dashboard-port]] — 3-column dashboard (family card | composer+feed | community rail) + persistent Navbar (desktop top + mobile bottom tabs) + GET /api/community/recent; 56/56 backend, 38/38 frontend.

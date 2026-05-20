@@ -188,6 +188,52 @@ describe('announcements-feed feature', () => {
     assert.equal(res.status, 400);
   });
 
+  it('AnnouncementDTO populates authorName from joined families row', async () => {
+    const jwt = await register(userA);
+    const created = await call('POST', '/api/announcements', { content: 'with name' }, { authorization: `Bearer ${jwt}` });
+    assert.equal(created.status, 201);
+    assert.equal(created.body['authorName'], userA.name);
+
+    const id = created.body['id'] as string;
+    const got = await call('GET', `/api/announcements/${id}`, undefined, { authorization: `Bearer ${jwt}` });
+    assert.equal(got.body['authorName'], userA.name);
+
+    const list = await call('GET', '/api/announcements', undefined, { authorization: `Bearer ${jwt}` });
+    const items = list.body['items'] as Json[];
+    assert.equal(items[0]?.['authorName'], userA.name);
+  });
+
+  it('AnnouncementDTO authorName is null when family record is missing (orphaned author)', async () => {
+    const jwt = await register(userA);
+    const aRow = db().prepare('SELECT id FROM users WHERE email = ?').get(userA.email) as { id: string };
+    db().prepare('INSERT INTO announcements (id, user_id, content) VALUES (?, ?, ?)')
+      .run('11111111-1111-1111-1111-111111111111', aRow.id, 'orphan post');
+    db().prepare('DELETE FROM families WHERE user_id = ?').run(aRow.id);
+
+    const got = await call('GET', '/api/announcements/11111111-1111-1111-1111-111111111111', undefined, { authorization: `Bearer ${jwt}` });
+    assert.equal(got.status, 200);
+    assert.equal(got.body['authorName'], null);
+    assert.equal(got.body['authorId'], aRow.id);
+  });
+
+  it('CommentDTO populates authorName and is null when family is missing', async () => {
+    const jwtA = await register(userA);
+    const post = await call('POST', '/api/announcements', { content: 'parent' }, { authorization: `Bearer ${jwtA}` });
+    const postId = post.body['id'] as string;
+    const jwtB = await register(userB);
+    const cB = await call('POST', `/api/announcements/${postId}/comments`, { content: 'B says hi' }, { authorization: `Bearer ${jwtB}` });
+    assert.equal(cB.body['authorName'], userB.name);
+
+    const bRow = db().prepare('SELECT id FROM users WHERE email = ?').get(userB.email) as { id: string };
+    db().prepare('DELETE FROM families WHERE user_id = ?').run(bRow.id);
+
+    const list = await call('GET', `/api/announcements/${postId}/comments`, undefined, { authorization: `Bearer ${jwtA}` });
+    const items = list.body as unknown as Json[];
+    const orphan = items.find((i) => i['id'] === cB.body['id']);
+    assert.equal(orphan?.['authorName'], null);
+    assert.equal(orphan?.['authorId'], bRow.id);
+  });
+
   it('all endpoints require auth (401 without JWT)', async () => {
     const list = await call('GET', '/api/announcements');
     const create = await call('POST', '/api/announcements', { content: 'x' });

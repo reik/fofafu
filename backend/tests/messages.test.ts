@@ -123,6 +123,44 @@ describe('messaging-dms feature', () => {
     assert.equal((count.body as Json)['count'], 0);
   });
 
+  it('ThreadDTO populates partnerName from joined families row', async () => {
+    const a = await register(userA);
+    const b = await register(userB);
+    await call('POST', '/api/messages', { to: b.userId, content: 'hi B' }, { authorization: `Bearer ${a.jwt}` });
+
+    const threads = await call('GET', '/api/messages/threads', undefined, { authorization: `Bearer ${a.jwt}` });
+    const items = threads.body as Json[];
+    assert.equal(items.length, 1);
+    assert.equal(items[0]?.['partnerId'], b.userId);
+    assert.equal(items[0]?.['partnerName'], userB.name);
+  });
+
+  it('ThreadDTO partnerName is null when partner family is missing', async () => {
+    const a = await register(userA);
+    const b = await register(userB);
+    await call('POST', '/api/messages', { to: b.userId, content: 'hi B' }, { authorization: `Bearer ${a.jwt}` });
+    db().prepare('DELETE FROM families WHERE user_id = ?').run(b.userId);
+
+    const threads = await call('GET', '/api/messages/threads', undefined, { authorization: `Bearer ${a.jwt}` });
+    const items = threads.body as Json[];
+    assert.equal(items[0]?.['partnerId'], b.userId);
+    assert.equal(items[0]?.['partnerName'], null);
+  });
+
+  it('MessageDTO populates fromName/toName and is null when family is missing', async () => {
+    const a = await register(userA);
+    const b = await register(userB);
+    const sent = await call('POST', '/api/messages', { to: b.userId, content: 'named send' }, { authorization: `Bearer ${a.jwt}` });
+    assert.equal((sent.body as Json)['fromName'], userA.name);
+    assert.equal((sent.body as Json)['toName'], userB.name);
+
+    db().prepare('DELETE FROM families WHERE user_id = ?').run(b.userId);
+    const thread = await call('GET', `/api/messages/threads/${b.userId}`, undefined, { authorization: `Bearer ${a.jwt}` });
+    const items = thread.body as Json[];
+    assert.equal(items[0]?.['fromName'], userA.name);
+    assert.equal(items[0]?.['toName'], null);
+  });
+
   it('all message endpoints require auth (401 without JWT)', async () => {
     const send = await call('POST', '/api/messages', { to: '00000000-0000-0000-0000-000000000000', content: 'x' });
     const threads = await call('GET', '/api/messages/threads');

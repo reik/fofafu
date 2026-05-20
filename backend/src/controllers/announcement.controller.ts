@@ -20,6 +20,7 @@ interface AnnouncementRow {
   media_type: 'image' | 'video' | null;
   created_at: string;
   updated_at: string;
+  author_name: string | null;
 }
 
 interface CommentRow {
@@ -28,7 +29,22 @@ interface CommentRow {
   user_id: string;
   content: string;
   created_at: string;
+  author_name: string | null;
 }
+
+const ANNOUNCEMENT_SELECT = `
+  SELECT a.id, a.user_id, a.content, a.media_url, a.media_type, a.created_at, a.updated_at,
+         f.name AS author_name
+  FROM announcements a
+  LEFT JOIN families f ON f.user_id = a.user_id
+`;
+
+const COMMENT_SELECT = `
+  SELECT c.id, c.announcement_id, c.user_id, c.content, c.created_at,
+         f.name AS author_name
+  FROM comments c
+  LEFT JOIN families f ON f.user_id = c.user_id
+`;
 
 const REACTION_TYPES: ReactionType[] = ['like', 'love', 'hug', 'celebrate', 'support'];
 
@@ -48,6 +64,7 @@ function toAnnouncementDTO(row: AnnouncementRow, viewerUserId: string | undefine
   return {
     id: row.id,
     authorId: row.user_id,
+    authorName: row.author_name,
     content: row.content,
     mediaUrl: row.media_url,
     mediaType: row.media_type,
@@ -67,7 +84,7 @@ export function createAnnouncement(req: AuthRequest, res: Response): void {
   db().prepare(
     'INSERT INTO announcements (id, user_id, content, media_url, media_type) VALUES (?, ?, ?, ?, ?)'
   ).run(id, userId, content, mediaUrl ?? null, mediaType ?? null);
-  const row = db().prepare('SELECT * FROM announcements WHERE id = ?').get(id) as AnnouncementRow;
+  const row = db().prepare(`${ANNOUNCEMENT_SELECT} WHERE a.id = ?`).get(id) as AnnouncementRow;
   res.status(201).json(toAnnouncementDTO(row, userId));
 }
 
@@ -76,10 +93,10 @@ export function listAnnouncements(req: AuthRequest, res: Response): void {
   const pageSize = limit ?? 20;
   const rows = (cursor
     ? db().prepare(
-        'SELECT * FROM announcements WHERE created_at < ? ORDER BY created_at DESC LIMIT ?'
+        `${ANNOUNCEMENT_SELECT} WHERE a.created_at < ? ORDER BY a.created_at DESC LIMIT ?`
       ).all(cursor, pageSize)
     : db().prepare(
-        'SELECT * FROM announcements ORDER BY created_at DESC LIMIT ?'
+        `${ANNOUNCEMENT_SELECT} ORDER BY a.created_at DESC LIMIT ?`
       ).all(pageSize)
   ) as AnnouncementRow[];
 
@@ -90,7 +107,7 @@ export function listAnnouncements(req: AuthRequest, res: Response): void {
 
 export function getAnnouncement(req: AuthRequest, res: Response): void {
   const { id } = req.params as unknown as AnnouncementIdParams;
-  const row = db().prepare('SELECT * FROM announcements WHERE id = ?').get(id) as AnnouncementRow | undefined;
+  const row = db().prepare(`${ANNOUNCEMENT_SELECT} WHERE a.id = ?`).get(id) as AnnouncementRow | undefined;
   if (!row) { res.status(404).json({ error: 'Not found' }); return; }
   res.json(toAnnouncementDTO(row, req.userId));
 }
@@ -101,7 +118,7 @@ export function patchAnnouncement(req: AuthRequest, res: Response): void {
   const { id } = req.params as unknown as AnnouncementIdParams;
   const patch = req.body as PatchAnnouncementInput;
 
-  const row = db().prepare('SELECT * FROM announcements WHERE id = ?').get(id) as AnnouncementRow | undefined;
+  const row = db().prepare(`${ANNOUNCEMENT_SELECT} WHERE a.id = ?`).get(id) as AnnouncementRow | undefined;
   if (!row) { res.status(404).json({ error: 'Not found' }); return; }
   if (row.user_id !== userId) { res.status(403).json({ error: 'Only the author can change this post.' }); return; }
 
@@ -113,7 +130,7 @@ export function patchAnnouncement(req: AuthRequest, res: Response): void {
   db().prepare(
     `UPDATE announcements SET content=?, media_url=?, media_type=?, updated_at=datetime('now') WHERE id=?`
   ).run(next.content, next.media_url, next.media_type, id);
-  const updated = db().prepare('SELECT * FROM announcements WHERE id = ?').get(id) as AnnouncementRow;
+  const updated = db().prepare(`${ANNOUNCEMENT_SELECT} WHERE a.id = ?`).get(id) as AnnouncementRow;
   res.json(toAnnouncementDTO(updated, userId));
 }
 
@@ -139,11 +156,12 @@ export function createComment(req: AuthRequest, res: Response): void {
   db().prepare(
     'INSERT INTO comments (id, announcement_id, user_id, content) VALUES (?, ?, ?, ?)'
   ).run(id, announcementId, userId, content);
-  const row = db().prepare('SELECT * FROM comments WHERE id = ?').get(id) as CommentRow;
+  const row = db().prepare(`${COMMENT_SELECT} WHERE c.id = ?`).get(id) as CommentRow;
   res.status(201).json({
     id: row.id,
     announcementId: row.announcement_id,
     authorId: row.user_id,
+    authorName: row.author_name,
     content: row.content,
     createdAt: row.created_at,
     isAuthor: true,
@@ -155,12 +173,13 @@ export function listComments(req: AuthRequest, res: Response): void {
   const exists = db().prepare('SELECT 1 FROM announcements WHERE id = ?').get(announcementId);
   if (!exists) { res.status(404).json({ error: 'Not found' }); return; }
   const rows = db().prepare(
-    'SELECT * FROM comments WHERE announcement_id = ? ORDER BY created_at ASC'
+    `${COMMENT_SELECT} WHERE c.announcement_id = ? ORDER BY c.created_at ASC`
   ).all(announcementId) as CommentRow[];
   res.json(rows.map((r) => ({
     id: r.id,
     announcementId: r.announcement_id,
     authorId: r.user_id,
+    authorName: r.author_name,
     content: r.content,
     createdAt: r.created_at,
     isAuthor: req.userId === r.user_id,

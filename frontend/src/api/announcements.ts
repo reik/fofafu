@@ -16,6 +16,7 @@ const ReactionCounts = z.object({
 export const AnnouncementDTO = z.object({
   id: z.string(),
   authorId: z.string(),
+  authorName: z.string().nullable(),
   content: z.string(),
   mediaUrl: z.string().nullable(),
   mediaType: z.enum(['image', 'video']).nullable(),
@@ -37,6 +38,7 @@ export const CommentDTO = z.object({
   id: z.string(),
   announcementId: z.string(),
   authorId: z.string(),
+  authorName: z.string().nullable(),
   content: z.string(),
   createdAt: z.string(),
   isAuthor: z.boolean(),

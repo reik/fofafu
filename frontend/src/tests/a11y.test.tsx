@@ -41,6 +41,7 @@ const family = {
 const announcement = {
   id: '00000000-0000-0000-0000-000000000010',
   authorId: 'u1',
+  authorName: 'Garcia',
   content: 'hello',
   mediaUrl: null,
   mediaType: null,

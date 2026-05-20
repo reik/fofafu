@@ -4,7 +4,9 @@ import { apiRequest } from './client';
 export const MessageDTO = z.object({
   id: z.string(),
   from: z.string(),
+  fromName: z.string().nullable(),
   to: z.string(),
+  toName: z.string().nullable(),
   content: z.string(),
   read: z.boolean(),
   createdAt: z.string(),
@@ -14,6 +16,7 @@ export type MessageDTO = z.infer<typeof MessageDTO>;
 
 export const ThreadDTO = z.object({
   partnerId: z.string(),
+  partnerName: z.string().nullable(),
   lastMessage: z.string(),
   lastAt: z.string(),
   unreadCount: z.number(),

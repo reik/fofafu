@@ -15,7 +15,9 @@ describe('MessageComposer', () => {
         return HttpResponse.json({
           id: 'm1',
           from: 'sender',
+          fromName: 'Sender Family',
           to: received.to,
+          toName: 'Partner Family',
           content: received.content,
           read: false,
           createdAt: '2026-05-17T10:00:00Z',

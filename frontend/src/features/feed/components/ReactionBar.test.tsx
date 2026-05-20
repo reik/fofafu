@@ -10,6 +10,7 @@ import type { AnnouncementDTO } from '@/api/announcements';
 const baseAnnouncement: AnnouncementDTO = {
   id: 'a1',
   authorId: 'u1',
+  authorName: 'Test Family',
   content: 'hello',
   mediaUrl: null,
   mediaType: null,

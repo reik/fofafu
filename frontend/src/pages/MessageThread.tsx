@@ -1,10 +1,11 @@
 import { useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getThread, markThreadRead, messageKeys } from '@/api/messages';
+import { getThread, listThreads, markThreadRead, messageKeys } from '@/api/messages';
 import { Layout } from '@/components/Layout';
 import { MessageBubble } from '@/features/messages/components/MessageBubble';
 import { MessageComposer } from '@/features/messages/components/MessageComposer';
+import { formatAuthor } from '@/utils/formatAuthor';
 
 export default function MessageThreadPage() {
   const { userId } = useParams<{ userId: string }>();
@@ -15,6 +16,15 @@ export default function MessageThreadPage() {
     queryFn: () => getThread(userId!),
     enabled: !!userId,
   });
+
+  const threadsQuery = useQuery({
+    queryKey: messageKeys.threads,
+    queryFn: listThreads,
+  });
+
+  const partnerFromThreads = threadsQuery.data?.find((t) => t.partnerId === userId)?.partnerName ?? undefined;
+  const partnerFromMessage = data?.find((m) => !m.mine)?.fromName ?? undefined;
+  const partnerName = partnerFromThreads ?? partnerFromMessage ?? null;
 
   const markRead = useMutation({
     mutationFn: () => markThreadRead(userId!),
@@ -38,7 +48,21 @@ export default function MessageThreadPage() {
       <header className="mb-4">
         <Link to="/messages" className="text-sm text-brand-primary underline-offset-4 hover:underline">← All messages</Link>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight">Conversation</h1>
-        <p className="text-sm text-ink-muted">With {userId.slice(0, 8)}…</p>
+        <p className="text-sm text-ink-muted">
+          With{' '}
+          {partnerName
+            ? (
+              <Link
+                to={`/family/${userId}`}
+                className="font-semibold text-ink-lead underline-offset-4 hover:underline"
+              >
+                {formatAuthor(partnerName)}
+              </Link>
+            )
+            : (
+              <span className="font-semibold italic">{formatAuthor(partnerName)}</span>
+            )}
+        </p>
       </header>
 
       <section className="space-y-2">

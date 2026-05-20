@@ -13,7 +13,7 @@ describe('CommentForm', () => {
       http.post('/api/announcements/a1/comments', async ({ request }) => {
         body = (await request.json()) as { content: string };
         return HttpResponse.json({
-          id: 'c1', announcementId: 'a1', authorId: 'u1',
+          id: 'c1', announcementId: 'a1', authorId: 'u1', authorName: 'Test Family',
           content: body.content, createdAt: '2026-05-17T10:00:00Z', isAuthor: true,
         }, { status: 201 });
       }),

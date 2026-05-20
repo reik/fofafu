@@ -9,6 +9,7 @@ import { AnnouncementComposer } from './AnnouncementComposer';
 const samplePost = {
   id: 'a1',
   authorId: 'u1',
+  authorName: 'Test Family',
   content: 'hello',
   mediaUrl: null,
   mediaType: null,

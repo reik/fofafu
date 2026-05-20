@@ -5,7 +5,6 @@ team: engineering
 
 ## Backlog
 - [ ] [[features/focus-reset-on-route-change]] @engineering — a11y follow-up flagged in a11y-audit.md
-- [ ] [[features/author-display-names]] @engineering — feed/comments/threads show authorId UUID; need real display name through DTOs
 - [ ] [[features/edit-comment]] @engineering — delete-comment exists; edit-comment for parity with announcements
 - [ ] [[features/family-recent-posts]] @engineering — FamilyView should list that family's announcements
 - [ ] [[features/moderation-report-block]] @engineering — foster-family safety surface; report + block
@@ -15,6 +14,7 @@ team: engineering
 ## In Progress
 
 ## Review
+- [ ] [[features/author-display-names]] @engineering — feed/comments/threads show authorId UUID; need real display name through DTOs
 
 ## Done
 - [x] [[features/home-dashboard-port]] @engineering
