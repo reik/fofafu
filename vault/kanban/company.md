@@ -4,10 +4,18 @@ team: company
 ---
 
 ## Backlog
+- [ ] [[features/focus-reset-on-route-change]] — a11y follow-up
+- [ ] [[features/author-display-names]] — UX gap: UUIDs everywhere
+- [ ] [[features/edit-comment]] — parity with edit-announcement
+- [ ] [[features/family-recent-posts]] — surface a family's posts on their page
+- [ ] [[features/moderation-report-block]] — community safety
+- [ ] [[features/playdates]] — fofa feature deferred at ultraplan time
+- [ ] [[features/mobile-expo-bootstrap]] — Phase 4 mobile
 
 ## In Progress
 
 ## Review
+- [ ] [[features/home-dashboard-port]] — Port fofa's 3-column dashboard + navbar; backend community endpoint + frontend dashboard + Navbar + tests all green awaiting commit.
 
 ## Done
 - [x] [[features/a11y-audit]] — axe-core sweep across all 11 pages: 0 violations; skip-link + main landmark; manual contrast pass.
