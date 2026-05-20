@@ -3,7 +3,7 @@ slug: author-display-names
 title: Author Display Names
 owner: engineering
 collaborators: []
-status: review
+status: shipped
 priority: P2
 created: 2026-05-20
 target: null

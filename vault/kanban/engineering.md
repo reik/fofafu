@@ -14,9 +14,9 @@ team: engineering
 ## In Progress
 
 ## Review
-- [ ] [[features/author-display-names]] @engineering — feed/comments/threads show authorId UUID; need real display name through DTOs
 
 ## Done
+- [x] [[features/author-display-names]] @engineering — feed/comments/threads show family names via server-hydrated DTOs; "A former member" fallback when family record is missing
 - [x] [[features/home-dashboard-port]] @engineering
 - [x] [[features/a11y-audit]] @engineering
 - [x] [[features/community-search]] @engineering
