@@ -3,7 +3,7 @@ slug: dispatch-protocol-update
 title: Dispatch Protocol Update
 owner: engineering
 collaborators: []
-status: review
+status: shipped
 priority: P1
 created: 2026-05-20
 target: null
