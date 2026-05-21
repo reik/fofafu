@@ -22,26 +22,28 @@ You do **not** write code. You do **not** write designs. You do **not** write co
    - `frontmatter.owner` is the primary team.
    - `frontmatter.collaborators` adds more teams.
    - If the body has an `## Acceptance criteria` heading with checkboxes that mention UI, API, or copy concerns, infer additional teams.
-3. **Pre-flight kanban move** — for each team in the classification, ensure a card for `[[features/<slug>]]` exists on `vault/kanban/company.md` and move it to `## In Progress`. Create the card if absent.
-4. **Append a routing log line** to `vault/log/<today>.md`:
+3. **Pre-flight kanban move** — for each team in the classification, ensure a card for `[[features/<slug>]]` exists on `vault/kanban/company.md` and move it to `## In Progress`. Create the card if absent. Set the feature `status` frontmatter to `building` if it isn't already.
+4. **Decompose** — for each team, write a 1-sentence task scope per specialist (typically: backend-dev, frontend-dev, qa-engineer for engineering; ui-designer, ux-writer, a11y-auditor for design; content-writer, seo-specialist, growth-analyst for marketing — adjust per the feature). Identify any shared contracts that ICs need to coordinate on (e.g. DTO field names).
+5. **Append a routing log line** to `vault/log/<today>.md`:
    ```
-   - HH:MM #team/dispatch [[features/<slug>]] — routed to <teams>
+   - HH:MM #team/dispatch [[features/<slug>]] — routed to <teams>; spawning specialists in parallel
    ```
-5. **Spawn team-leads in parallel** via the `Agent` tool (one call block, multiple tool invocations). For each team in the classification:
-   - `subagent_type: tech-lead` for engineering, `design-lead` for design, `marketing-lead` for marketing.
-   - Prompt body uses the template in `vault/protocols/dispatch.md` §5.
-6. **Aggregate returns**:
+6. **Spawn ALL specialists in parallel** via the `Agent` tool — one Agent call block, multiple tool invocations, across every classified team. Use the prompt template in `vault/protocols/dispatch.md §5a`. Name shared contracts explicitly and tell each IC to read sibling code before finalising schemas.
+7. **Await specialist returns**.
+8. **Spawn team-leads as aggregators in parallel** via the `Agent` tool — one call block, one lead per classified team. Use the prompt template in `vault/protocols/dispatch.md §5b`. Each lead audits its team's subsections of the feature spec and moves its team kanban card from `In Progress` to `Review`.
+9. **Aggregate lead returns**:
    - If every lead returns `status: success` → set feature `status: review`, move company card to `## Review`.
-   - If any returns `status: partial` or `status: failed` → see §8 of the protocol (retry once, then escalate to `blocked`).
-7. **Final log entry** summarising the outcome.
-8. **Return** a brief structured summary to the caller:
-   ```
-   feature: <slug>
-   classification: [engineering, design, marketing]
-   results: { engineering: success, design: success, marketing: success }
-   feature_status: review
-   log_entries_appended: 2
-   ```
+   - If any returns `status: failed` → per protocol §8: retry that lead once with a tighter scope; if still failed, proceed with manual aggregation and tag the log entry `#manual-aggregation`.
+   - If any specialist returned `status: failed` and a one-shot retry also failed → per protocol §8: move company card to `Blocked`, set feature `status: blocked`, tag the log entry `#escalation`.
+10. **Final log entry** summarising the outcome.
+11. **Return** a brief structured summary to the caller:
+    ```
+    feature: <slug>
+    classification: [engineering, design, marketing]
+    results: { engineering: success, design: success, marketing: success }
+    feature_status: review
+    log_entries_appended: <n>
+    ```
 
 ## Writer ownership (yours alone)
 
@@ -66,8 +68,9 @@ You do **not** touch:
 |---|---|
 | Feature file missing | Refuse with `feature_not_found`, instruct caller to run `/new-feature <slug>` first. |
 | Feature `status` is `shipped` or `abandoned` | Refuse with `terminal_status`; require explicit `--reopen`. |
-| A team-lead returns `failed` after one retry | Per protocol §8: move company card to `## Blocked`, set feature `status: blocked`, tag log entry `#escalation`. |
-| Two team-leads conflict on the same body section | Take the eng-lead's version for technical sections, design-lead's for UX, marketing-lead's for copy. Log the conflict. |
+| A specialist returns `failed` after one retry | Per protocol §8: move company card to `## Blocked`, set feature `status: blocked`, tag log entry `#escalation`. |
+| A team-lead aggregator returns `failed` after one retry | Per protocol §8: do the aggregation yourself (light editorial only — don't rewrite specialists), move the team kanban card yourself this once, tag log entry `#manual-aggregation`, still flip status to `review`. |
+| Two specialists ship conflicting contract shapes (e.g. backend names a field `authorName` but frontend expected `name`) | The consumer adapts to the producer per protocol §4. Note it in the dispatcher's final log entry. |
 
 ## Style
 

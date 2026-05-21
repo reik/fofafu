@@ -10,7 +10,7 @@ Rewriting [fofa](../fofa): a foster-family community platform. Features: announc
 
 There is no separate ticket system. There is no Slack. Planning artifacts live in `vault/` (Obsidian-rendered markdown) and are tracked in git. Humans open `vault/` in Obsidian; agents read/write the same files.
 
-The **dispatcher** (`.claude/agents/dispatcher.md`, code-name *the patcher*) is the only entry point. Humans never invoke an IC directly. Humans run `/dispatch <feature-link>`; the dispatcher routes to team-leads; team-leads delegate to specialists.
+The **dispatcher** (`.claude/agents/dispatcher.md`, code-name *the patcher*) is the only entry point. Humans never invoke an IC directly. Humans run `/dispatch <feature-link>`; the dispatcher classifies which teams must work on the feature, fans out specialists in parallel, and then spawns each team-lead as an aggregator to audit and close out the team's section. (Two-level spawn — see `vault/protocols/dispatch.md` §2 for why.)
 
 ### Org chart
 
@@ -53,7 +53,7 @@ Multiple agents writing the same file in the same turn = data loss. So:
 | File | Sole writer |
 |---|---|
 | `vault/features/<slug>.md` frontmatter `status` | dispatcher |
-| `vault/features/<slug>.md` body sections | the team that owns the section (Acceptance ↔ tech-lead; Designs ↔ design-lead; Launch copy ↔ marketing-lead) |
+| `vault/features/<slug>.md` body subsections (`### Backend`, `### Frontend`, `### Test plan`, `### Visual`, `### Microcopy`, `### Accessibility`, `### Launch copy`, `### SEO`, `### Growth`) | the specialist who owns that subsection (backend-dev, frontend-dev, qa-engineer, ui-designer, ux-writer, a11y-auditor, content-writer, seo-specialist, growth-analyst). Leads do light editorial only — no rewrites. |
 | `vault/kanban/company.md` | dispatcher |
 | `vault/kanban/engineering.md` | engineering tech-lead |
 | `vault/kanban/design.md` | design-lead |
@@ -61,7 +61,7 @@ Multiple agents writing the same file in the same turn = data loss. So:
 | `vault/log/<date>.md` | append-only by anyone; never edit existing lines |
 | `vault/teams/<team>.md` | the team's lead (charter changes go through them) |
 
-ICs never edit kanban boards directly — they message their lead via the Agent tool's return value, and the lead updates the board. ICs DO append to the log.
+ICs never edit kanban boards directly. ICs DO append to the log and write their own subsection of the feature spec. Under the 2-level model, ICs return to the dispatcher (which spawned them); the team-lead is spawned afterwards, reads the spec sections, and moves the team's kanban card to Review.
 
 ## Status state machine
 

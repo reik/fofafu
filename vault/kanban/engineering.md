@@ -14,6 +14,7 @@ team: engineering
 ## In Progress
 
 ## Review
+- [ ] [[features/dispatch-protocol-update]] @engineering — P1: protocol + 4 role files + CLAUDE.md rewritten for the 2-level harness (Option B); ready for ship + first /dispatch smoke run on next backlog feature
 
 ## Done
 - [x] [[features/author-display-names]] @engineering — feed/comments/threads show family names via server-hydrated DTOs; "A former member" fallback when family record is missing

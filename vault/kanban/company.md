@@ -14,6 +14,7 @@ team: company
 ## In Progress
 
 ## Review
+- [ ] [[features/dispatch-protocol-update]] — P1: `vault/protocols/dispatch.md` + 4 role files + `CLAUDE.md` rewritten for the 2-level harness (Option B). Final acceptance box ("smoke run") validates on the next real /dispatch.
 
 ## Done
 - [x] [[features/author-display-names]] — Server-hydrated authorName/partnerName/fromName/toName via LEFT JOIN families; frontend renders linked family names with "A former member" fallback; 70/70 backend, 46/46 frontend.

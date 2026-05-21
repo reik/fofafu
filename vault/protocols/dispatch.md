@@ -18,67 +18,123 @@ The dispatcher is the **only** entry point. ICs are never invoked directly.
 2. classify(feature) → set([engineering, design, marketing])  ⊆ frontmatter.owner ∪ collaborators
 3. for each team in classification:
      move kanban/company.md card to "In Progress"
-     spawn Agent(<team>-lead, prompt=PROMPT_TEMPLATE(feature, role="lead"))
-4. await all team-lead returns
-5. aggregate(returns) → update kanban/company.md, update feature.frontmatter.status
-6. append vault/log/<today>.md entry summarising routing + results
+     decompose the team's work into 1–3 specialist tasks
+4. spawn ALL specialists in parallel — one Agent call block, multiple tool
+   invocations, across every classified team. Each gets prompt 5a below.
+5. await all specialist returns
+6. for each team in classification:
+     spawn Agent(<team>-lead, prompt=5b) — lead audits the specialist
+     subsections, moves its team kanban card to Review, returns
+7. await all team-lead aggregator returns
+8. aggregate(lead returns) → update kanban/company.md, update feature.frontmatter.status
+9. append vault/log/<today>.md entry summarising routing + results
 ```
 
 The dispatcher itself never touches a team's kanban — only `company.md` and feature `status`.
 
-## 3. Team-lead's loop
+### Why the dispatcher fans out to specialists directly
 
-A team-lead, when spawned by the dispatcher:
+The Claude Code harness flattens the spawn hierarchy: a top-level session can spawn subagents, but those subagents cannot spawn further subagents (the `Agent` tool is not propagated to subagent sessions even when the role file declares it). The protocol therefore runs in 2 levels — dispatcher → specialist — with the team-lead serving as an aggregator after the fact instead of as a spawner before. Lead role files keep `Agent` in their tool list for forward-compatibility; if the harness ever supports nested spawn, the protocol can be revised to A-shape (lead spawns specialists) without breaking the role-file contract.
+
+## 3. Team-lead's loop (aggregator-only)
+
+A team-lead is spawned by the dispatcher AFTER its specialists have already returned:
 
 ```
 1. read .claude/agents/<team>/<lead>.md (own role)
 2. read vault/teams/<team>.md            (charter, conventions)
 3. read vault/protocols/dispatch.md      (this file)
-4. read vault/features/<slug>.md         (the work)
-5. decompose into specialist tasks
-6. move kanban/<team>.md card to "In Progress"
-7. for each specialist task:
-     spawn Agent(<specialist>, prompt=PROMPT_TEMPLATE(feature, role=<specialist>))
-8. await all specialist returns
-9. write specialist outputs into the appropriate section of vault/features/<slug>.md
-10. move kanban/<team>.md card to "Review"
-11. append a single roll-up log entry
-12. return {team, summary, status: success | partial | failed, requested_status: <enum>}
+4. read vault/features/<slug>.md         (specialist subsections already written)
+5. audit the specialist subsections for completeness, mutual consistency, basic quality
+6. light editorial consolidation if needed; do NOT rewrite the specialists' work
+7. move kanban/<team>.md card from "In Progress" to "Review"
+8. append a single roll-up log entry
+9. return {team, status, requested_status, deliverables, notes, test_summary}
 ```
 
-Team-leads own their team's kanban. Specialists never touch the kanban.
+Team-leads own their team's kanban. They do not spawn specialists (the dispatcher does). They do not write code (specialists do).
 
 ## 4. Specialist's loop
 
 ```
 1. read .claude/agents/<team>/<role>.md
-2. read vault/features/<slug>.md
-3. do the work (write code / copy / design tokens / etc.)
-4. append a log entry to vault/log/<today>.md
-5. return {role, deliverable, status: success | failed, notes}
+2. read vault/protocols/dispatch.md
+3. read vault/features/<slug>.md
+4. (optional) move kanban/<team>.md card from "Backlog" to "In Progress" if no
+   card is there yet — the lead will move it to Review later. Normally the
+   dispatcher has already created the In Progress entry implicitly via the
+   spawn; this step is a safety net.
+5. do the work (write code / copy / design tokens / tests)
+6. write your subsection into vault/features/<slug>.md (### Backend, ### Frontend,
+   ### Visual, ### Microcopy, etc.) — only the section you own
+7. append a log entry to vault/log/<today>.md
+8. return {role, status, deliverable, test_summary, notes}
 ```
 
-## 5. Prompt template (used by dispatcher → lead and lead → specialist)
+### Cross-specialist coordination
+
+When specialists run in parallel and share a contract (e.g. backend DTO shape consumed by frontend), the dispatcher's prompt must name the contract explicitly and tell each specialist to read the other's committed/uncommitted code before finalising schemas. If shapes drift, the consumer adapts to the producer and notes it in `notes`.
+
+## 5. Prompt templates
+
+### 5a. Dispatcher → specialist
 
 ```
 You are <role>. Today is <YYYY-MM-DD>.
 
 Feature: vault/features/<slug>.md
-Your task scope: <one sentence from classification step>
+Your task scope: <one sentence from the dispatcher's decomposition>
+
+You're being spawned by the dispatcher (not your team-lead) because the
+Claude Code harness does not propagate the Agent tool into subagent sessions.
+Your team-lead will audit and aggregate your work AFTER you return.
 
 Required reads:
 1. .claude/agents/<team>/<role>.md
-2. vault/teams/<team>.md       (skip if specialist)
-3. vault/protocols/dispatch.md
-4. vault/features/<slug>.md
+2. vault/protocols/dispatch.md
+3. vault/features/<slug>.md
 
 Writer ownership (only edit what you own):
 <copied from CLAUDE.md Writer-ownership table for this role>
 
+Coordinate with: <list of sibling specialists running in parallel + shared
+contract fields if any>
+
 Deliverables: <comma-separated list>
 
-Return a structured JSON-like block:
-{ role, status, deliverable, notes, requested_status (if lead) }
+Quality gates: <test commands, tsc, build — whatever applies>
+
+Return a structured block:
+{ role, status, deliverable, test_summary, notes }
+```
+
+### 5b. Dispatcher → lead (aggregator)
+
+```
+You are <team>-lead. Today is <YYYY-MM-DD>.
+
+Feature: vault/features/<slug>.md
+Slug: <slug>
+
+The specialists have already returned. Their subsections are already written
+into the feature spec. You are NOT being asked to spawn anyone or write code.
+
+Your duties:
+1. Audit your team's subsections of the feature spec.
+2. Move the kanban/<team>.md card from In Progress to Review.
+3. Append one roll-up log entry.
+4. Return the structured block.
+
+Required reads:
+1. vault/features/<slug>.md (focus on your team's section)
+2. vault/kanban/<team>.md (confirm card is in In Progress)
+3. vault/log/<today>.md (confirm specialist entries exist)
+
+Writer ownership:
+<copied from CLAUDE.md>
+
+Return:
+{ team, status, requested_status, deliverables, notes, test_summary }
 ```
 
 ## 6. Status state machine
@@ -115,28 +171,41 @@ drafting → speced → building → review → shipped
 
 ```
 specialist returns status=failed
-   → lead retries ONCE with a more constrained prompt
+   → dispatcher retries that specialist ONCE with a more constrained prompt
        → still failing?
-           → lead returns status=partial, includes failure reason in notes
-              → dispatcher moves card to "Blocked" on company.md
-              → dispatcher appends log entry tagged #escalation
-              → dispatcher sets feature.frontmatter.status = blocked
-              → human is now expected to intervene (mentioned in next /standup)
+           → dispatcher moves card to "Blocked" on company.md
+           → dispatcher appends log entry tagged #escalation
+           → dispatcher sets feature.frontmatter.status = blocked
+           → human is now expected to intervene (surfaced in next /standup)
+
+team-lead aggregator returns status=failed
+   → dispatcher retries the lead ONCE with a more constrained prompt (typically
+     pointing to a specific subsection that needs cleanup)
+       → still failing?
+           → dispatcher proceeds with manual aggregation, sets status=review
+             with a #manual-aggregation log tag, and surfaces the failure in
+             the lead's notes for the next /standup
 ```
 
-Retry is bounded: **one** retry per spawn level. Don't loop. Don't recurse. Don't widen scope on retry — narrow it.
+Retry is bounded: **one** retry per spawn. Don't loop. Don't recurse. Don't widen scope on retry — narrow it.
 
 ## 9. Log entry format
 
-Append-only. Never edit existing lines. Today's file is `vault/log/<YYYY-MM-DD>.md`. Lines look like:
+Append-only. Never edit existing lines. Today's file is `vault/log/<YYYY-MM-DD>.md`. Under the 2-level model, a typical dispatch produces this sequence:
 
 ```
-- 14:32 #team/dispatch [[features/user-profile]] — routed to engineering, design, marketing
-- 14:33 #team/eng [[features/user-profile]] — tech-lead acknowledged, decomposing
-- 14:35 #team/eng/backend [[features/user-profile]] — drafted GET /api/users/:id spec
-- 14:36 #team/design [[features/user-profile]] — ui-designer producing wireframes
-- 14:42 #team/marketing [[features/user-profile]] — content-writer drafted profile-card microcopy
-- 14:47 #team/dispatch [[features/user-profile]] — all teams returned success, moved to Review
+- 14:32 #team/dispatch [[features/user-profile]] — routed to engineering, design, marketing; spawning specialists in parallel
+- 14:35 #team/eng/backend [[features/user-profile]] — drafted GET /api/users/:id; +4 tests; 64/64 pass
+- 14:36 #team/eng/frontend [[features/user-profile]] — UserCard + ProfileEdit; +3 tests; 42/42 pass; tsc/vite clean
+- 14:37 #team/eng/qa [[features/user-profile]] — test plan + sweep; backend 68/68, frontend 45/45
+- 14:38 #team/design/ui [[features/user-profile]] — wireframes + token references in feature spec
+- 14:39 #team/design/uxw [[features/user-profile]] — microcopy table (12 strings)
+- 14:40 #team/design/a11y [[features/user-profile]] — keyboard + contrast + ARIA audit clean
+- 14:42 #team/marketing/content [[features/user-profile]] — release-note draft + landing block
+- 14:45 #team/eng [[features/user-profile]] — tech-lead aggregated; engineering kanban In Progress -> Review
+- 14:46 #team/design [[features/user-profile]] — design-lead aggregated; design kanban In Progress -> Review
+- 14:46 #team/marketing [[features/user-profile]] — marketing-lead aggregated; marketing kanban In Progress -> Review
+- 14:47 #team/dispatch [[features/user-profile]] — all teams returned success; status building -> review; company kanban In Progress -> Review
 ```
 
 `HH:MM` is 24-hour local time. Tag namespace: `#team/<eng|design|marketing|dispatch>` with optional sub-tag `/<role>`. Feature link wikilink. Em-dash, then message.
@@ -167,8 +236,10 @@ Built by aggregating that week's `log/*.md` files and current kanban state.
 
 ## 11. Things you may NOT do
 
-- Spawn an IC without going through their lead (except inside the lead's own decomposition).
-- Edit a file outside your writer-ownership.
-- Rename or delete a feature file (mark `status: abandoned` instead).
-- Skip the log entry on completion.
+- (dispatcher) Skip the lead-aggregator spawn — the lead still owns the team kanban move and the audit, even though it no longer spawns specialists. Spawning a lead solely to move a kanban card is fine; that's its job under the 2-level model.
+- (lead) Spawn specialists yourself — the dispatcher does that. If the harness ever supports nested spawn and §2 is revised to A-shape, this restriction lifts.
+- (specialist) Talk to another team's specialist directly. Cross-team contracts are coordinated through your dispatcher prompt (per §4 "Cross-specialist coordination"); cross-team disagreements escalate via your `notes` field.
+- (anyone) Edit a file outside your writer-ownership.
+- (anyone) Rename or delete a feature file (mark `status: abandoned` instead).
+- (anyone) Skip the log entry on completion.
 - Re-prompt yourself in a loop — the protocol is bounded by design.
