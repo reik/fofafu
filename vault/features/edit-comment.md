@@ -3,7 +3,7 @@ slug: edit-comment
 title: Edit Comment
 owner: engineering
 collaborators: []
-status: review
+status: shipped
 priority: P2
 created: 2026-05-21
 target: null
