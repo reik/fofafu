@@ -4,7 +4,6 @@ team: company
 ---
 
 ## Backlog
-- [ ] [[features/focus-reset-on-route-change]] — a11y follow-up
 - [ ] [[features/edit-comment]] — parity with edit-announcement
 - [ ] [[features/family-recent-posts]] — surface a family's posts on their page
 - [ ] [[features/moderation-report-block]] — community safety
@@ -14,6 +13,7 @@ team: company
 ## In Progress
 
 ## Review
+- [ ] [[features/focus-reset-on-route-change]] — a11y follow-up shipped (smoke test of the new 2-level dispatch protocol — passed): `useFocusMainOnRouteChange` hook in `Layout.tsx`; frontend 50/50; axe sweep 11/11 0 violations.
 
 ## Done
 - [x] [[features/dispatch-protocol-update]] — P1: `vault/protocols/dispatch.md` + 4 role files + `CLAUDE.md` rewritten for the 2-level harness (Option B: dispatcher fans out specialists, lead aggregates). Final acceptance box pends next /dispatch smoke run.

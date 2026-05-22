@@ -4,7 +4,6 @@ team: engineering
 ---
 
 ## Backlog
-- [ ] [[features/focus-reset-on-route-change]] @engineering — a11y follow-up flagged in a11y-audit.md
 - [ ] [[features/edit-comment]] @engineering — delete-comment exists; edit-comment for parity with announcements
 - [ ] [[features/family-recent-posts]] @engineering — FamilyView should list that family's announcements
 - [ ] [[features/moderation-report-block]] @engineering — foster-family safety surface; report + block
@@ -14,6 +13,7 @@ team: engineering
 ## In Progress
 
 ## Review
+- [ ] [[features/focus-reset-on-route-change]] @engineering — a11y follow-up flagged in a11y-audit.md
 
 ## Done
 - [x] [[features/dispatch-protocol-update]] @engineering — P1: protocol + 4 role files + CLAUDE.md rewritten for the 2-level harness (Option B); smoke run pends next backlog feature

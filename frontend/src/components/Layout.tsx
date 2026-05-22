@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { useAuthStore } from '@/stores/auth';
+import { useFocusMainOnRouteChange } from '@/hooks/useFocusMainOnRouteChange';
 import { Navbar } from './Navbar';
 
 interface LayoutProps {
@@ -9,6 +10,7 @@ interface LayoutProps {
 
 export function Layout({ children, wide = false }: LayoutProps) {
   const token = useAuthStore((s) => s.token);
+  useFocusMainOnRouteChange();
 
   return (
     <div className="min-h-screen bg-surface-warm pb-16 md:pb-0">

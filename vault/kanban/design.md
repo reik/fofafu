@@ -8,6 +8,7 @@ team: design
 ## In Progress
 
 ## Review
+- [ ] [[features/focus-reset-on-route-change]] @design
 
 ## Done
 - [x] [[features/a11y-audit]] @design
