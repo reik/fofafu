@@ -28,6 +28,16 @@ export const CreateCommentInput = z.object({
 });
 export type CreateCommentInput = z.infer<typeof CreateCommentInput>;
 
+export const PatchCommentInput = z.object({
+  content: z.string().min(1).max(2000),
+});
+export type PatchCommentInput = z.infer<typeof PatchCommentInput>;
+
+export const CommentIdParams = z.object({
+  id: z.string().uuid(),
+});
+export type CommentIdParams = z.infer<typeof CommentIdParams>;
+
 export const ReactInput = z.object({
   type: ReactionType,
 });

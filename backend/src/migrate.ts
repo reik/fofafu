@@ -68,7 +68,8 @@ export function runMigrations(): void {
       announcement_id TEXT NOT NULL REFERENCES announcements(id) ON DELETE CASCADE,
       user_id         TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       content         TEXT NOT NULL,
-      created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+      created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
     CREATE INDEX IF NOT EXISTS idx_comments_announcement ON comments(announcement_id, created_at);
@@ -101,13 +102,21 @@ export function runMigrations(): void {
   // Defensive backfill for columns added after the initial schema. SQLite has
   // no ADD COLUMN IF NOT EXISTS, so we check pragma table_info first.
   ensureColumn('families', 'avatar_url', 'TEXT');
+  // edit-comment: comments.updated_at added in 2026-05-21. SQLite forbids
+  // datetime('now') as ADD COLUMN default, so we add a TEXT column then
+  // backfill from created_at for any existing rows.
+  if (ensureColumn('comments', 'updated_at', 'TEXT')) {
+    db().prepare("UPDATE comments SET updated_at = created_at WHERE updated_at IS NULL").run();
+  }
 }
 
-function ensureColumn(table: string, column: string, type: string): void {
+function ensureColumn(table: string, column: string, type: string): boolean {
   const rows = db().prepare(`PRAGMA table_info(${table})`).all() as { name: string }[];
   if (!rows.some((r) => r.name === column)) {
     db().prepare(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`).run();
+    return true;
   }
+  return false;
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

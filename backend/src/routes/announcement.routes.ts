@@ -7,6 +7,7 @@ import {
   deleteAnnouncement,
   createComment,
   listComments,
+  patchComment,
   deleteComment,
   toggleReaction,
 } from '../controllers/announcement.controller.js';
@@ -17,6 +18,8 @@ import {
   PatchAnnouncementInput,
   ListAnnouncementsQuery,
   CreateCommentInput,
+  PatchCommentInput,
+  CommentIdParams,
   ReactInput,
   AnnouncementIdParams,
 } from '../schemas/announcement.schemas.js';
@@ -38,4 +41,5 @@ announcementRouter.post('/:id/reactions', validate(AnnouncementIdParams, 'params
 
 export const commentRouter = Router();
 commentRouter.use(authenticate);
-commentRouter.delete('/:id', validate(AnnouncementIdParams, 'params'), deleteComment);
+commentRouter.patch('/:id', validate(CommentIdParams, 'params'), validate(PatchCommentInput, 'body'), patchComment);
+commentRouter.delete('/:id', validate(CommentIdParams, 'params'), deleteComment);

@@ -4,7 +4,6 @@ team: company
 ---
 
 ## Backlog
-- [ ] [[features/edit-comment]] — parity with edit-announcement
 - [ ] [[features/family-recent-posts]] — surface a family's posts on their page
 - [ ] [[features/moderation-report-block]] — community safety
 - [ ] [[features/playdates]] — fofa feature deferred at ultraplan time
@@ -13,6 +12,7 @@ team: company
 ## In Progress
 
 ## Review
+- [ ] [[features/edit-comment]] — parity with edit-announcement shipped: PATCH /api/comments/:id (author-only) + CommentDTO.updatedAt + inline editor in CommentList + "(edited)" indicator; backend 76/76 (+6 net new), frontend 57/57 (+7 net new).
 
 ## Done
 - [x] [[features/focus-reset-on-route-change]] — a11y follow-up shipped (smoke test of the new 2-level dispatch protocol — passed): `useFocusMainOnRouteChange` hook in `Layout.tsx`; frontend 50/50; axe sweep 11/11 0 violations.

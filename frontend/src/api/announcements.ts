@@ -41,6 +41,7 @@ export const CommentDTO = z.object({
   authorName: z.string().nullable(),
   content: z.string(),
   createdAt: z.string(),
+  updatedAt: z.string(),
   isAuthor: z.boolean(),
 });
 export type CommentDTO = z.infer<typeof CommentDTO>;
@@ -112,6 +113,11 @@ export async function patchAnnouncement(id: string, input: PatchAnnouncementInpu
 
 export async function deleteAnnouncement(id: string): Promise<void> {
   await apiRequest<unknown>(`/announcements/${id}`, { method: 'DELETE' });
+}
+
+export async function patchComment(id: string, input: { content: string }): Promise<CommentDTO> {
+  const data = await apiRequest<unknown>(`/comments/${id}`, { method: 'PATCH', body: input });
+  return CommentDTO.parse(data);
 }
 
 export async function deleteComment(id: string): Promise<void> {

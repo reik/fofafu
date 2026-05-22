@@ -134,6 +134,43 @@ describe('announcements-feed feature', () => {
     assert.equal(ok.status, 204);
   });
 
+  it('PATCH /api/comments/:id — too-long content returns 400 (Zod max 2000)', async () => {
+    const jwtA = await register(userA);
+    const post = await call('POST', '/api/announcements', { content: 'parent' }, { authorization: `Bearer ${jwtA}` });
+    const postId = post.body['id'] as string;
+    const created = await call('POST', `/api/announcements/${postId}/comments`, { content: 'orig' }, { authorization: `Bearer ${jwtA}` });
+    const commentId = created.body['id'] as string;
+
+    const tooLong = 'x'.repeat(2001);
+    const bad = await call('PATCH', `/api/comments/${commentId}`, { content: tooLong }, { authorization: `Bearer ${jwtA}` });
+    assert.equal(bad.status, 400);
+  });
+
+  it('listing roundtrip: after PATCH /api/comments/:id the listing endpoint reports the new updatedAt and content', async () => {
+    const jwtA = await register(userA);
+    const post = await call('POST', '/api/announcements', { content: 'parent' }, { authorization: `Bearer ${jwtA}` });
+    const postId = post.body['id'] as string;
+    const created = await call('POST', `/api/announcements/${postId}/comments`, { content: 'before edit' }, { authorization: `Bearer ${jwtA}` });
+    const commentId = created.body['id'] as string;
+    const createdAt = created.body['createdAt'] as string;
+
+    await new Promise((r) => setTimeout(r, 1100));
+    const patched = await call('PATCH', `/api/comments/${commentId}`, { content: 'after edit' }, { authorization: `Bearer ${jwtA}` });
+    assert.equal(patched.status, 200);
+
+    const list = await call('GET', `/api/announcements/${postId}/comments`, undefined, { authorization: `Bearer ${jwtA}` });
+    const items = list.body as unknown as Json[];
+    const found = items.find((i) => i['id'] === commentId);
+    assert.ok(found, 'edited comment must appear in listing');
+    assert.equal(found?.['content'], 'after edit');
+    const listedUpdatedAt = found?.['updatedAt'] as string;
+    assert.ok(listedUpdatedAt, 'listing endpoint must expose updatedAt');
+    assert.ok(
+      new Date(listedUpdatedAt).getTime() > new Date(createdAt).getTime(),
+      'listing endpoint must reflect the new updatedAt after PATCH',
+    );
+  });
+
   it('reaction toggle: add, then same type removes', async () => {
     const jwtA = await register(userA);
     const post = await call('POST', '/api/announcements', { content: 'react to me' }, { authorization: `Bearer ${jwtA}` });
@@ -239,5 +276,84 @@ describe('announcements-feed feature', () => {
     const create = await call('POST', '/api/announcements', { content: 'x' });
     assert.equal(list.status, 401);
     assert.equal(create.status, 401);
+  });
+
+  it('PATCH /api/comments/:id — author can edit own comment; updatedAt advances', async () => {
+    const jwtA = await register(userA);
+    const post = await call('POST', '/api/announcements', { content: 'parent post' }, { authorization: `Bearer ${jwtA}` });
+    const postId = post.body['id'] as string;
+    const created = await call('POST', `/api/announcements/${postId}/comments`, { content: 'first draft' }, { authorization: `Bearer ${jwtA}` });
+    assert.equal(created.status, 201);
+    const commentId = created.body['id'] as string;
+    const createdAt = created.body['createdAt'] as string;
+    assert.equal(created.body['updatedAt'], createdAt, 'on create, updatedAt should equal createdAt');
+
+    // Sleep at least 1s so SQLite datetime('now') (1s resolution) advances.
+    await new Promise((r) => setTimeout(r, 1100));
+
+    const edited = await call('PATCH', `/api/comments/${commentId}`, { content: 'fixed typo' }, { authorization: `Bearer ${jwtA}` });
+    assert.equal(edited.status, 200);
+    assert.equal(edited.body['content'], 'fixed typo');
+    assert.equal(edited.body['id'], commentId);
+    assert.equal(edited.body['authorName'], userA.name, 'edited DTO carries authorName');
+    assert.equal(edited.body['isAuthor'], true);
+    assert.equal(edited.body['createdAt'], createdAt, 'createdAt is immutable');
+    assert.ok(
+      (edited.body['updatedAt'] as string) > createdAt,
+      `updatedAt (${String(edited.body['updatedAt'])}) should advance past createdAt (${createdAt})`,
+    );
+
+    const list = await call('GET', `/api/announcements/${postId}/comments`, undefined, { authorization: `Bearer ${jwtA}` });
+    const items = list.body as unknown as Json[];
+    const found = items.find((i) => i['id'] === commentId);
+    assert.equal(found?.['content'], 'fixed typo');
+    assert.equal(found?.['updatedAt'], edited.body['updatedAt']);
+  });
+
+  it('PATCH /api/comments/:id — non-author gets 403; comment unchanged', async () => {
+    const jwtA = await register(userA);
+    const post = await call('POST', '/api/announcements', { content: 'parent' }, { authorization: `Bearer ${jwtA}` });
+    const postId = post.body['id'] as string;
+    const created = await call('POST', `/api/announcements/${postId}/comments`, { content: 'A says hi' }, { authorization: `Bearer ${jwtA}` });
+    const commentId = created.body['id'] as string;
+
+    const jwtB = await register(userB);
+    const denied = await call('PATCH', `/api/comments/${commentId}`, { content: 'hijacked' }, { authorization: `Bearer ${jwtB}` });
+    assert.equal(denied.status, 403);
+
+    const list = await call('GET', `/api/announcements/${postId}/comments`, undefined, { authorization: `Bearer ${jwtA}` });
+    const items = list.body as unknown as Json[];
+    assert.equal(items[0]?.['content'], 'A says hi');
+  });
+
+  it('PATCH /api/comments/:id — 404 for unknown id, 400 for empty content, 401 without JWT', async () => {
+    const jwtA = await register(userA);
+    const missing = await call('PATCH', '/api/comments/00000000-0000-0000-0000-000000000000', { content: 'x' }, { authorization: `Bearer ${jwtA}` });
+    assert.equal(missing.status, 404);
+
+    const post = await call('POST', '/api/announcements', { content: 'p' }, { authorization: `Bearer ${jwtA}` });
+    const postId = post.body['id'] as string;
+    const created = await call('POST', `/api/announcements/${postId}/comments`, { content: 'real' }, { authorization: `Bearer ${jwtA}` });
+    const commentId = created.body['id'] as string;
+
+    const empty = await call('PATCH', `/api/comments/${commentId}`, { content: '' }, { authorization: `Bearer ${jwtA}` });
+    assert.equal(empty.status, 400);
+
+    const noAuth = await call('PATCH', `/api/comments/${commentId}`, { content: 'nope' });
+    assert.equal(noAuth.status, 401);
+  });
+
+  it('CommentDTO shape — createComment + listComments expose updatedAt', async () => {
+    const jwtA = await register(userA);
+    const post = await call('POST', '/api/announcements', { content: 'parent' }, { authorization: `Bearer ${jwtA}` });
+    const postId = post.body['id'] as string;
+    const created = await call('POST', `/api/announcements/${postId}/comments`, { content: 'hello' }, { authorization: `Bearer ${jwtA}` });
+    assert.ok('updatedAt' in created.body, 'createComment response must include updatedAt');
+    assert.equal(typeof created.body['updatedAt'], 'string');
+
+    const list = await call('GET', `/api/announcements/${postId}/comments`, undefined, { authorization: `Bearer ${jwtA}` });
+    const items = list.body as unknown as Json[];
+    assert.ok(items[0] && 'updatedAt' in items[0], 'listComments items must include updatedAt');
+    assert.equal(typeof items[0]?.['updatedAt'], 'string');
   });
 });

@@ -4,7 +4,6 @@ team: engineering
 ---
 
 ## Backlog
-- [ ] [[features/edit-comment]] @engineering — delete-comment exists; edit-comment for parity with announcements
 - [ ] [[features/family-recent-posts]] @engineering — FamilyView should list that family's announcements
 - [ ] [[features/moderation-report-block]] @engineering — foster-family safety surface; report + block
 - [ ] [[features/playdates]] @engineering — fofa had availability_slots + playdate_requests; deferred per ultraplan, worth revisiting
@@ -13,6 +12,7 @@ team: engineering
 ## In Progress
 
 ## Review
+- [ ] [[features/edit-comment]] @engineering — delete-comment exists; edit-comment for parity with announcements
 
 ## Done
 - [x] [[features/focus-reset-on-route-change]] @engineering — a11y follow-up: useFocusMainOnRouteChange hook in Layout.tsx; 4 unit tests covering all 5 ACs; axe sweep clean

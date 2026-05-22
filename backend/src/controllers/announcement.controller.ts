@@ -7,6 +7,8 @@ import type {
   PatchAnnouncementInput,
   ListAnnouncementsQuery,
   CreateCommentInput,
+  PatchCommentInput,
+  CommentIdParams,
   ReactInput,
   AnnouncementIdParams,
   ReactionType,
@@ -29,6 +31,7 @@ interface CommentRow {
   user_id: string;
   content: string;
   created_at: string;
+  updated_at: string;
   author_name: string | null;
 }
 
@@ -40,11 +43,24 @@ const ANNOUNCEMENT_SELECT = `
 `;
 
 const COMMENT_SELECT = `
-  SELECT c.id, c.announcement_id, c.user_id, c.content, c.created_at,
+  SELECT c.id, c.announcement_id, c.user_id, c.content, c.created_at, c.updated_at,
          f.name AS author_name
   FROM comments c
   LEFT JOIN families f ON f.user_id = c.user_id
 `;
+
+function toCommentDTO(row: CommentRow, viewerUserId: string | undefined): Record<string, unknown> {
+  return {
+    id: row.id,
+    announcementId: row.announcement_id,
+    authorId: row.user_id,
+    authorName: row.author_name,
+    content: row.content,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    isAuthor: viewerUserId === row.user_id,
+  };
+}
 
 const REACTION_TYPES: ReactionType[] = ['like', 'love', 'hug', 'celebrate', 'support'];
 
@@ -157,15 +173,7 @@ export function createComment(req: AuthRequest, res: Response): void {
     'INSERT INTO comments (id, announcement_id, user_id, content) VALUES (?, ?, ?, ?)'
   ).run(id, announcementId, userId, content);
   const row = db().prepare(`${COMMENT_SELECT} WHERE c.id = ?`).get(id) as CommentRow;
-  res.status(201).json({
-    id: row.id,
-    announcementId: row.announcement_id,
-    authorId: row.user_id,
-    authorName: row.author_name,
-    content: row.content,
-    createdAt: row.created_at,
-    isAuthor: true,
-  });
+  res.status(201).json(toCommentDTO(row, userId));
 }
 
 export function listComments(req: AuthRequest, res: Response): void {
@@ -175,15 +183,24 @@ export function listComments(req: AuthRequest, res: Response): void {
   const rows = db().prepare(
     `${COMMENT_SELECT} WHERE c.announcement_id = ? ORDER BY c.created_at ASC`
   ).all(announcementId) as CommentRow[];
-  res.json(rows.map((r) => ({
-    id: r.id,
-    announcementId: r.announcement_id,
-    authorId: r.user_id,
-    authorName: r.author_name,
-    content: r.content,
-    createdAt: r.created_at,
-    isAuthor: req.userId === r.user_id,
-  })));
+  res.json(rows.map((r) => toCommentDTO(r, req.userId)));
+}
+
+export function patchComment(req: AuthRequest, res: Response): void {
+  const userId = req.userId;
+  if (!userId) { res.status(401).json({ error: 'Not authenticated' }); return; }
+  const { id } = req.params as unknown as CommentIdParams;
+  const { content } = req.body as PatchCommentInput;
+
+  const row = db().prepare('SELECT user_id FROM comments WHERE id = ?').get(id) as { user_id: string } | undefined;
+  if (!row) { res.status(404).json({ error: 'Not found' }); return; }
+  if (row.user_id !== userId) { res.status(403).json({ error: 'Only the author can edit this comment.' }); return; }
+
+  db().prepare(
+    `UPDATE comments SET content = ?, updated_at = datetime('now') WHERE id = ?`
+  ).run(content, id);
+  const updated = db().prepare(`${COMMENT_SELECT} WHERE c.id = ?`).get(id) as CommentRow;
+  res.json(toCommentDTO(updated, userId));
 }
 
 export function deleteComment(req: AuthRequest, res: Response): void {
