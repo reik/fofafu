@@ -8,9 +8,9 @@ team: design
 ## In Progress
 
 ## Review
-- [ ] [[features/focus-reset-on-route-change]] @design
 
 ## Done
+- [x] [[features/focus-reset-on-route-change]] @design — a11y-auditor: 7 findings / 0 blocking; axe sweep 11/11 0 violations; Visual + Microcopy marked N/A (no surface)
 - [x] [[features/a11y-audit]] @design
 - [x] [[features/community-search]] @design
 - [x] [[features/family-avatar]] @design

@@ -13,10 +13,10 @@ team: engineering
 ## In Progress
 
 ## Review
-- [ ] [[features/focus-reset-on-route-change]] @engineering — a11y follow-up flagged in a11y-audit.md
 
 ## Done
-- [x] [[features/dispatch-protocol-update]] @engineering — P1: protocol + 4 role files + CLAUDE.md rewritten for the 2-level harness (Option B); smoke run pends next backlog feature
+- [x] [[features/focus-reset-on-route-change]] @engineering — a11y follow-up: useFocusMainOnRouteChange hook in Layout.tsx; 4 unit tests covering all 5 ACs; axe sweep clean
+- [x] [[features/dispatch-protocol-update]] @engineering — P1: protocol + 4 role files + CLAUDE.md rewritten for the 2-level harness (Option B); smoke-run validated by focus-reset-on-route-change
 - [x] [[features/author-display-names]] @engineering — feed/comments/threads show family names via server-hydrated DTOs; "A former member" fallback when family record is missing
 - [x] [[features/home-dashboard-port]] @engineering
 - [x] [[features/a11y-audit]] @engineering

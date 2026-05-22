@@ -24,7 +24,7 @@ The current `vault/protocols/dispatch.md` assumes a 3-level agent hierarchy (dis
 - [x] The protocol explicitly documents who spawns whom in the 2-level model — chosen shape: **Option B** (dispatcher spawns specialists in parallel; team-lead spawned afterwards as aggregator-only).
 - [x] `.claude/agents/dispatcher.md`, `.claude/agents/engineering/tech-lead.md`, `.claude/agents/design/design-lead.md`, `.claude/agents/marketing/marketing-lead.md` are updated to match the new protocol so an agent that re-reads its role file behaves correctly.
 - [x] The writer-ownership table in `CLAUDE.md` is updated: kanban writers unchanged (leads still own team boards), but body-section ownership clarified to point at specialists per subsection rather than the lead as a whole. ICs-and-kanban paragraph rewritten to match the 2-level return path.
-- [ ] An end-to-end smoke run of `/dispatch` against a small throwaway feature (or a real low-risk one from the backlog) completes Backlog → In Progress → Review → Done without any tooling escalation. *(Validated on the next real dispatch — left open here so it tracks against an independent feature.)*
+- [x] An end-to-end smoke run of `/dispatch` against a small throwaway feature (or a real low-risk one from the backlog) completes Backlog → In Progress → Review → Done without any tooling escalation. *(Validated 2026-05-21 by `[[features/focus-reset-on-route-change]]` — clean end-to-end run with zero `#escalation`. One `#manual-aggregation` footnote where a lead's aggregator spawn hit a session quota mid-call AFTER moving the kanban card; dispatcher wrote the missing log entry per the new failure-mode rule. Confirms the new protocol works as designed.)*
 
 ## Out of scope
 

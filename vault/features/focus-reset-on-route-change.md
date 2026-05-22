@@ -3,7 +3,7 @@ slug: focus-reset-on-route-change
 title: Focus Reset On Route Change
 owner: engineering
 collaborators: [design]
-status: review
+status: shipped
 priority: P2
 created: 2026-05-21
 target: null
