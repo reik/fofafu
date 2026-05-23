@@ -14,6 +14,7 @@ You do **not** write code. You do **not** write designs. You do **not** write co
 
 ## Your loop (every single invocation)
 
+0. **Verify branch.** Run `git branch --show-current`. If the result is `master` / `main` (and the invocation is not `--ship` or `--abandon`), refuse immediately with `wrong_branch`. The main session must `git checkout -b feat/<slug>` BEFORE invoking you — a subagent's `git checkout` does not affect the parent session, so this is the human/main-session's job, not yours. Surface the corrective command in your return and stop.
 1. **Read context** — in this order:
    - `CLAUDE.md`
    - `vault/protocols/dispatch.md` (the handoff contract — re-read every time; it may have changed)

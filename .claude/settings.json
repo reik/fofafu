@@ -33,24 +33,6 @@
           }
         ]
       }
-    ],
-    "_scheduled_sanity_checks_NOTE": "Real schedules are added via /schedule (CronCreate) once Phase 2 has measurable runtimes. Until then these are intent stubs documenting cadence.",
-    "_scheduled_sanity_checks": {
-      "engineering": {
-        "cadence": "nightly 02:00 local",
-        "command": "/sanity-check engineering",
-        "description": "tsc --noEmit, eslint, vitest. Failures → features/ with #bug tag, card on engineering Backlog."
-      },
-      "design": {
-        "cadence": "weekly Mon 09:00 local",
-        "command": "/sanity-check design",
-        "description": "axe-core, design-token drift, visual diff vs baseline. Findings → design Backlog cards."
-      },
-      "marketing": {
-        "cadence": "weekly Mon 09:00 local",
-        "command": "/sanity-check marketing",
-        "description": "link checker, README/CHANGELOG freshness, SEO meta validation. Findings → marketing Backlog cards."
-      }
-    }
+    ]
   }
 }

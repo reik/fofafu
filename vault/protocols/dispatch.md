@@ -11,6 +11,12 @@ Humans invoke `/dispatch <feature-link>`. Examples:
 
 The dispatcher is the **only** entry point. ICs are never invoked directly.
 
+### Precondition: feature branch
+
+Before `/dispatch <slug>` is invoked, the main session must be on `feat/<slug>` (or the appropriate `fix/<slug>` / `vault/<topic>` per `CLAUDE.md` Conventions). The `/dispatch` slash-command body handles this in its main-session pre-flight: if the current branch is `master` / `main`, it runs `git checkout -b feat/<slug>` (carrying over any uncommitted `/new-feature` scaffold) before spawning the dispatcher subagent. The dispatcher itself refuses with `wrong_branch` if it finds `master` / `main` on entry — a subagent's `git checkout` does not affect the parent session, so the fix must happen in the main session.
+
+Exception: `--ship` and `--abandon` are vault-only operations that typically run on `master` and skip this precondition.
+
 ## 2. The dispatcher's loop
 
 ```
