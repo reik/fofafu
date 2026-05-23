@@ -4,7 +4,6 @@ team: engineering
 ---
 
 ## Backlog
-- [ ] [[features/family-recent-posts]] @engineering — FamilyView should list that family's announcements
 - [ ] [[features/moderation-report-block]] @engineering — foster-family safety surface; report + block
 - [ ] [[features/playdates]] @engineering — fofa had availability_slots + playdate_requests; deferred per ultraplan, worth revisiting
 - [ ] [[features/mobile-expo-bootstrap]] @engineering — Phase 4: mobile workspace + shared API client (deferred)
@@ -14,6 +13,7 @@ team: engineering
 ## Review
 
 ## Done
+- [x] [[features/family-recent-posts]] @engineering — GET /api/announcements?familyId filter + FamilyRecentPosts section in FamilyView; reuses AnnouncementCard; Load-more parity with Feed.tsx; backend 82/82, frontend 64/64, tsc clean both
 - [x] [[features/edit-comment]] @engineering — PATCH /api/comments/:id + CommentDTO.updatedAt + inline CommentEditForm + "(edited)" indicator; backend 76/76, frontend 57/57
 - [x] [[features/focus-reset-on-route-change]] @engineering — a11y follow-up: useFocusMainOnRouteChange hook in Layout.tsx; 4 unit tests covering all 5 ACs; axe sweep clean
 - [x] [[features/dispatch-protocol-update]] @engineering — P1: protocol + 4 role files + CLAUDE.md rewritten for the 2-level harness (Option B); smoke-run validated by focus-reset-on-route-change

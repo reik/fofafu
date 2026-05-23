@@ -20,6 +20,7 @@ export type PatchAnnouncementInput = z.infer<typeof PatchAnnouncementInput>;
 export const ListAnnouncementsQuery = z.object({
   cursor: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(100).optional(),
+  familyId: z.string().uuid().optional(),
 });
 export type ListAnnouncementsQuery = z.infer<typeof ListAnnouncementsQuery>;
 

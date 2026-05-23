@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getFamily, familyKeys } from '@/api/family';
 import { Layout } from '@/components/Layout';
 import { FamilyHeader } from '@/features/family/components/FamilyHeader';
+import { FamilyRecentPosts } from '@/features/family/components/FamilyRecentPosts';
 
 export default function FamilyViewPage() {
   const { id } = useParams<{ id: string }>();
@@ -48,6 +49,7 @@ export default function FamilyViewPage() {
           </Link>
         </div>
       )}
+      <FamilyRecentPosts familyId={data.id} />
       <p className="mt-8 text-sm">
         <Link to="/" className="text-brand-primary underline-offset-4 hover:underline">Back home</Link>
       </p>

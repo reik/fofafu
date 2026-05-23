@@ -4,7 +4,6 @@ team: company
 ---
 
 ## Backlog
-- [ ] [[features/family-recent-posts]] — surface a family's posts on their page
 - [ ] [[features/moderation-report-block]] — community safety
 - [ ] [[features/playdates]] — fofa feature deferred at ultraplan time
 - [ ] [[features/mobile-expo-bootstrap]] — Phase 4 mobile
@@ -14,6 +13,7 @@ team: company
 ## Review
 
 ## Done
+- [x] [[features/family-recent-posts]] — FamilyView now lists that family's announcements (newest first, Load-more parity with home feed); GET /api/announcements?familyId backend filter; reuses AnnouncementCard (no parallel component tree); warm empty state; backend 82/82, frontend 64/64, tsc clean both workspaces.
 - [x] [[features/edit-comment]] — parity with edit-announcement: PATCH /api/comments/:id (author-only) + CommentDTO.updatedAt + inline editor in CommentList + "(edited)" indicator; backend 76/76 (+6 net new), frontend 57/57 (+7 net new).
 - [x] [[features/focus-reset-on-route-change]] — a11y follow-up shipped (smoke test of the new 2-level dispatch protocol — passed): `useFocusMainOnRouteChange` hook in `Layout.tsx`; frontend 50/50; axe sweep 11/11 0 violations.
 - [x] [[features/dispatch-protocol-update]] — P1: `vault/protocols/dispatch.md` + 4 role files + `CLAUDE.md` rewritten for the 2-level harness (Option B: dispatcher fans out specialists, lead aggregates). Smoke-run validated by focus-reset-on-route-change.

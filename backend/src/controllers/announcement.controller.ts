@@ -105,16 +105,41 @@ export function createAnnouncement(req: AuthRequest, res: Response): void {
 }
 
 export function listAnnouncements(req: AuthRequest, res: Response): void {
-  const { cursor, limit } = req.query as unknown as ListAnnouncementsQuery;
+  const { cursor, limit, familyId } = req.query as unknown as ListAnnouncementsQuery;
   const pageSize = limit ?? 20;
-  const rows = (cursor
-    ? db().prepare(
-        `${ANNOUNCEMENT_SELECT} WHERE a.created_at < ? ORDER BY a.created_at DESC LIMIT ?`
-      ).all(cursor, pageSize)
-    : db().prepare(
-        `${ANNOUNCEMENT_SELECT} ORDER BY a.created_at DESC LIMIT ?`
-      ).all(pageSize)
-  ) as AnnouncementRow[];
+
+  // family-recent-posts: when `familyId` is provided, resolve it to the owning
+  // user_id and filter the feed. Unknown familyId returns an empty page rather
+  // than 404 — the FamilyView surface shows the empty state, and the family
+  // detail endpoint is the right place to surface a 404 for a missing family.
+  let authorUserId: string | null = null;
+  if (familyId !== undefined) {
+    const fam = db().prepare('SELECT user_id FROM families WHERE id = ?').get(familyId) as { user_id: string } | undefined;
+    if (!fam) {
+      res.json({ items: [], nextCursor: null });
+      return;
+    }
+    authorUserId = fam.user_id;
+  }
+
+  let rows: AnnouncementRow[];
+  if (authorUserId !== null && cursor) {
+    rows = db().prepare(
+      `${ANNOUNCEMENT_SELECT} WHERE a.user_id = ? AND a.created_at < ? ORDER BY a.created_at DESC LIMIT ?`
+    ).all(authorUserId, cursor, pageSize) as AnnouncementRow[];
+  } else if (authorUserId !== null) {
+    rows = db().prepare(
+      `${ANNOUNCEMENT_SELECT} WHERE a.user_id = ? ORDER BY a.created_at DESC LIMIT ?`
+    ).all(authorUserId, pageSize) as AnnouncementRow[];
+  } else if (cursor) {
+    rows = db().prepare(
+      `${ANNOUNCEMENT_SELECT} WHERE a.created_at < ? ORDER BY a.created_at DESC LIMIT ?`
+    ).all(cursor, pageSize) as AnnouncementRow[];
+  } else {
+    rows = db().prepare(
+      `${ANNOUNCEMENT_SELECT} ORDER BY a.created_at DESC LIMIT ?`
+    ).all(pageSize) as AnnouncementRow[];
+  }
 
   const items = rows.map((r) => toAnnouncementDTO(r, req.userId));
   const nextCursor = rows.length === pageSize ? rows[rows.length - 1]?.created_at ?? null : null;

@@ -53,10 +53,13 @@ export const ReactionResponse = z.object({
 });
 export type ReactionResponse = z.infer<typeof ReactionResponse>;
 
-export async function listAnnouncements(opts: { cursor?: string; limit?: number } = {}): Promise<FeedPage> {
+export async function listAnnouncements(
+  opts: { cursor?: string; limit?: number; familyId?: string } = {},
+): Promise<FeedPage> {
   const params = new URLSearchParams();
   if (opts.cursor) params.set('cursor', opts.cursor);
   if (opts.limit !== undefined) params.set('limit', String(opts.limit));
+  if (opts.familyId) params.set('familyId', opts.familyId);
   const qs = params.toString();
   const data = await apiRequest<unknown>(`/announcements${qs ? `?${qs}` : ''}`);
   return FeedPage.parse(data);
@@ -98,6 +101,7 @@ export const feedKeys = {
   page: ['feed', 'page'] as const,
   byId: (id: string) => ['feed', 'byId', id] as const,
   comments: (id: string) => ['feed', 'comments', id] as const,
+  byFamily: (familyId: string) => ['feed', 'byFamily', familyId] as const,
 };
 
 export interface PatchAnnouncementInput {

@@ -356,4 +356,102 @@ describe('announcements-feed feature', () => {
     assert.ok(items[0] && 'updatedAt' in items[0], 'listComments items must include updatedAt');
     assert.equal(typeof items[0]?.['updatedAt'], 'string');
   });
+
+  // family-recent-posts: GET /api/announcements?familyId=<id> filters the feed
+  // to posts authored by that family. Preserves the cursor/limit/nextCursor
+  // contract and returns the same DTO shape as the home feed.
+  describe('family-recent-posts: GET /api/announcements?familyId=<id>', () => {
+    async function familyIdFor(jwt: string): Promise<string> {
+      const me = await call('GET', '/api/family/me', undefined, { authorization: `Bearer ${jwt}` });
+      return me.body['id'] as string;
+    }
+
+    it('filters to only that family\'s posts and paginates via the shared cursor', async () => {
+      const jwtA = await register(userA);
+      const jwtB = await register(userB);
+
+      // A posts 3, B posts 2 — interleaved so naive ORDER BY would mix them.
+      await call('POST', '/api/announcements', { content: 'A-1' }, { authorization: `Bearer ${jwtA}` });
+      await new Promise((r) => setTimeout(r, 1100));
+      await call('POST', '/api/announcements', { content: 'B-1' }, { authorization: `Bearer ${jwtB}` });
+      await new Promise((r) => setTimeout(r, 1100));
+      await call('POST', '/api/announcements', { content: 'A-2' }, { authorization: `Bearer ${jwtA}` });
+      await new Promise((r) => setTimeout(r, 1100));
+      await call('POST', '/api/announcements', { content: 'B-2' }, { authorization: `Bearer ${jwtB}` });
+      await new Promise((r) => setTimeout(r, 1100));
+      await call('POST', '/api/announcements', { content: 'A-3' }, { authorization: `Bearer ${jwtA}` });
+
+      const familyA = await familyIdFor(jwtA);
+
+      const page1 = await call('GET', `/api/announcements?familyId=${familyA}&limit=2`, undefined, { authorization: `Bearer ${jwtB}` });
+      assert.equal(page1.status, 200);
+      const items1 = page1.body['items'] as Json[];
+      assert.equal(items1.length, 2);
+      assert.equal(items1[0]?.['content'], 'A-3');
+      assert.equal(items1[1]?.['content'], 'A-2');
+      // Same DTO shape as home feed.
+      assert.ok('reactions' in (items1[0] as Json));
+      assert.ok('myReaction' in (items1[0] as Json));
+      assert.ok('authorName' in (items1[0] as Json));
+      assert.ok('isAuthor' in (items1[0] as Json));
+      const cursor = page1.body['nextCursor'] as string;
+      assert.ok(cursor, 'nextCursor should be set when a full page comes back');
+
+      const page2 = await call('GET', `/api/announcements?familyId=${familyA}&limit=2&cursor=${encodeURIComponent(cursor)}`, undefined, { authorization: `Bearer ${jwtB}` });
+      const items2 = page2.body['items'] as Json[];
+      assert.equal(items2.length, 1, 'last page has the single remaining A-1 post');
+      assert.equal(items2[0]?.['content'], 'A-1');
+      assert.equal(page2.body['nextCursor'], null, 'nextCursor is null when fewer than limit rows returned');
+
+      // Spot-check the filter: no B-* content appears in any A page.
+      const allContent = [...items1, ...items2].map((i) => i['content']);
+      assert.ok(!allContent.includes('B-1'));
+      assert.ok(!allContent.includes('B-2'));
+    });
+
+    it('returns a single-item page when the family has exactly one post', async () => {
+      const jwtA = await register(userA);
+      await call('POST', '/api/announcements', { content: 'only post' }, { authorization: `Bearer ${jwtA}` });
+      const familyA = await familyIdFor(jwtA);
+
+      const res = await call('GET', `/api/announcements?familyId=${familyA}&limit=20`, undefined, { authorization: `Bearer ${jwtA}` });
+      assert.equal(res.status, 200);
+      const items = res.body['items'] as Json[];
+      assert.equal(items.length, 1);
+      assert.equal(items[0]?.['content'], 'only post');
+      assert.equal(res.body['nextCursor'], null);
+    });
+
+    it('returns an empty page when the family has never posted', async () => {
+      const jwtA = await register(userA);
+      // userA registers but never posts.
+      const familyA = await familyIdFor(jwtA);
+
+      const res = await call('GET', `/api/announcements?familyId=${familyA}`, undefined, { authorization: `Bearer ${jwtA}` });
+      assert.equal(res.status, 200);
+      assert.deepEqual(res.body['items'], []);
+      assert.equal(res.body['nextCursor'], null);
+    });
+
+    it('returns an empty page (not 404) when familyId is unknown', async () => {
+      const jwtA = await register(userA);
+      // A real-looking but non-existent UUID.
+      const unknown = '00000000-0000-0000-0000-000000000000';
+      const res = await call('GET', `/api/announcements?familyId=${unknown}`, undefined, { authorization: `Bearer ${jwtA}` });
+      assert.equal(res.status, 200);
+      assert.deepEqual(res.body['items'], []);
+      assert.equal(res.body['nextCursor'], null);
+    });
+
+    it('rejects a non-UUID familyId with 400 (Zod)', async () => {
+      const jwtA = await register(userA);
+      const res = await call('GET', '/api/announcements?familyId=not-a-uuid', undefined, { authorization: `Bearer ${jwtA}` });
+      assert.equal(res.status, 400);
+    });
+
+    it('requires auth (401 without JWT)', async () => {
+      const res = await call('GET', '/api/announcements?familyId=00000000-0000-0000-0000-000000000000');
+      assert.equal(res.status, 401);
+    });
+  });
 });
