@@ -40,12 +40,18 @@ Success = the coach reduces reported/edited-after-publish comments without makin
 - Storing or analyzing rejection/acceptance signals beyond aggregate counts (Growth section will define).
 - Model fine-tuning — prompt engineering only.
 
+## Decisions
+
+- **Mock first** *(2026-06-03)*. v1 ships a swappable `ClaudeClient` interface returning canned responses (one neutral, one minimization, one savior-framing fixture at minimum). The real `@anthropic-ai/sdk` integration + `ANTHROPIC_API_KEY` plumbing + prompt caching lands as a follow-up feature (`reply-coach-live`) once this PR is in. Rationale: keeps the first PR free of API-key plumbing and live-call cost while still landing the endpoint, flag, rate limit, response shape, and tests.
+  - All acceptance criteria still apply EXCEPT the prompt-caching AC and the `ANTHROPIC_API_KEY` boot-refusal AC — both move to the live-SDK follow-up.
+  - Tests run fully offline against the mock; no network calls.
+
 ## Open questions
 
 - Final list of categories (initial six are in `vault/plans/PHASE_2.md` — confirm during spec).
 - Reasoning string returned to the client: included in v1 response or held back until UI design lands?
 - Default rate limit (60/hour proposed) — tune after dogfood pass.
-- Do we expose cache-hit metadata in the response body (for the frontend to surface), or only in server logs?
+- Cache-hit metadata in the response body vs. server logs only? *(deferred to the live-SDK follow-up)*
 
 <!-- The sections below are written by team-leads during dispatch. -->
 
