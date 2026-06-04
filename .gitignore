@@ -19,3 +19,11 @@ vault/.obsidian/graph.json
 
 # Session-summary scratchpad regenerated each Claude Code session.
 STATUS.md
+
+# Claude Code per-project state: session transcripts (~/.claude/projects/...
+# symlinked here so the memory/ subdir is project-local). Transcripts contain
+# raw tool I/O and must NEVER be committed — they can leak secrets.
+.claude-state/
+
+# Obsidian auto-creates this when "New canvas" is clicked accidentally.
+vault/Untitled.canvas
