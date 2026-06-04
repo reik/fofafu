@@ -4,6 +4,7 @@ team: company
 ---
 
 ## Backlog
+- [ ] [[features/reply-coach]] — Phase 2 Claude-API feature: trauma-informed comment coach
 - [ ] [[features/moderation-report-block]] — community safety
 - [ ] [[features/playdates]] — fofa feature deferred at ultraplan time
 - [ ] [[features/mobile-expo-bootstrap]] — Phase 4 mobile
