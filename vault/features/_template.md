@@ -45,6 +45,9 @@ links:
 ### Test plan
 *(filled by qa-engineer)*
 
+### Code review
+*(filled by code-reviewer; populated during building → review, not at speccing time)*
+
 ## Design — Spec
 
 ### Visual
