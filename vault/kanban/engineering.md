@@ -4,6 +4,7 @@ team: engineering
 ---
 
 ## Backlog
+- [ ] [[features/reply-coach]] @engineering — Phase 2 Claude-API feature: trauma-informed comment coach (advisory, non-blocking, flag-gated)
 - [ ] [[features/moderation-report-block]] @engineering — foster-family safety surface; report + block
 - [ ] [[features/playdates]] @engineering — fofa had availability_slots + playdate_requests; deferred per ultraplan, worth revisiting
 - [ ] [[features/mobile-expo-bootstrap]] @engineering — Phase 4: mobile workspace + shared API client (deferred)
