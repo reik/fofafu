@@ -4,6 +4,7 @@ team: design
 ---
 
 ## Backlog
+- [ ] [[features/brand-contrast-fix]] @design — system-wide WCAG 1.4.3 token revision; introduce `color.brand.primary.pressed` (~`#3F7E54`) and pick which token white text is composed against
 
 ## In Progress
 
