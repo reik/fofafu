@@ -198,8 +198,8 @@ describe('reply-coach feature', () => {
     }
     const over = await call('POST', '/api/comments/coach', { draft: 'one too many' }, headers);
     assert.equal(over.status, 429);
-    assert.ok(over.headers.get('retry-after'), 'should include Retry-After header');
-  });
+    const retryAfter = Number(over.headers.get('retry-after'));
+    assert.ok(Number.isFinite(retryAfter) && retryAfter >= 1, 'Retry-After should be a positive integer (seconds)');
 
   it('returns the silent fallback (200 + verdict=ok) when the Claude client throws', async () => {
     const jwt = await register(userA);
