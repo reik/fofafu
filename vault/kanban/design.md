@@ -8,9 +8,9 @@ team: design
 ## In Progress
 
 ## Review
-- [ ] [[features/reply-coach]] @design — ui-designer + ux-writer + a11y-auditor returned success; design-lead ratified 4 flagged gaps (added `color.surface.subtle` token; deferred system-wide brand-contrast fix to a new `brand-contrast-fix` feature)
 
 ## Done
+- [x] [[features/reply-coach]] @design — ui-designer + ux-writer + a11y-auditor; design-lead ratified 4 flagged gaps (added `color.surface.subtle` token; deferred system-wide brand-contrast fix to [[features/brand-contrast-fix]]); merged 2026-06-11 (PR #2)
 - [x] [[features/focus-reset-on-route-change]] @design — a11y-auditor: 7 findings / 0 blocking; axe sweep 11/11 0 violations; Visual + Microcopy marked N/A (no surface)
 - [x] [[features/a11y-audit]] @design
 - [x] [[features/community-search]] @design
