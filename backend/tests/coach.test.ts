@@ -212,6 +212,6 @@ describe('reply-coach feature', () => {
     assert.equal(res.status, 200);
     assert.equal(res.body['verdict'], 'ok');
     assert.deepEqual(res.body['categories'], []);
+    assert.equal(res.body['reasoning'], '');
     assert.equal(res.body['rewrite'], null);
-  });
 });
