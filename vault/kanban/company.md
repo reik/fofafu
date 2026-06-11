@@ -9,9 +9,9 @@ team: company
 - [ ] [[features/mobile-expo-bootstrap]] — Phase 4 mobile
 
 ## In Progress
-- [ ] [[features/reply-coach]] — Phase 2 Claude-API feature: trauma-informed comment coach (mock-first; engineering + design + marketing)
 
 ## Review
+- [ ] [[features/reply-coach]] — Phase 2 Claude-API feature: trauma-informed comment coach (mock-first); backend POST /api/comments/coach + MockClaudeClient + flag + 60/hr rate limit + silent fallback; 96/96 backend tests, tsc clean; engineering/design/marketing all aggregated to Review; MF-1 (logger util) carried as known deviation pending [[features/backend-logger-util]] (to scaffold); follow-ups noted: [[features/reply-coach-live]] (live SDK + key + prompt caching), [[features/brand-contrast-fix]] (system-wide WCAG 1.4.3)
 
 ## Done
 - [x] [[features/family-recent-posts]] — FamilyView now lists that family's announcements (newest first, Load-more parity with home feed); GET /api/announcements?familyId backend filter; reuses AnnouncementCard (no parallel component tree); warm empty state; backend 82/82, frontend 64/64, tsc clean both workspaces.

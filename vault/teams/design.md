@@ -21,6 +21,7 @@ Make fofafu feel like a warm, careful home for foster families. Quality bar = th
 |---|---|---|
 | `color.surface.warm` | `#FFFBF5` | page background |
 | `color.surface.card` | `#FFFFFF` | card background |
+| `color.surface.subtle` | `#F4ECDF` | low-contrast hover/active fill for text-on-surface pills (e.g. `Edit` / `Keep mine` in chip action rows). A muted derivative of `color.surface.warm`. Introduced 2026-06-10 by design-lead for the reply-coach `CoachChip`; reusable wherever a chip needs a soft pill. |
 | `color.ink.lead` | `#1F1B18` | primary text |
 | `color.ink.muted` | `#5E534B` | secondary text (use sparingly — weight, not gray) |
 | `color.brand.primary` | `#4D9463` | primary CTA pill |
