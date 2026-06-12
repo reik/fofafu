@@ -4,6 +4,9 @@ team: company
 ---
 
 ## Backlog
+- [ ] [[features/reply-coach-live]] — Phase 2 follow-up to [[features/reply-coach]]: live Anthropic SDK + key plumbing + prompt caching + $5/day cost cap + 50/50 holdback experiment + `coach_events` aggregate table
+- [ ] [[features/backend-logger-util]] — chore closing MF-1 from reply-coach review: backend logger util + migrate the three known `console.*` sites
+- [ ] [[features/brand-contrast-fix]] — system-wide WCAG 1.4.3 fix: white-on-`color.brand.primary` is ~3.4:1; introduce `color.brand.primary.pressed` and migrate every CTA
 - [ ] [[features/moderation-report-block]] — community safety
 - [ ] [[features/playdates]] — fofa feature deferred at ultraplan time
 - [ ] [[features/mobile-expo-bootstrap]] — Phase 4 mobile
@@ -11,9 +14,9 @@ team: company
 ## In Progress
 
 ## Review
-- [ ] [[features/reply-coach]] — Phase 2 Claude-API feature: trauma-informed comment coach (mock-first); backend POST /api/comments/coach + MockClaudeClient + flag + 60/hr rate limit + silent fallback; 96/96 backend tests, tsc clean; engineering/design/marketing all aggregated to Review; MF-1 (logger util) carried as known deviation pending [[features/backend-logger-util]] (to scaffold); follow-ups noted: [[features/reply-coach-live]] (live SDK + key + prompt caching), [[features/brand-contrast-fix]] (system-wide WCAG 1.4.3)
 
 ## Done
+- [x] [[features/reply-coach]] — Phase 2 Claude-API feature: trauma-informed comment coach (mock-first); backend POST /api/comments/coach + MockClaudeClient + flag + 60/hr rate limit + silent fallback; 96/96 backend tests, tsc clean; merged to master 2026-06-11 (PR #2); follow-ups: [[features/reply-coach-live]], [[features/backend-logger-util]], [[features/brand-contrast-fix]]
 - [x] [[features/family-recent-posts]] — FamilyView now lists that family's announcements (newest first, Load-more parity with home feed); GET /api/announcements?familyId backend filter; reuses AnnouncementCard (no parallel component tree); warm empty state; backend 82/82, frontend 64/64, tsc clean both workspaces.
 - [x] [[features/edit-comment]] — parity with edit-announcement: PATCH /api/comments/:id (author-only) + CommentDTO.updatedAt + inline editor in CommentList + "(edited)" indicator; backend 76/76 (+6 net new), frontend 57/57 (+7 net new).
 - [x] [[features/focus-reset-on-route-change]] — a11y follow-up shipped (smoke test of the new 2-level dispatch protocol — passed): `useFocusMainOnRouteChange` hook in `Layout.tsx`; frontend 50/50; axe sweep 11/11 0 violations.

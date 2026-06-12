@@ -8,9 +8,9 @@ team: marketing
 ## In Progress
 
 ## Review
-- [ ] [[features/reply-coach]] @marketing
 
 ## Done
+- [x] [[features/reply-coach]] @marketing — launch copy + SEO (N/A in v1; `/help/reply-coach` proposed for follow-up) + Growth (acceptance-rate primary, reported-comment delta counter); merged 2026-06-11 (PR #2)
 - [x] [[features/community-search]] @marketing
 - [x] [[features/family-avatar]] @marketing
 - [x] [[features/family-owner-link]] @marketing
