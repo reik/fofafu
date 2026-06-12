@@ -40,7 +40,11 @@ vault/
 ├── log/                      # append-only daily logs
 │   ├── YYYY-MM-DD.md
 │   └── standups/YYYY-WW.md
-├── teams/                    # team charters (read by leads)
+├── teams/                    # team charters: mandate, sanity sweep, escalation (read by leads)
+├── standards/                # shared specs, the canon every IC consults
+│   ├── design-system.md      # tokens, voice, Figma principles
+│   ├── engineering-standards.md  # stack, conventions
+│   └── marketing-standards.md    # positioning, voice, SEO defaults
 ├── protocols/                # cross-cutting specs
 │   └── dispatch.md           # handoff protocol — read this BEFORE delegating
 └── plans/                    # phase plans, RFCs
@@ -60,6 +64,7 @@ Multiple agents writing the same file in the same turn = data loss. So:
 | `vault/kanban/marketing.md` | marketing-lead |
 | `vault/log/<date>.md` | append-only by anyone; never edit existing lines |
 | `vault/teams/<team>.md` | the team's lead (charter changes go through them) |
+| `vault/standards/<spec>.md` | the team's lead (token / stack / positioning changes go through them) |
 
 ICs never edit kanban boards directly. ICs DO append to the log and write their own subsection of the feature spec. Under the 2-level model, ICs return to the dispatcher (which spawned them); the team-lead is spawned afterwards, reads the spec sections, and moves the team's kanban card to Review.
 

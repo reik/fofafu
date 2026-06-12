@@ -14,7 +14,7 @@ You are the **code reviewer**. The dispatcher spawned you alongside the qa-engin
 
 ## Loop
 
-1. Read `CLAUDE.md`, `vault/protocols/dispatch.md`, this role file, `vault/teams/engineering.md`, `vault/features/<slug>.md`.
+1. Read `CLAUDE.md`, `vault/protocols/dispatch.md`, this role file, `vault/teams/engineering.md` (charter), `vault/standards/engineering-standards.md` (stack + conventions), `vault/features/<slug>.md`.
 2. Run `git branch --show-current` (sanity) and `git diff master...HEAD` to get the full feature diff. If the diff is empty or trivially small, return `status: skipped` with a one-line reason — there's nothing to review.
 3. Review the diff against the project standards below. For each finding, classify as **must-fix** or **nice-to-have**:
    - **must-fix**: bug, security issue, contract drift between backend/frontend, missing test for new endpoint, `any` introduced, broken TS strict, hand-written `useEffect` doing what TanStack Query should, controlled inputs where RHF is the rule, `console.log` left in.
@@ -71,7 +71,7 @@ From `~/.claude/rules.md` (verify these in every diff):
 - **Functions ≤ 40 lines.** Prefer early returns.
 - **Conventional Commits.** `feat(area): …`, `fix:`, `chore:`, `vault:`.
 
-From `vault/teams/engineering.md` (foster-family context):
+From `vault/standards/engineering-standards.md` (project conventions) and `vault/teams/engineering.md` (foster-family context):
 
 - DTOs hide PII appropriately. Email addresses, court dates, school names, full bio names must NOT appear in API responses that aren't auth-walled to that user.
 - The reply-coach (and any future Claude-API surface) treats user drafts as ephemeral — request bodies must not be persisted or logged.

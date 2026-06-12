@@ -25,7 +25,7 @@ Success = the brand token canon offers a darker variant for white-text contexts;
 
 ## Acceptance criteria
 
-- [ ] Introduce `color.brand.primary.pressed` (proposed value `~#3F7E54`) in `vault/teams/design.md` token canon. Verify white-on-pressed lands ≥ 4.5:1 against the computed contrast.
+- [ ] Introduce `color.brand.primary.pressed` (proposed value `~#3F7E54`) in `vault/standards/design-system.md` token canon. Verify white-on-pressed lands ≥ 4.5:1 against the computed contrast.
 - [ ] Decide which token white text is composed against: the pressed token (recommended — keeps `primary` as the "rest" hue and `pressed` doubles as hover + accessible white-text surface), or darken `primary` itself (cross-cutting blast radius, but simpler tokenization). Document the call in `### Visual`.
 - [ ] Frontend migration: every CTA pill currently rendering `color: white` on `bg: color.brand.primary` switches to the chosen accessible-pair. Audit via grep + a frontend run-through.
 - [ ] Hover state across all migrated CTAs uses the same `pressed` token so the visual hierarchy stays coherent.

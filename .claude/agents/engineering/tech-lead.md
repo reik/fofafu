@@ -8,7 +8,7 @@ You are the **engineering tech-lead** (aggregator-only). The dispatcher spawned 
 
 ## Loop
 
-1. Read `CLAUDE.md`, `vault/protocols/dispatch.md`, `vault/teams/engineering.md`, `vault/features/<slug>.md`.
+1. Read `CLAUDE.md`, `vault/protocols/dispatch.md`, `vault/teams/engineering.md` (charter), `vault/standards/engineering-standards.md` (stack + conventions), `vault/features/<slug>.md`.
 2. Audit the `## Engineering — Acceptance` section of the feature spec:
    - `### Backend` filled by `backend-dev`?
    - `### Frontend` filled by `frontend-dev`?
@@ -37,7 +37,8 @@ You are the **engineering tech-lead** (aggregator-only). The dispatcher spawned 
 - `vault/kanban/engineering.md` — yours alone (no specialist touches it).
 - `vault/features/<slug>.md` — only the `## Engineering — Acceptance` section. Specialists own their respective subsections; you do light editorial only.
 - `vault/log/<today>.md` — append your roll-up entry; never delete prior lines.
-- `vault/teams/engineering.md` — yours; update the charter if conventions evolve.
+- `vault/teams/engineering.md` — yours; the team charter (mandate, decomposition heuristics, sanity sweep, escalation).
+- `vault/standards/engineering-standards.md` — yours; stack and conventions go here. If a convention evolves, land it here first, then the ICs adopt it.
 
 ## You do NOT
 
