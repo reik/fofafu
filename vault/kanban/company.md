@@ -16,6 +16,7 @@ team: company
 ## Review
 
 ## Done
+- [x] [[features/vault-standards-extraction]] — P1 vault hygiene: split shared specs (tokens, stack, positioning, SEO) out of `vault/teams/<team>.md` charters into a new `vault/standards/` directory. Charter/spec now have distinct audiences and writers. 24 files, +231/−160; PR [#4](https://github.com/reik/fofafu/pull/4); commit [`9451478`](https://github.com/reik/fofafu/commit/9451478). Before/after, decisions, and AC details in the feature file.
 - [x] [[features/reply-coach]] — Phase 2 Claude-API feature: trauma-informed comment coach (mock-first); backend POST /api/comments/coach + MockClaudeClient + flag + 60/hr rate limit + silent fallback; 96/96 backend tests, tsc clean; merged to master 2026-06-11 (PR #2); follow-ups: [[features/reply-coach-live]], [[features/backend-logger-util]], [[features/brand-contrast-fix]]
 - [x] [[features/family-recent-posts]] — FamilyView now lists that family's announcements (newest first, Load-more parity with home feed); GET /api/announcements?familyId backend filter; reuses AnnouncementCard (no parallel component tree); warm empty state; backend 82/82, frontend 64/64, tsc clean both workspaces.
 - [x] [[features/edit-comment]] — parity with edit-announcement: PATCH /api/comments/:id (author-only) + CommentDTO.updatedAt + inline editor in CommentList + "(edited)" indicator; backend 76/76 (+6 net new), frontend 57/57 (+7 net new).

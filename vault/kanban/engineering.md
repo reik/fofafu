@@ -15,6 +15,7 @@ team: engineering
 ## Review
 
 ## Done
+- [x] [[features/vault-standards-extraction]] @engineering — P1 vault hygiene: extracted shared specs from `vault/teams/<team>.md` into new `vault/standards/` directory (`design-system.md`, `engineering-standards.md`, `marketing-standards.md`). Charters now hold mandate + sanity sweep + escalation only. 24 files, +231/−160; PR [#4](https://github.com/reik/fofafu/pull/4); commit [`9451478`](https://github.com/reik/fofafu/commit/9451478)
 - [x] [[features/reply-coach]] @engineering — Phase 2 Claude-API feature: trauma-informed comment coach (mock-first; POST /api/comments/coach behind `reply_coach_enabled`; 60/hr rate limit; silent 200 fallback); backend 96/96, tsc clean; merged 2026-06-11 (PR #2)
 - [x] [[features/family-recent-posts]] @engineering — GET /api/announcements?familyId filter + FamilyRecentPosts section in FamilyView; reuses AnnouncementCard; Load-more parity with Feed.tsx; backend 82/82, frontend 64/64, tsc clean both
 - [x] [[features/edit-comment]] @engineering — PATCH /api/comments/:id + CommentDTO.updatedAt + inline CommentEditForm + "(edited)" indicator; backend 76/76, frontend 57/57
