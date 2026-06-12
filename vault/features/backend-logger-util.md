@@ -28,7 +28,7 @@ Success = a small, dependency-light logger util exists, the three known sites us
 - [ ] `backend/src/utils/logger.ts` exports `logger.info`, `logger.warn`, `logger.error`, `logger.debug` (or equivalent). Level filtering via an env var (`LOG_LEVEL`, default `info` in prod, `debug` in dev, `silent` in test).
 - [ ] Output format: single line per record (text or JSON — pick one and document why). No PII or request-body leakage by construction — the logger accepts a `{ msg, ...fields }` shape and refuses to deep-stringify unknown objects.
 - [ ] No new runtime dependency unless the team specifically wants Pino/Winston. Start with a 30-line hand-rolled wrapper around `console.*` that satisfies the project rule (the rule is about discipline + a single seam, not about feature richness).
-- [ ] Three known `console.*` sites migrated: `coach.controller.ts:52`, `email.service.ts`, `index.ts`.
+- [ ] Three known `console.*` sites migrated: `backend/src/controllers/coach.controller.ts`, `backend/src/services/email.service.ts`, `backend/src/index.ts`.
 - [ ] `// eslint-disable-next-line no-console` markers removed at those sites.
 - [ ] Backend tests stay green (96/96 + whatever has been added since).
 
