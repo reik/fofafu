@@ -240,6 +240,29 @@ describe('announcements-feed feature', () => {
     assert.equal(items[0]?.['authorName'], userA.name);
   });
 
+  it('AnnouncementDTO populates authorAvatarUrl from joined families row', async () => {
+    const jwt = await register(userA);
+    await call('PATCH', '/api/family/me', { avatarUrl: 'https://example.com/avatar.png' }, { authorization: `Bearer ${jwt}` });
+
+    const created = await call('POST', '/api/announcements', { content: 'with avatar' }, { authorization: `Bearer ${jwt}` });
+    assert.equal(created.status, 201);
+    assert.equal(created.body['authorAvatarUrl'], 'https://example.com/avatar.png');
+
+    const id = created.body['id'] as string;
+    const got = await call('GET', `/api/announcements/${id}`, undefined, { authorization: `Bearer ${jwt}` });
+    assert.equal(got.body['authorAvatarUrl'], 'https://example.com/avatar.png');
+
+    const list = await call('GET', '/api/announcements', undefined, { authorization: `Bearer ${jwt}` });
+    const items = list.body['items'] as Json[];
+    assert.equal(items[0]?.['authorAvatarUrl'], 'https://example.com/avatar.png');
+  });
+
+  it('AnnouncementDTO authorAvatarUrl is null when the family has no avatar set', async () => {
+    const jwt = await register(userA);
+    const created = await call('POST', '/api/announcements', { content: 'no avatar' }, { authorization: `Bearer ${jwt}` });
+    assert.equal(created.body['authorAvatarUrl'], null);
+  });
+
   it('AnnouncementDTO authorName is null when family record is missing (orphaned author)', async () => {
     const jwt = await register(userA);
     const aRow = db().prepare('SELECT id FROM users WHERE email = ?').get(userA.email) as { id: string };

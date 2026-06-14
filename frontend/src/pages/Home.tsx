@@ -6,12 +6,9 @@ import { AnnouncementComposer } from '@/features/feed/components/AnnouncementCom
 import { AnnouncementCard } from '@/features/feed/components/AnnouncementCard';
 import { listAnnouncements, feedKeys, type FeedPage as FeedPageDTO } from '@/api/announcements';
 import { getRecentCommunity, communityKeys } from '@/api/community';
+import { getInitial } from '@/utils/initials';
 
 const COMMUNITY_LIMIT = 12;
-
-function initialBadge(name: string) {
-  return name.trim().charAt(0).toUpperCase() || '?';
-}
 
 export default function HomePage() {
   const user = useAuthStore((s) => s.user);
@@ -37,7 +34,7 @@ export default function HomePage() {
                 aria-hidden="true"
                 className="flex h-14 w-14 items-center justify-center rounded-full border-4 border-surface-card bg-surface-warm text-2xl font-bold text-brand-primary"
               >
-                {user ? initialBadge(user.name) : '?'}
+                {user ? getInitial(user.name) : '?'}
               </div>
               <div className="mt-2 font-semibold leading-tight">{user?.name ?? 'You'}</div>
               {user && (
@@ -105,7 +102,7 @@ export default function HomePage() {
                         aria-hidden="true"
                         className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-warm text-sm font-bold text-brand-primary"
                       >
-                        {initialBadge(fam.name)}
+                        {getInitial(fam.name)}
                       </span>
                     )}
                     <span className="min-w-0 flex-1 truncate text-sm font-semibold">

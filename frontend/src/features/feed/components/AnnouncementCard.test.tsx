@@ -43,3 +43,28 @@ describe('AnnouncementCard author display', () => {
     expect(article.textContent ?? '').not.toContain('u-author');
   });
 });
+
+describe('AnnouncementCard author avatar', () => {
+  it('renders the author avatar image inside the family link when authorAvatarUrl is set', () => {
+    const withAvatar = { ...baseAnnouncement, authorAvatarUrl: 'https://example.com/garcia.png' } as unknown as AnnouncementDTO;
+    const { container } = renderWithProviders(<AnnouncementCard announcement={withAvatar} />);
+
+    const article = screen.getByRole('article');
+    const avatar = container.querySelector('img');
+    expect(avatar).toHaveAttribute('src', 'https://example.com/garcia.png');
+
+    const link = within(article).getByRole('link', { name: /the garcias/i });
+    expect(link.contains(avatar)).toBe(true);
+  });
+
+  it('renders an initial-letter placeholder inside the family link when authorAvatarUrl is missing', () => {
+    const noAvatar = { ...baseAnnouncement, authorAvatarUrl: null } as unknown as AnnouncementDTO;
+    const { container } = renderWithProviders(<AnnouncementCard announcement={noAvatar} />);
+
+    const article = screen.getByRole('article');
+    expect(container.querySelector('img')).toBeNull();
+
+    const link = within(article).getByRole('link', { name: /the garcias/i });
+    expect(within(link).getByText('T')).toBeInTheDocument();
+  });
+});

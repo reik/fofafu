@@ -3,11 +3,26 @@ import { Link } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { deleteAnnouncement, feedKeys, type AnnouncementDTO } from '@/api/announcements';
 import { formatAuthor } from '@/utils/formatAuthor';
+import { getInitial } from '@/utils/initials';
 import { ReactionBar } from './ReactionBar';
 import { AnnouncementEditForm } from './AnnouncementEditForm';
 
 interface Props {
   announcement: AnnouncementDTO;
+}
+
+function AuthorAvatar({ avatarUrl, name }: { avatarUrl: string | null; name: string | null }) {
+  if (avatarUrl) {
+    return <img src={avatarUrl} alt="" className="h-8 w-8 rounded-full object-cover" />;
+  }
+  return (
+    <span
+      aria-hidden="true"
+      className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-warm text-sm font-bold text-brand-primary"
+    >
+      {name ? getInitial(name) : '?'}
+    </span>
+  );
 }
 
 export function AnnouncementCard({ announcement }: Props) {
@@ -23,18 +38,20 @@ export function AnnouncementCard({ announcement }: Props) {
   return (
     <article className="space-y-3 rounded-lg bg-surface-card p-5 shadow-lift">
       <header className="flex items-center justify-between text-xs">
-        <div className="flex items-baseline gap-2">
+        <div className="flex items-center gap-2">
           {announcement.authorName
             ? (
               <Link
                 to={`/family/${announcement.authorId}`}
-                className="text-sm font-semibold text-ink-lead underline-offset-4 hover:underline"
+                className="flex items-center gap-2 text-sm font-semibold text-ink-lead underline-offset-4 hover:underline"
               >
+                <AuthorAvatar avatarUrl={announcement.authorAvatarUrl ?? null} name={announcement.authorName} />
                 {formatAuthor(announcement.authorName)}
               </Link>
             )
             : (
-              <span className="text-sm font-semibold text-ink-muted italic">
+              <span className="flex items-center gap-2 text-sm font-semibold text-ink-muted italic">
+                <AuthorAvatar avatarUrl={null} name={null} />
                 {formatAuthor(announcement.authorName)}
               </span>
             )}

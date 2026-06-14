@@ -17,6 +17,7 @@ export const AnnouncementDTO = z.object({
   id: z.string(),
   authorId: z.string(),
   authorName: z.string().nullable(),
+  authorAvatarUrl: z.string().nullable().optional(),
   content: z.string(),
   mediaUrl: z.string().nullable(),
   mediaType: z.enum(['image', 'video']).nullable(),
