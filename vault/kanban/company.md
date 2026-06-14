@@ -11,6 +11,7 @@ team: company
 ## In Progress
 
 ## Review
+- [ ] [[features/feed-avatars]] — author avatar (img or initial-letter circle, neutral placeholder for deleted families) next to display name on AnnouncementCard (Home/FamilyView/AnnouncementDetail); backend authorAvatarUrl via existing LEFT JOIN families on AnnouncementDTO; new shared Avatar component also adopted by FamilyHeader; backend 85/85, frontend 72/72, tsc clean both workspaces; code review 0 must-fix
 - [ ] [[features/reply-coach]] — Phase 2 Claude-API feature: trauma-informed comment coach (mock-first); backend POST /api/comments/coach + MockClaudeClient + flag + 60/hr rate limit + silent fallback; 96/96 backend tests, tsc clean; engineering/design/marketing all aggregated to Review; MF-1 (logger util) carried as known deviation pending [[features/backend-logger-util]] (to scaffold); follow-ups noted: [[features/reply-coach-live]] (live SDK + key + prompt caching), [[features/brand-contrast-fix]] (system-wide WCAG 1.4.3)
 
 ## Done

@@ -11,6 +11,7 @@ team: engineering
 ## In Progress
 
 ## Review
+- [ ] [[features/feed-avatars]] @engineering — shared Avatar component (img/initial-circle/neutral-placeholder) wired into AnnouncementCard via authorAvatarUrl on AnnouncementDTO; backend 85/85, frontend 72/72, tsc/build clean both, 0 must-fix
 - [ ] [[features/reply-coach]] @engineering — Phase 2 Claude-API feature: trauma-informed comment coach (advisory, non-blocking, flag-gated)
 
 ## Done
