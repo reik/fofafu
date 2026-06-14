@@ -10,7 +10,9 @@ import { getRecentCommunity, communityKeys } from '@/api/community';
 const COMMUNITY_LIMIT = 12;
 
 function initialBadge(name: string) {
-  return name.trim().charAt(0).toUpperCase() || '?';
+  const trimmed = name.trim();
+  const word = trimmed.split(/\s+/).find((w) => !/^(the|a|an)$/i.test(w)) ?? trimmed;
+  return word.charAt(0).toUpperCase() || '?';
 }
 
 export default function HomePage() {

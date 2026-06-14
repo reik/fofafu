@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { patchFamily, familyKeys, type FamilyDTO, type FamilyPatchInput } from '@/api/family';
 import { ApiError } from '@/api/client';
+import { CheckIcon, XIcon } from '@/components/icons';
 import type { UploadResult } from '@/api/uploads';
 import { ImagePicker } from '@/features/feed/components/ImagePicker';
 
@@ -96,11 +97,13 @@ export function FamilyEditForm({ family, onCancel, onSaved }: Props) {
         <button
           type="submit"
           disabled={isSubmitting || mutation.isPending}
-          className="rounded-full bg-brand-primary px-5 py-2.5 font-semibold text-white shadow-lift disabled:opacity-60"
+          className="inline-flex items-center gap-1.5 rounded-full bg-brand-primary px-5 py-2.5 font-semibold text-white shadow-lift disabled:opacity-60"
         >
+          <CheckIcon className="h-4 w-4" />
           {isSubmitting || mutation.isPending ? 'Saving…' : 'Save'}
         </button>
-        <button type="button" onClick={onCancel} className="rounded-full border border-ink-muted/30 px-4 py-2 text-sm font-medium">
+        <button type="button" onClick={onCancel} className="inline-flex items-center gap-1.5 rounded-full border border-ink-muted/30 px-4 py-2 text-sm font-medium">
+          <XIcon className="h-4 w-4" />
           Cancel
         </button>
       </div>

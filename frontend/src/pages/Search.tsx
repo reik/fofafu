@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
 import { searchFamilies, searchKeys } from '@/api/search';
 import { Layout } from '@/components/Layout';
+import { SearchIcon } from '@/components/icons';
 
 const Schema = z.object({
   q: z.string().trim().min(2, 'At least 2 characters.').max(100),
@@ -47,8 +48,9 @@ export default function SearchPage() {
         />
         <button
           type="submit"
-          className="rounded-full bg-brand-primary px-5 py-2 text-sm font-semibold text-white shadow-lift"
+          className="inline-flex items-center gap-1.5 rounded-full bg-brand-primary px-5 py-2 text-sm font-semibold text-white shadow-lift"
         >
+          <SearchIcon className="h-4 w-4" />
           Search
         </button>
       </form>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { deleteAnnouncement, feedKeys, type AnnouncementDTO } from '@/api/announcements';
+import { EditIcon, OpenIcon, TrashIcon } from '@/components/icons';
 import { formatAuthor } from '@/utils/formatAuthor';
 import { Avatar } from '@/components/Avatar';
 import { ReactionBar } from './ReactionBar';
@@ -52,8 +53,9 @@ export function AnnouncementCard({ announcement }: Props) {
               <button
                 type="button"
                 onClick={() => setEditing(true)}
-                className="text-ink-muted underline-offset-4 hover:underline"
+                className="inline-flex items-center gap-1 text-ink-muted underline-offset-4 hover:underline"
               >
+                <EditIcon className="h-3.5 w-3.5" />
                 Edit
               </button>
               <button
@@ -62,16 +64,18 @@ export function AnnouncementCard({ announcement }: Props) {
                   if (window.confirm('Delete this post?')) del.mutate();
                 }}
                 disabled={del.isPending}
-                className="text-feedback-error underline-offset-4 hover:underline disabled:opacity-60"
+                className="inline-flex items-center gap-1 text-feedback-error underline-offset-4 hover:underline disabled:opacity-60"
               >
+                <TrashIcon className="h-3.5 w-3.5" />
                 {del.isPending ? 'Deleting…' : 'Delete'}
               </button>
             </>
           )}
           <Link
             to={`/post/${announcement.id}`}
-            className="text-brand-primary underline-offset-4 hover:underline"
+            className="inline-flex items-center gap-1 text-brand-primary underline-offset-4 hover:underline"
           >
+            <OpenIcon className="h-3.5 w-3.5" />
             Open
           </Link>
         </div>
