@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { deleteComment, feedKeys, type CommentDTO } from '@/api/announcements';
+import { EditIcon, TrashIcon } from '@/components/icons';
 import { formatAuthor } from '@/utils/formatAuthor';
 import { CommentEditForm } from './CommentEditForm';
 
@@ -62,16 +63,18 @@ export function CommentList({ comments }: Props) {
                   <button
                     type="button"
                     onClick={() => setEditingId(c.id)}
-                    className="text-ink-muted underline-offset-4 hover:underline"
+                    className="inline-flex items-center gap-1 text-ink-muted underline-offset-4 hover:underline"
                   >
+                    <EditIcon className="h-3.5 w-3.5" />
                     Edit
                   </button>
                   <button
                     type="button"
                     onClick={() => { if (window.confirm('Delete this comment?')) del.mutate(c.id); }}
                     disabled={del.isPending}
-                    className="text-feedback-error underline-offset-4 hover:underline disabled:opacity-60"
+                    className="inline-flex items-center gap-1 text-feedback-error underline-offset-4 hover:underline disabled:opacity-60"
                   >
+                    <TrashIcon className="h-3.5 w-3.5" />
                     Delete
                   </button>
                 </div>

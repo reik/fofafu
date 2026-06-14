@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { uploadImage, type UploadResult } from '@/api/uploads';
+import { ImagePlusIcon, XIcon } from '@/components/icons';
 
 interface Props {
   attached: UploadResult | null;
@@ -40,8 +41,9 @@ export function ImagePicker({ attached, onAttached }: Props) {
         <button
           type="button"
           onClick={() => onAttached(null)}
-          className="text-xs text-feedback-error underline-offset-4 hover:underline"
+          className="inline-flex items-center gap-1.5 rounded-full border border-feedback-error/30 px-3 py-1.5 text-xs font-medium text-feedback-error hover:bg-feedback-error/10"
         >
+          <XIcon className="h-3.5 w-3.5" />
           Remove image
         </button>
       </div>
@@ -62,8 +64,9 @@ export function ImagePicker({ attached, onAttached }: Props) {
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={mutation.isPending}
-        className="rounded-full border border-ink-muted/30 px-3 py-1.5 text-xs font-medium hover:bg-surface-warm disabled:opacity-60"
+        className="inline-flex items-center gap-1.5 rounded-full border border-ink-muted/30 px-3 py-1.5 text-xs font-medium text-ink-lead hover:bg-surface-warm disabled:opacity-60"
       >
+        <ImagePlusIcon className="h-4 w-4 text-brand-primary" />
         {mutation.isPending ? 'Uploading…' : 'Add image'}
       </button>
       {error && <span role="alert" className="text-xs text-feedback-error">{error}</span>}

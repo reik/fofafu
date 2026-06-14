@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { sendMessage, messageKeys } from '@/api/messages';
 import { ApiError } from '@/api/client';
+import { SendIcon } from '@/components/icons';
 
 const Schema = z.object({
   content: z.string().min(1, 'Type a message.').max(4000),
@@ -55,8 +56,9 @@ export function MessageComposer({ to }: Props) {
         <button
           type="submit"
           disabled={isSubmitting || mutation.isPending}
-          className="rounded-full bg-brand-primary px-4 py-1.5 text-sm font-semibold text-white shadow-lift disabled:opacity-60"
+          className="inline-flex items-center gap-1.5 rounded-full bg-brand-primary px-4 py-1.5 text-sm font-semibold text-white shadow-lift disabled:opacity-60"
         >
+          <SendIcon className="h-4 w-4" />
           {isSubmitting || mutation.isPending ? 'Sending…' : 'Send'}
         </button>
       </div>
