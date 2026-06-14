@@ -57,6 +57,10 @@ function dropFamilyFor(userId: string): void {
   db().prepare('DELETE FROM families WHERE user_id = ?').run(userId);
 }
 
+function setAvatarFor(userId: string, avatarUrl: string): void {
+  db().prepare('UPDATE families SET avatar_url = ? WHERE user_id = ?').run(avatarUrl, userId);
+}
+
 describe('author-display-names — DTO hydration', () => {
   before(() => { runMigrations(); });
   beforeEach(() => { resetDb(); });
@@ -100,6 +104,47 @@ describe('author-display-names — DTO hydration', () => {
       const got = await call('GET', `/api/announcements/${id}`, undefined, { authorization: `Bearer ${b.jwt}` });
       assert.equal(got.status, 200);
       assert.equal((got.body as Json)['authorId'], a.userId);
+      assert.equal((got.body as Json)['authorName'], null);
+    });
+
+    it('GET /api/announcements/:id and list return authorAvatarUrl matching families.avatar_url when set', async () => {
+      const a = await register(userA);
+      setAvatarFor(a.userId, 'https://cdn.example.com/avatars/garcia.png');
+
+      const created = await call('POST', '/api/announcements', { content: 'with avatar' }, { authorization: `Bearer ${a.jwt}` });
+      const id = (created.body as Json)['id'] as string;
+      assert.equal((created.body as Json)['authorAvatarUrl'], 'https://cdn.example.com/avatars/garcia.png');
+
+      const got = await call('GET', `/api/announcements/${id}`, undefined, { authorization: `Bearer ${a.jwt}` });
+      assert.equal(got.status, 200);
+      assert.equal((got.body as Json)['authorAvatarUrl'], 'https://cdn.example.com/avatars/garcia.png');
+
+      const list = await call('GET', '/api/announcements', undefined, { authorization: `Bearer ${a.jwt}` });
+      const items = (list.body as Json)['items'] as Json[];
+      assert.equal(items[0]?.['authorAvatarUrl'], 'https://cdn.example.com/avatars/garcia.png');
+    });
+
+    it('GET /api/announcements/:id returns authorAvatarUrl=null when the family has no avatar_url set', async () => {
+      const a = await register(userA);
+      const created = await call('POST', '/api/announcements', { content: 'no avatar' }, { authorization: `Bearer ${a.jwt}` });
+      const id = (created.body as Json)['id'] as string;
+
+      const got = await call('GET', `/api/announcements/${id}`, undefined, { authorization: `Bearer ${a.jwt}` });
+      assert.equal(got.status, 200);
+      assert.equal((got.body as Json)['authorAvatarUrl'], null);
+    });
+
+    it('GET /api/announcements/:id returns authorAvatarUrl=null when the family record is missing', async () => {
+      const a = await register(userA);
+      const b = await register(userB);
+      const created = await call('POST', '/api/announcements', { content: 'orphan avatar' }, { authorization: `Bearer ${a.jwt}` });
+      const id = (created.body as Json)['id'] as string;
+
+      dropFamilyFor(a.userId);
+
+      const got = await call('GET', `/api/announcements/${id}`, undefined, { authorization: `Bearer ${b.jwt}` });
+      assert.equal(got.status, 200);
+      assert.equal((got.body as Json)['authorAvatarUrl'], null);
       assert.equal((got.body as Json)['authorName'], null);
     });
 

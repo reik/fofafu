@@ -23,6 +23,7 @@ interface AnnouncementRow {
   created_at: string;
   updated_at: string;
   author_name: string | null;
+  author_avatar_url: string | null;
 }
 
 interface CommentRow {
@@ -37,7 +38,7 @@ interface CommentRow {
 
 const ANNOUNCEMENT_SELECT = `
   SELECT a.id, a.user_id, a.content, a.media_url, a.media_type, a.created_at, a.updated_at,
-         f.name AS author_name
+         f.name AS author_name, f.avatar_url AS author_avatar_url
   FROM announcements a
   LEFT JOIN families f ON f.user_id = a.user_id
 `;
@@ -81,6 +82,7 @@ function toAnnouncementDTO(row: AnnouncementRow, viewerUserId: string | undefine
     id: row.id,
     authorId: row.user_id,
     authorName: row.author_name,
+    authorAvatarUrl: row.author_avatar_url,
     content: row.content,
     mediaUrl: row.media_url,
     mediaType: row.media_type,
