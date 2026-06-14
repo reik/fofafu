@@ -55,7 +55,7 @@ export function AnnouncementComposer() {
         {...register('content')}
         placeholder="What's going on at home?"
         rows={3}
-        className="w-full resize-none bg-transparent text-ink-lead outline-none placeholder:text-ink-muted"
+        className="w-full resize-none bg-transparent text-ink-lead outline-none placeholder:italic placeholder:text-ink-muted"
       />
       {errors.content && <p className="text-feedback-error text-xs">{errors.content.message}</p>}
       {serverError && <p role="alert" className="text-feedback-error text-xs">{serverError}</p>}
