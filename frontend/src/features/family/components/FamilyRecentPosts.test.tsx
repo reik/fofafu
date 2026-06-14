@@ -11,6 +11,7 @@ const announcement = {
   id: '00000000-0000-0000-0000-000000000010',
   authorId: 'u1',
   authorName: 'The Garcias',
+  authorAvatarUrl: null,
   content: 'hello from the Garcias',
   mediaUrl: null,
   mediaType: null,
