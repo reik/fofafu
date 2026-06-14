@@ -200,6 +200,7 @@ describe('reply-coach feature', () => {
     assert.equal(over.status, 429);
     const retryAfter = Number(over.headers.get('retry-after'));
     assert.ok(Number.isFinite(retryAfter) && retryAfter >= 1, 'Retry-After should be a positive integer (seconds)');
+  });
 
   it('returns the silent fallback (200 + verdict=ok) when the Claude client throws', async () => {
     const jwt = await register(userA);
@@ -214,4 +215,5 @@ describe('reply-coach feature', () => {
     assert.deepEqual(res.body['categories'], []);
     assert.equal(res.body['reasoning'], '');
     assert.equal(res.body['rewrite'], null);
+  });
 });
