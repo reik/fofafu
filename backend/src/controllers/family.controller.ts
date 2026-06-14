@@ -44,7 +44,10 @@ export function getMyFamily(req: AuthRequest, res: Response): void {
 
 export function getFamily(req: AuthRequest, res: Response): void {
   const { id } = req.params as unknown as FamilyIdParams;
-  const row = db().prepare('SELECT * FROM families WHERE id = ?').get(id) as FamilyRow | undefined;
+  // Accept either the family's own id (links from community/search) or its
+  // owner's user id (links from announcements/comments/messages, which only
+  // carry authorId/userId).
+  const row = db().prepare('SELECT * FROM families WHERE id = ? OR user_id = ?').get(id, id) as FamilyRow | undefined;
   if (!row) {
     res.status(404).json({ error: 'Family not found' });
     return;
