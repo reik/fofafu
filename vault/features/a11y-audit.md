@@ -38,7 +38,7 @@ First real audit of the running frontend against WCAG 2.2 AA. Two surfaces:
 ### Fixes (applied)
 - `Layout.tsx`: wrap content in `<main id="main">`; add a "Skip to main content" link visible on focus.
 - Loading/empty messages now use `role="status"` for important async transitions.
-- Any contrast failures fixed in-token via `vault/teams/design.md`.
+- Any contrast failures fixed in-token via `vault/standards/design-system.md`.
 
 ### Known limitations
 - axe-core cannot verify focus order on route change, dynamic announcement ordering, or aria-live timing — these are reviewed manually and noted below.

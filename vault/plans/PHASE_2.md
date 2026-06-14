@@ -89,7 +89,7 @@ Content-Type: application/json
 
 - Coach is **advisory, never blocking**. The composer always lets the user publish their original draft.
 - Coach is **silent on neutral comments**. `verdict=ok` returns nothing visible to the user; no banner, no green check.
-- Coach speaks **warmly, briefly, and never lectures**. Voice rules live in `vault/teams/design.md` and are extended for this feature in the spec.
+- Coach speaks **warmly, briefly, and never lectures**. Voice rules live in `vault/standards/design-system.md` and are extended for this feature in the spec.
 - Coach **does not moderate opinions** — it flags phrasings known to land badly in foster contexts, not viewpoints.
 
 ### Categories it watches for (initial list — refined during spec phase)

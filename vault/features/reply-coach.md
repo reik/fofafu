@@ -223,7 +223,7 @@ Request body: `{ draft: string, threadContext?: { postTitle: string, recentComme
 
 **Form integration.** `CommentForm` already uses React Hook Form + Zod per the project rules; the coach hook reads `watch('body')` to feed the debounce input and uses `setValue('body', ...)` from `Accept`/`Edit`. Field-level validation errors on the comment textarea continue to render as today and are unrelated to the chip.
 
-**Styling.** Tailwind utilities only, `cn()` for the chip's conditional states (visible / dismissed / accept-pending). No inline styles, no CSS modules. Visual tokens (color, radius, spacing) come from `vault/teams/design.md` via the existing tokens module — frontend-dev does not pick palette here.
+**Styling.** Tailwind utilities only, `cn()` for the chip's conditional states (visible / dismissed / accept-pending). No inline styles, no CSS modules. Visual tokens (color, radius, spacing) come from `vault/standards/design-system.md` via the existing tokens module — frontend-dev does not pick palette here.
 
 **Testing (Phase 3).** Co-located `CoachChip.test.tsx` + `useCoach.test.ts`. Mock at the network boundary with MSW:
 - Renders nothing when API returns `verdict: 'ok'`.
@@ -410,7 +410,7 @@ No lint script is configured for the backend workspace (confirmed by qa-engineer
 
 ### Visual
 
-**Implementation deferred to Phase 3 frontend port** (matches `### Frontend`'s posture). This subsection is the spec the Phase 3 port reads to wire `CoachChip` against `vault/teams/design.md` tokens — no code, no screenshots.
+**Implementation deferred to Phase 3 frontend port** (matches `### Frontend`'s posture). This subsection is the spec the Phase 3 port reads to wire `CoachChip` against `vault/standards/design-system.md` tokens — no code, no screenshots.
 
 #### 1. Component anatomy — `CoachChip`
 
@@ -447,7 +447,7 @@ No avatar, no icon, no close-X (Keep mine IS the close). No chevron-only collaps
 
 #### 2. Token references
 
-Pulled from `vault/teams/design.md` § Fofafu Design System. All token names below are exact.
+Pulled from `vault/standards/design-system.md`. All token names below are exact.
 
 **Surface & frame**
 
@@ -491,7 +491,7 @@ Pulled from `vault/teams/design.md` § Fofafu Design System. All token names bel
 
 **Contrast (closes a11y-auditor flag #4 — contrast)**
 
-Computed pairs against the current palette values in `vault/teams/design.md`:
+Computed pairs against the current palette values in `vault/standards/design-system.md`:
 
 | Pair | Foreground | Background | Ratio | WCAG 2.2 AA |
 |---|---|---|---|---|
@@ -574,7 +574,7 @@ None of these block the spec; they are decisions the design-lead can take during
 
 Light editorial addendum from the design-lead aggregator pass — closes the four gaps `ui-designer` flagged in §5. No specialist subsection rewritten.
 
-1. **Secondary / tertiary pill variant — APPROVED Option A.** New token `color.surface.subtle` (`#F4ECDF`) added to `vault/teams/design.md` (§ Tokens — Color). Used as the hover/active fill for `chip.action.edit`, `chip.action.dismiss`, and `chip.reasoning.toggle`. Charter rule "Pill-only CTAs" stays intact — these remain pills; the new token only fills the hit area on hover. Rest state is still transparent. Reusable wherever a chip needs a soft pill.
+1. **Secondary / tertiary pill variant — APPROVED Option A.** New token `color.surface.subtle` (`#F4ECDF`) added to `vault/standards/design-system.md` (§ Tokens — Color). Used as the hover/active fill for `chip.action.edit`, `chip.action.dismiss`, and `chip.reasoning.toggle`. Charter rule "Pill-only CTAs" stays intact — these remain pills; the new token only fills the hit area on hover. Rest state is still transparent. Reusable wherever a chip needs a soft pill.
 2. **Primary CTA hover darken AND text-contrast — ACCEPTED FOR THIS FEATURE; SYSTEM-WIDE FIX DEFERRED.** The `#FFFFFF` on `color.brand.primary` (`#4D9463`) pair at ~3.4:1 clears WCAG 1.4.11 (UI component, 3:1) which is the criterion that applies to the pill control as a whole. The 1.4.3 failure (4.5:1 for normal text) is real, but it is a **system-wide property of `color.brand.primary`** affecting every primary CTA in fofafu — coupling this feature to a brand-token revision would balloon scope and require a re-audit of every shipped surface. Disposition: ship the chip as specced; design-lead to request a new feature `brand-contrast-fix` (proposed action for the next dispatcher pass — to introduce `color.brand.primary.pressed` `~#3F7E54` as both hover state and the surface white text is computed against, then propagate). Tracked in design-lead's return notes.
 3. **Hairline divider colour — ACCEPTED AS ONE-OFF.** Phase 3 implements the reasoning-panel divider as `color.ink.muted` at ~12% opacity inline (Tailwind `border-[#5E534B]/[0.12]` or equivalent). No new `color.border.hairline` token until a second consumer appears; promote then.
 4. **Focus ring token — DEFERRED to a11y-auditor for the Phase 3 frontend port.** a11y-auditor's §4 already flagged this for the cross-platform focus pass; the chip inherits whatever ring token lands there. No chip-local override.

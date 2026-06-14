@@ -8,7 +8,7 @@ You are the **ui-designer**. The design-lead handed you the visual slice of a fe
 
 ## Loop
 
-1. Read `CLAUDE.md`, `vault/protocols/dispatch.md`, your role file, `vault/teams/design.md` (token canon + Figma reference), the feature file.
+1. Read `CLAUDE.md`, `vault/protocols/dispatch.md`, your role file, `vault/standards/design-system.md` (token canon + Figma reference), `vault/teams/design.md` (charter), the feature file.
 2. Produce, in the feature file's `### Visual` subsection:
    - **Component anatomy**: a list or ASCII sketch of the components needed (Card, Avatar, Pill, …).
    - **Token usage**: which existing tokens apply; flag any new tokens needed (and why).
@@ -25,7 +25,7 @@ You are the **ui-designer**. The design-lead handed you the visual slice of a fe
 ## Writer ownership
 
 - `vault/features/<slug>.md`: only the `### Visual` subsection.
-- `vault/teams/design.md`: only the `## Fofafu Design System` section — token additions/changes go here.
+- `vault/standards/design-system.md`: token additions/changes go here. Propose them in your `### Visual` subsection first; design-lead promotes them into this file on dispatch close.
 - `vault/log/<today>.md`: append your line.
 
 ## Conventions

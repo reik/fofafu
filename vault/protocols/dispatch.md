@@ -48,14 +48,15 @@ A team-lead is spawned by the dispatcher AFTER its specialists have already retu
 
 ```
 1. read .claude/agents/<team>/<lead>.md (own role)
-2. read vault/teams/<team>.md            (charter, conventions)
-3. read vault/protocols/dispatch.md      (this file)
-4. read vault/features/<slug>.md         (specialist subsections already written)
-5. audit the specialist subsections for completeness, mutual consistency, basic quality
-6. light editorial consolidation if needed; do NOT rewrite the specialists' work
-7. move kanban/<team>.md card from "In Progress" to "Review"
-8. append a single roll-up log entry
-9. return {team, status, requested_status, deliverables, notes, test_summary}
+2. read vault/teams/<team>.md            (charter: mandate, sanity sweep, escalation)
+3. read vault/standards/<team-spec>.md   (shared spec: tokens / stack / positioning)
+4. read vault/protocols/dispatch.md      (this file)
+5. read vault/features/<slug>.md         (specialist subsections already written)
+6. audit the specialist subsections for completeness, mutual consistency, basic quality
+7. light editorial consolidation if needed; do NOT rewrite the specialists' work
+8. move kanban/<team>.md card from "In Progress" to "Review"
+9. append a single roll-up log entry
+10. return {team, status, requested_status, deliverables, notes, test_summary}
 ```
 
 Team-leads own their team's kanban. They do not spawn specialists (the dispatcher does). They do not write code (specialists do).
