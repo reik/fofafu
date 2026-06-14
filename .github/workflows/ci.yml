@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Typecheck & Test (backend + frontend)
+    runs-on: ubuntu-latest
+
+    # Backend tests rely on these env vars (see backend/package.json's
+    # `test:run` script). Setting them here lets us run the plain `npm test`
+    # fan-out at the workspace root without modifying any package.json.
+    env:
+      DB_PATH: ':memory:'
+      NODE_ENV: test
+      JWT_SECRET: test-secret-please-rotate
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          # No .nvmrc or `engines` field found in the repo; pinned to the
+          # current Node 20 LTS line. Revisit if the repo later declares an
+          # explicit version.
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies (workspaces-aware)
+        run: npm ci
+
+      - name: Typecheck (backend + frontend)
+        run: npm run typecheck --workspaces --if-present
+
+      - name: Test (backend + frontend)
+        run: npm test --workspaces --if-present
