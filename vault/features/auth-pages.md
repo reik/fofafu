@@ -23,7 +23,7 @@ First Phase 3 feature. Bootstraps the React frontend and ships the three auth sc
 - [x] Verify-email page reads `?token=…` from the URL, hits `GET /api/auth/verify`, shows success or error.
 - [x] Login form posts to `POST /api/auth/login`; on success stores JWT in Zustand (persist to localStorage) and navigates to `/`.
 - [x] Protected `/` redirects to `/login` when no JWT.
-- [x] Tailwind tokens wired from `vault/teams/design.md` (warm surface, brand-primary CTA pill).
+- [x] Tailwind tokens wired from `vault/standards/design-system.md` (warm surface, brand-primary CTA pill).
 - [x] At least one Vitest smoke test per page.
 
 ---
@@ -34,7 +34,7 @@ First Phase 3 feature. Bootstraps the React frontend and ships the three auth sc
 
 **Stack**
 - Vite 5 / React 18 / TS strict (extends `../tsconfig.base.json`)
-- Tailwind 3 + design tokens from `vault/teams/design.md`
+- Tailwind 3 + design tokens from `vault/standards/design-system.md`
 - TanStack Query 5 for server state
 - Zustand 4 (persist middleware) for JWT + current-user
 - React Hook Form 7 + Zod 3
@@ -66,7 +66,7 @@ Vitest + RTL + msw smoke tests for each page; happy-dom env.
 
 ## Design — Spec
 
-Visual follows `vault/teams/design.md` v0 token system. Single-column, ≤ 480px content, centered. CTAs are pill on brand-primary.
+Visual follows `vault/standards/design-system.md` v0 token system. Single-column, ≤ 480px content, centered. CTAs are pill on brand-primary.
 
 ---
 

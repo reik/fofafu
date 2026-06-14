@@ -49,6 +49,7 @@ describe('FamilyView — Recent posts integration', () => {
               id: 'a-1',
               authorId: VIEWED_OWNER_ID,
               authorName: 'The Lees',
+              authorAvatarUrl: null,
               content: 'first post from Lees',
               mediaUrl: null,
               mediaType: null,

@@ -7,6 +7,7 @@ import { ReactionBar } from '@/features/feed/components/ReactionBar';
 import { CommentList } from '@/features/feed/components/CommentList';
 import { CommentForm } from '@/features/feed/components/CommentForm';
 import { AnnouncementEditForm } from '@/features/feed/components/AnnouncementEditForm';
+import { EditIcon, TrashIcon } from '@/components/icons';
 
 export default function AnnouncementDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -66,16 +67,18 @@ export default function AnnouncementDetailPage() {
               <button
                 type="button"
                 onClick={() => setEditing(true)}
-                className="text-ink-muted underline-offset-4 hover:underline"
+                className="inline-flex items-center gap-1 text-ink-muted underline-offset-4 hover:underline"
               >
+                <EditIcon className="h-3.5 w-3.5" />
                 Edit
               </button>
               <button
                 type="button"
                 onClick={() => { if (window.confirm('Delete this post?')) del.mutate(); }}
                 disabled={del.isPending}
-                className="text-feedback-error underline-offset-4 hover:underline disabled:opacity-60"
+                className="inline-flex items-center gap-1 text-feedback-error underline-offset-4 hover:underline disabled:opacity-60"
               >
+                <TrashIcon className="h-3.5 w-3.5" />
                 {del.isPending ? 'Deleting…' : 'Delete'}
               </button>
             </div>

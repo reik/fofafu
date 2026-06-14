@@ -10,6 +10,7 @@ const samplePost = {
   id: 'a1',
   authorId: 'u1',
   authorName: 'Test Family',
+  authorAvatarUrl: null,
   content: 'hello',
   mediaUrl: null,
   mediaType: null,

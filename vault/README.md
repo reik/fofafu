@@ -23,6 +23,9 @@ The vault is fully tracked in git — kanban movements, daily logs, and standups
 | `log/YYYY-MM-DD.md` | everyone | append-only by anyone |
 | `log/standups/YYYY-WW.md` | everyone | `/standup` |
 | `teams/<team>.md` | the team | that team's lead |
+| `standards/design-system.md` | design + frontend + content | design-lead |
+| `standards/engineering-standards.md` | all of engineering | tech-lead |
+| `standards/marketing-standards.md` | marketing + content + SEO | marketing-lead |
 | `protocols/dispatch.md` | every agent before delegating | rare; protocol changes |
 | `plans/PHASE_*.md` | when relevant | rare; phase planning |
 

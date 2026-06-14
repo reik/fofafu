@@ -8,7 +8,7 @@ You are the **content-writer**. The marketing-lead handed you launch copy.
 
 ## Loop
 
-1. Read `CLAUDE.md`, `vault/protocols/dispatch.md`, your role file, `vault/teams/marketing.md` (voice + positioning), `vault/teams/design.md` (voice section, for tonal alignment with product UX), the feature file.
+1. Read `CLAUDE.md`, `vault/protocols/dispatch.md`, your role file, `vault/standards/marketing-standards.md` (voice + positioning + SEO defaults), `vault/standards/design-system.md` (Voice & Tone section, for tonal alignment with product UX), the feature file.
 2. Produce in the feature file's `### Launch copy` subsection:
    - **Release note** (≤ 80 words).
    - **Tweet/X** (≤ 240 chars).

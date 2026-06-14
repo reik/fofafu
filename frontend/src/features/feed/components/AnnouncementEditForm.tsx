@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { patchAnnouncement, feedKeys, type AnnouncementDTO, type PatchAnnouncementInput } from '@/api/announcements';
 import { ApiError } from '@/api/client';
+import { CheckIcon, XIcon } from '@/components/icons';
 import type { UploadResult } from '@/api/uploads';
 import { ImagePicker } from './ImagePicker';
 
@@ -75,15 +76,17 @@ export function AnnouncementEditForm({ announcement, onDone }: Props) {
         <button
           type="submit"
           disabled={isSubmitting || mutation.isPending}
-          className="rounded-full bg-brand-primary px-4 py-1.5 text-sm font-semibold text-white shadow-lift disabled:opacity-60"
+          className="inline-flex items-center gap-1.5 rounded-full bg-brand-primary px-4 py-1.5 text-sm font-semibold text-white shadow-lift disabled:opacity-60"
         >
+          <CheckIcon className="h-4 w-4" />
           {isSubmitting || mutation.isPending ? 'Saving…' : 'Save'}
         </button>
         <button
           type="button"
           onClick={onDone}
-          className="rounded-full border border-ink-muted/30 px-3 py-1 text-xs font-medium"
+          className="inline-flex items-center gap-1.5 rounded-full border border-ink-muted/30 px-3 py-1 text-xs font-medium"
         >
+          <XIcon className="h-3.5 w-3.5" />
           Cancel
         </button>
       </div>

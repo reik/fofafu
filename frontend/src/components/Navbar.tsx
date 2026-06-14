@@ -1,20 +1,22 @@
+import type { SVGProps } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/auth';
 import { unreadCount, messageKeys } from '@/api/messages';
+import { CommunityIcon, FamilyIcon, HomeIcon, LogOutIcon, MessageIcon } from '@/components/icons';
 
 interface NavLink {
   to: string;
   label: string;
-  icon: string;
+  Icon: (props: SVGProps<SVGSVGElement>) => JSX.Element;
   match: (pathname: string) => boolean;
 }
 
 const NAV_LINKS: NavLink[] = [
-  { to: '/', label: 'Home', icon: '🏠', match: (p) => p === '/' },
-  { to: '/family/me', label: 'Family', icon: '👨‍👩‍👧', match: (p) => p.startsWith('/family') },
-  { to: '/messages', label: 'Messages', icon: '💬', match: (p) => p.startsWith('/messages') },
-  { to: '/search', label: 'Community', icon: '🌿', match: (p) => p.startsWith('/search') },
+  { to: '/', label: 'Home', Icon: HomeIcon, match: (p) => p === '/' },
+  { to: '/family/me', label: 'Family', Icon: FamilyIcon, match: (p) => p.startsWith('/family') },
+  { to: '/messages', label: 'Messages', Icon: MessageIcon, match: (p) => p.startsWith('/messages') },
+  { to: '/search', label: 'Community', Icon: CommunityIcon, match: (p) => p.startsWith('/search') },
 ];
 
 function cn(...parts: Array<string | false | null | undefined>) {
@@ -66,6 +68,7 @@ export function Navbar() {
             {NAV_LINKS.map((link) => {
               const active = link.match(location.pathname);
               const badge = link.to === '/messages' ? unreadN : 0;
+              const Icon = link.Icon;
               return (
                 <Link
                   key={link.to}
@@ -76,7 +79,7 @@ export function Navbar() {
                     active ? 'bg-surface-warm text-brand-primary' : 'text-ink-lead hover:bg-surface-warm',
                   )}
                 >
-                  <span aria-hidden="true">{link.icon}</span>
+                  <Icon className="h-4 w-4 shrink-0" />
                   <span>{link.label}</span>
                   {renderBadge(link.label, badge)}
                 </Link>
@@ -94,8 +97,9 @@ export function Navbar() {
             <button
               type="button"
               onClick={handleSignOut}
-              className="rounded-full border border-ink-muted/30 px-3 py-1.5 text-sm font-medium hover:bg-surface-warm"
+              className="inline-flex items-center gap-1.5 rounded-full border border-ink-muted/30 px-3 py-1.5 text-sm font-medium hover:bg-surface-warm"
             >
+              <LogOutIcon className="h-4 w-4" />
               Sign out
             </button>
           </div>
@@ -109,6 +113,7 @@ export function Navbar() {
         {NAV_LINKS.map((link) => {
           const active = link.match(location.pathname);
           const badge = link.to === '/messages' ? unreadN : 0;
+          const Icon = link.Icon;
           return (
             <Link
               key={link.to}
@@ -120,8 +125,8 @@ export function Navbar() {
                 active ? 'bg-surface-warm text-brand-primary' : 'text-ink-lead',
               )}
             >
-              <span aria-hidden="true" className="relative text-xl leading-none">
-                {link.icon}
+              <span aria-hidden="true" className="relative">
+                <Icon className="h-5 w-5" />
                 {badge > 0 && (
                   <span className="absolute -right-2 -top-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-feedback-error px-1 text-[0.6rem] font-bold leading-none text-white">
                     {badge > 99 ? '99+' : badge}
