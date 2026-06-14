@@ -11,6 +11,7 @@ team: company
 ## In Progress
 
 ## Review
+- [ ] [[features/ci-pipeline]] — GitHub Actions CI on push/PR; .github/workflows/ci.yml (Node 20, npm ci, typecheck + test --workspaces --if-present); engineering aggregated to Review, 4/4 ACs verified
 - [ ] [[features/reply-coach]] — Phase 2 Claude-API feature: trauma-informed comment coach (mock-first); backend POST /api/comments/coach + MockClaudeClient + flag + 60/hr rate limit + silent fallback; 96/96 backend tests, tsc clean; engineering/design/marketing all aggregated to Review; MF-1 (logger util) carried as known deviation pending [[features/backend-logger-util]] (to scaffold); follow-ups noted: [[features/reply-coach-live]] (live SDK + key + prompt caching), [[features/brand-contrast-fix]] (system-wide WCAG 1.4.3)
 
 ## Done

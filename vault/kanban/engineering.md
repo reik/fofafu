@@ -11,6 +11,7 @@ team: engineering
 ## In Progress
 
 ## Review
+- [ ] [[features/ci-pipeline]] @engineering — GitHub Actions CI on push/PR (typecheck + tests); workflow + test plan mapped to all 4 ACs, both open questions resolved
 - [ ] [[features/reply-coach]] @engineering — Phase 2 Claude-API feature: trauma-informed comment coach (advisory, non-blocking, flag-gated)
 
 ## Done
