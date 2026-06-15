@@ -48,6 +48,12 @@ Third Phase 3 feature. Renders the announcements-feed backend so families can po
 - ReactionBar: toggles like → unlike (mock returns toggled:'added'|'removed').
 - CommentForm: submits, clears the textarea.
 
+### E2E coverage
+
+| Scenario | Spec | Status |
+|---|---|---|
+| Feed lists existing posts and a family can compose a new one | `frontend/e2e/feed-pages.spec.ts` | pass |
+
 ---
 
 ## Design — Spec

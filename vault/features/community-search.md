@@ -61,6 +61,13 @@ Backend (`tests/search.test.ts`):
 Frontend (`pages/Search.test.tsx`):
 - Typing a query and submitting fires the API and renders the result cards.
 
+### E2E coverage
+
+| Scenario | Spec | Status |
+|---|---|---|
+| Query under 2 characters shows the "At least 2 characters." validation error | `frontend/e2e/community-search.spec.ts` | pass |
+| Searching by family name returns a result that links to that family's page | `frontend/e2e/community-search.spec.ts` | pass |
+
 ---
 
 ## Design — Spec

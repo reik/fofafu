@@ -46,6 +46,13 @@ Note: the family DTO returns `id` (family id), not the underlying `user_id`. Mes
 
 - MessageComposer submits with expected payload.
 
+### E2E coverage
+
+| Scenario | Spec | Status |
+|---|---|---|
+| Thread list shows the empty state with no conversations | `frontend/e2e/messages-pages.spec.ts` | pass |
+| Starting a conversation from a family's profile sends and shows a message | `frontend/e2e/messages-pages.spec.ts` | pass |
+
 ---
 
 ## Design — Spec

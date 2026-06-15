@@ -47,6 +47,13 @@ Second Phase 3 feature. Renders the family page from the `family-profiles` backe
 - FamilyEditForm: submits valid input, calls api.patchFamily.
 - FamilyHeader: hides kidCount when isOwner=false.
 
+### E2E coverage
+
+| Scenario | Spec | Status |
+|---|---|---|
+| Owner edits their family page bio and sees it saved | `frontend/e2e/profile-pages.spec.ts` | pass |
+| Visiting another family's page shows a "Message this family" link | `frontend/e2e/profile-pages.spec.ts` | pass |
+
 ---
 
 ## Design — Spec
