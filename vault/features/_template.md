@@ -45,6 +45,9 @@ links:
 ### Test plan
 *(filled by qa-engineer)*
 
+### E2E coverage
+*(filled by e2e-test-writer; "No E2E coverage" if the feature is backend-only)*
+
 ### Code review
 *(filled by code-reviewer; populated during building → review, not at speccing time)*
 
