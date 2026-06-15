@@ -16,7 +16,7 @@ The **dispatcher** (`.claude/agents/dispatcher.md`, code-name *the patcher*) is 
 
 ```
 dispatcher (the patcher)
-├── engineering  → tech-lead → backend-dev | frontend-dev | mobile-dev | qa-engineer | code-reviewer
+├── engineering  → tech-lead → backend-dev | frontend-dev | mobile-dev | qa-engineer | e2e-test-writer | code-reviewer
 ├── design       → design-lead → ui-designer | ux-writer | a11y-auditor
 └── marketing    → marketing-lead → content-writer | seo-specialist | growth-analyst
 ```
@@ -57,7 +57,7 @@ Multiple agents writing the same file in the same turn = data loss. So:
 | File | Sole writer |
 |---|---|
 | `vault/features/<slug>.md` frontmatter `status` | dispatcher |
-| `vault/features/<slug>.md` body subsections (`### Backend`, `### Frontend`, `### Test plan`, `### Code review`, `### Visual`, `### Microcopy`, `### Accessibility`, `### Launch copy`, `### SEO`, `### Growth`) | the specialist who owns that subsection (backend-dev, frontend-dev, qa-engineer, code-reviewer, ui-designer, ux-writer, a11y-auditor, content-writer, seo-specialist, growth-analyst). Leads do light editorial only — no rewrites. |
+| `vault/features/<slug>.md` body subsections (`### Backend`, `### Frontend`, `### Test plan`, `### E2E coverage`, `### Code review`, `### Visual`, `### Microcopy`, `### Accessibility`, `### Launch copy`, `### SEO`, `### Growth`) | the specialist who owns that subsection (backend-dev, frontend-dev, qa-engineer, e2e-test-writer, code-reviewer, ui-designer, ux-writer, a11y-auditor, content-writer, seo-specialist, growth-analyst). Leads do light editorial only — no rewrites. |
 | `vault/kanban/company.md` | dispatcher |
 | `vault/kanban/engineering.md` | engineering tech-lead |
 | `vault/kanban/design.md` | design-lead |

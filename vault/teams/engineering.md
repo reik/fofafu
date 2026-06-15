@@ -1,7 +1,7 @@
 ---
 team: engineering
 lead: tech-lead
-members: [tech-lead, backend-dev, frontend-dev, mobile-dev, qa-engineer]
+members: [tech-lead, backend-dev, frontend-dev, mobile-dev, qa-engineer, e2e-test-writer]
 charter_owner: tech-lead
 ---
 
@@ -19,6 +19,9 @@ For a typical CRUD feature:
 - backend-dev: routes, controller, DB schema/migration, validation.
 - frontend-dev: page, components, query hooks, form with Zod.
 - qa-engineer: 1 integration test per endpoint + 1 RTL smoke test per page.
+
+For any feature that adds or changes a route, page, or user-facing component (i.e. frontend-dev's section is non-empty), also spawn:
+- e2e-test-writer: one Playwright spec per new/changed flow at `frontend/e2e/<slug>.spec.ts`, covering the acceptance criteria qa-engineer lists as E2E in `### Test plan`. Backend-only features skip this (writes "No E2E coverage" instead).
 
 For an auth-touching feature, add:
 - backend-dev: middleware updates, token handling.
