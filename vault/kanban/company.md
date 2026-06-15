@@ -14,6 +14,7 @@ team: company
 ## In Progress
 
 ## Review
+- [ ] [[features/feed-virtualization]] — perf: `@tanstack/react-virtual`'s `useWindowVirtualizer` applied to pages/Feed.tsx (windowed list, measureElement for variable-height cards); accumulate-vs-replace pagination interpretation endorsed; cache-desync must-fix resolved via useMemo-derived items from cached feedKeys.page queries; vitest 79/79, playwright 14/14, tsc/build clean
 - [ ] [[features/feed-avatars]] — author avatar (img or initial-letter circle, neutral placeholder for deleted families) next to display name on AnnouncementCard (Home/FamilyView/AnnouncementDetail); backend authorAvatarUrl via existing LEFT JOIN families on AnnouncementDTO; new shared Avatar component also adopted by FamilyHeader; backend 85/85, frontend 72/72, tsc clean both workspaces; code review 0 must-fix
 - [ ] [[features/ci-pipeline]] — GitHub Actions CI on push/PR; .github/workflows/ci.yml (Node 20, npm ci, typecheck + test --workspaces --if-present); engineering aggregated to Review, 4/4 ACs verified
 
