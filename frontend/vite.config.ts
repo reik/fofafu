@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
+import { configDefaults } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
 
@@ -8,14 +9,14 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/api': 'http://localhost:4000',
-      '/uploads': 'http://localhost:4000',
+      '/api': `http://localhost:${process.env.E2E_BACKEND_PORT ?? '4000'}`,
+      '/uploads': `http://localhost:${process.env.E2E_BACKEND_PORT ?? '4000'}`,
     },
   },
   test: {
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/tests/setup.ts'],
-    exclude: ['e2e/**', 'node_modules/**'],
+    exclude: [...configDefaults.exclude, 'e2e/**'],
   },
 });
