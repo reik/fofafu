@@ -10,6 +10,7 @@ import AnnouncementDetailPage from '@/pages/AnnouncementDetail';
 import MessagesPage from '@/pages/Messages';
 import MessageThreadPage from '@/pages/MessageThread';
 import SearchPage from '@/pages/Search';
+import PlaydatesPage from '@/pages/PlaydatesPage/PlaydatesPage';
 import { RequireAuth } from '@/components/RequireAuth';
 
 export function App() {
@@ -79,6 +80,14 @@ export function App() {
         element={
           <RequireAuth>
             <SearchPage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/playdates"
+        element={
+          <RequireAuth>
+            <PlaydatesPage />
           </RequireAuth>
         }
       />

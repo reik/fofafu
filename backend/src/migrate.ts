@@ -97,6 +97,39 @@ export function runMigrations(): void {
     CREATE INDEX IF NOT EXISTS idx_messages_sender   ON messages(sender_id);
     CREATE INDEX IF NOT EXISTS idx_messages_receiver ON messages(receiver_id);
     CREATE INDEX IF NOT EXISTS idx_messages_pair     ON messages(sender_id, receiver_id, created_at);
+
+    -- Availability slots. fofa keys this to users(id); fofafu has a separate
+    -- families table (1:1 with users), so we key to families(id) instead so
+    -- the DTO can expose familyId directly (matches the /family/:id surface).
+    CREATE TABLE IF NOT EXISTS availability_slots (
+      id         TEXT PRIMARY KEY,
+      family_id  TEXT NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+      date       TEXT NOT NULL,
+      start_time TEXT NOT NULL,
+      end_time   TEXT NOT NULL,
+      status     TEXT NOT NULL CHECK(status IN ('free', 'busy')) DEFAULT 'free',
+      note       TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_slots_family_date ON availability_slots(family_id, date);
+
+    -- Playdate requests. Same family_id keying rationale as availability_slots.
+    CREATE TABLE IF NOT EXISTS playdate_requests (
+      id                  TEXT PRIMARY KEY,
+      slot_id             TEXT NOT NULL REFERENCES availability_slots(id) ON DELETE CASCADE,
+      requester_family_id TEXT NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+      owner_family_id     TEXT NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+      message             TEXT,
+      status              TEXT NOT NULL CHECK(status IN ('pending', 'accepted', 'declined')) DEFAULT 'pending',
+      created_at          TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at          TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_requests_requester ON playdate_requests(requester_family_id);
+    CREATE INDEX IF NOT EXISTS idx_requests_owner     ON playdate_requests(owner_family_id);
+    CREATE INDEX IF NOT EXISTS idx_requests_slot      ON playdate_requests(slot_id);
   `);
 
   // Defensive backfill for columns added after the initial schema. SQLite has

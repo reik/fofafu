@@ -7,6 +7,7 @@ import { uploadsRouter } from "./uploads.routes.js";
 import { searchRouter } from "./search.routes.js";
 import { communityRouter } from "./community.routes.js";
 import { coachRouter } from "./coach.routes.js";
+import { playdateRouter } from "./playdate.routes.js";
 
 export const apiRouter = Router();
 apiRouter.use("/auth", authRouter);
@@ -20,3 +21,4 @@ apiRouter.use("/messages", messageRouter);
 apiRouter.use("/uploads", uploadsRouter);
 apiRouter.use("/search", searchRouter);
 apiRouter.use("/community", communityRouter);
+apiRouter.use("/playdates", playdateRouter);

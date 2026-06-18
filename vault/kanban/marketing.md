@@ -6,6 +6,7 @@ team: marketing
 ## Backlog
 
 ## In Progress
+- [ ] [[features/playdates]] @marketing — launch copy + growth metric for the new /playdates page and cross-family request flow
 
 ## Review
 
