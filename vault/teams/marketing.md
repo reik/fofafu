@@ -7,7 +7,7 @@ charter_owner: marketing-lead
 
 # Marketing — Team Charter
 
-How the marketing team operates. This file is the marketing-lead's playbook: mandate, growth philosophy, sanity sweep, escalation. The shared marketing spec (positioning, voice, SEO defaults) lives in `[[standards/marketing-standards]]` and is the canon every IC consults — keep it in lockstep with this charter.
+How the marketing team operates. This file is the marketing-lead's playbook: mandate, growth philosophy, sanity sweep, escalation. The shared marketing spec (positioning, voice, SEO defaults) lives in `[[standards/marketing-standards]]` and is the canon every IC consults — keep it in lockstep with this charter. This team operates under [[protocols/dispatch]].
 
 ## Mandate
 
@@ -28,10 +28,10 @@ Triggered by `/sanity-check marketing` (weekly once scheduled):
 3. SEO meta validation: title length, description length, OG image presence on every public route. Spec lives in `[[standards/marketing-standards]]`.
 4. Voice consistency spot-check on any string added in the last week, against `[[standards/marketing-standards]]` Voice section.
 
-For each finding: scaffold a feature file with `priority: P2`, tag `#marketing-debt`, add a Backlog card on `kanban/marketing.md`.
+For each finding: scaffold a feature file with `priority: P2`, tag `#marketing-debt`, add a Backlog card on [[kanban/marketing]].
 
 ## Escalation
 
-- A primary metric that conflicts with another feature's primary metric → marketing-lead returns `status: partial`; dispatcher raises to human review.
-- A launch where engineering and design are ready but marketing copy is stuck → return `status: partial` so dispatcher can ship behind a flag and unblock writers.
-- A positioning or voice change proposed mid-launch → land it in `[[standards/marketing-standards]]` first, then update the launch copy; never the other way around.
+- A primary metric that conflicts with another feature's primary metric → [[agents/marketing-lead]] returns `status: partial`; dispatcher raises to human review.
+- A launch where engineering and design are ready but marketing copy is stuck → [[agents/marketing-lead]] returns `status: partial` so dispatcher can ship behind a flag and unblock writers.
+- A positioning or voice change proposed mid-launch → land it in [[standards/marketing-standards]] first, then update the launch copy; never the other way around.

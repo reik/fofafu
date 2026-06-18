@@ -6,7 +6,7 @@ read_by: [tech-lead, backend-dev, frontend-dev, mobile-dev, qa-engineer, code-re
 
 # Engineering Standards
 
-The shared engineering spec. Stack, coding conventions, and the project-wide rules every IC follows when they write code. Owned by the tech-lead; read by every engineering IC at the start of every dispatch.
+The shared engineering spec. Stack, coding conventions, and the project-wide rules every IC follows when they write code. Owned by the [[agents/tech-lead]]; read by every engineering IC ([[agents/backend-dev]], [[agents/frontend-dev]], [[agents/qa-engineer]], [[agents/code-reviewer]], [[agents/e2e-test-writer]]) at the start of every dispatch — see [[protocols/dispatch]] §4.
 
 ## Stack
 
@@ -29,6 +29,6 @@ The shared engineering spec. Stack, coding conventions, and the project-wide rul
 
 ## Ownership
 
-- Stack additions or replacements go through the tech-lead.
-- Convention changes go through the tech-lead and are reflected in this file before any IC adopts them.
+- Stack additions or replacements go through the [[agents/tech-lead]].
+- Convention changes go through the [[agents/tech-lead]] and are reflected in this file before any IC adopts them.
 - ICs reference this file; they do not edit it.

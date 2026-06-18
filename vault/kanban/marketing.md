@@ -3,6 +3,7 @@ kanban-plugin: basic
 team: marketing
 ---
 
+> Navigation: [[kanban/company]] · [[teams/marketing]] · [[standards/marketing-standards]]
 ## Backlog
 
 ## In Progress
