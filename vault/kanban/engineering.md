@@ -8,12 +8,12 @@ team: engineering
 - [ ] [[features/reply-coach-live]] @engineering — swap MockClaudeClient for live `@anthropic-ai/sdk`; prompt caching; ANTHROPIC_API_KEY boot-refusal; new `reply_coach_live_enabled` flag; $5/day cost cap with silent degradation; 50/50 holdback
 - [ ] [[features/backend-logger-util]] @engineering — small logger util at `backend/src/utils/logger.ts` + migrate `backend/src/controllers/coach.controller.ts`, `backend/src/services/email.service.ts`, `backend/src/index.ts`; closes MF-1
 - [ ] [[features/moderation-report-block]] @engineering — foster-family safety surface; report + block
-- [ ] [[features/playdates]] @engineering — fofa had availability_slots + playdate_requests; deferred per ultraplan, worth revisiting
 - [ ] [[features/mobile-expo-bootstrap]] @engineering — Phase 4: mobile workspace + shared API client (deferred)
 
 ## In Progress
 
 ## Review
+- [ ] [[features/playdates]] @engineering — availability_slots + playdate_requests tables; /playdates page (week/month calendar); request flow on /family/:id
 - [ ] [[features/feed-avatars]] @engineering — shared Avatar component (img/initial-circle/neutral-placeholder) wired into AnnouncementCard via authorAvatarUrl on AnnouncementDTO; backend 85/85, frontend 72/72, tsc/build clean both, 0 must-fix
 - [ ] [[features/ci-pipeline]] @engineering — GitHub Actions CI on push/PR (typecheck + tests); workflow + test plan mapped to all 4 ACs, both open questions resolved
 

@@ -12,22 +12,22 @@ The vault is fully tracked in git — kanban movements, daily logs, and standups
 
 ## Layout
 
-| Path | Read by | Written by |
-|---|---|---|
-| `features/<slug>.md` | everyone | section-by-section per writer-ownership table |
-| [[features/_template]] | `/new-feature` | rarely |
-| [[kanban/company]] | everyone | dispatcher only |
-| [[kanban/engineering]] | everyone | tech-lead only |
-| [[kanban/design]] | everyone | design-lead only |
-| [[kanban/marketing]] | everyone | marketing-lead only |
-| `log/YYYY-MM-DD.md` | everyone | append-only by anyone |
-| `log/standups/YYYY-WW.md` | everyone | `/standup` |
-| [[teams/engineering]] / [[teams/design]] / [[teams/marketing]] | the team | that team's lead |
-| [[standards/design-system]] | design + frontend + content | design-lead |
-| [[standards/engineering-standards]] | all of engineering | tech-lead |
-| [[standards/marketing-standards]] | marketing + content + SEO | marketing-lead |
-| [[protocols/dispatch]] | every agent before delegating | rare; protocol changes |
-| [[plans/PHASE_1]] / [[plans/PHASE_2]] | when relevant | rare; phase planning |
+| Path                                                              | Read by                       | Written by                                    |
+| ----------------------------------------------------------------- | ----------------------------- | --------------------------------------------- |
+| `features/<slug>.md`                                              | everyone                      | section-by-section per writer-ownership table |
+| [[features/_template]]                                            | `/new-feature`                | rarely                                        |
+| [[kanban/company]]                                                | everyone                      | dispatcher only                               |
+| [[kanban/engineering]]                                            | everyone                      | tech-lead only                                |
+| [[kanban/design]]                                                 | everyone                      | design-lead only                              |
+| [[kanban/marketing]]                                              | everyone                      | marketing-lead only                           |
+| `log/YYYY-MM-DD.md`                                               | everyone                      | append-only by anyone                         |
+| `log/standups/YYYY-WW.md`                                         | everyone                      | `/standup`                                    |
+| [[teams/engineering]] / [[teams/design]] / [[teams/marketing]]    | the team                      | that team's lead                              |
+| [[standards/design-system]]                                       | design + frontend + content   | design-lead                                   |
+| [[standards/engineering-standards]]                               | all of engineering            | tech-lead                                     |
+| [[standards/marketing-standards]]                                 | marketing + content + SEO     | marketing-lead                                |
+| [[protocols/dispatch]]                                            | every agent before delegating | rare; protocol changes                        |
+| [[plans/PHASE_1]] / [[plans/PHASE_2]]                             | when relevant                 | rare; phase planning                          |
 
 ## How to start a feature
 
