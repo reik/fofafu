@@ -12,22 +12,22 @@ The vault is fully tracked in git — kanban movements, daily logs, and standups
 
 ## Layout
 
-| Path | Read by | Written by |
-|---|---|---|
-| `features/<slug>.md` | everyone | section-by-section per writer-ownership table |
-| `features/_template.md` | `/new-feature` | rarely |
-| `kanban/company.md` | everyone | dispatcher only |
-| `kanban/engineering.md` | everyone | tech-lead only |
-| `kanban/design.md` | everyone | design-lead only |
-| `kanban/marketing.md` | everyone | marketing-lead only |
-| `log/YYYY-MM-DD.md` | everyone | append-only by anyone |
-| `log/standups/YYYY-WW.md` | everyone | `/standup` |
-| `teams/<team>.md` | the team | that team's lead |
-| `standards/design-system.md` | design + frontend + content | design-lead |
-| `standards/engineering-standards.md` | all of engineering | tech-lead |
-| `standards/marketing-standards.md` | marketing + content + SEO | marketing-lead |
-| `protocols/dispatch.md` | every agent before delegating | rare; protocol changes |
-| `plans/PHASE_*.md` | when relevant | rare; phase planning |
+| Path                                 | Read by                       | Written by                                    |
+| ------------------------------------ | ----------------------------- | --------------------------------------------- |
+| `features/<slug>.md`                 | everyone                      | section-by-section per writer-ownership table |
+| `features/_template.md`              | `/new-feature`                | rarely                                        |
+| `kanban/company.md`                  | everyone                      | dispatcher only                               |
+| `kanban/engineering.md`              | everyone                      | tech-lead only                                |
+| `kanban/design.md`                   | everyone                      | design-lead only                              |
+| `kanban/marketing.md`                | everyone                      | marketing-lead only                           |
+| `log/YYYY-MM-DD.md`                  | everyone                      | append-only by anyone                         |
+| `log/standups/YYYY-WW.md`            | everyone                      | `/standup`                                    |
+| `teams/<team>.md`                    | the team                      | that team's lead                              |
+| `standards/design-system.md`         | design + frontend + content   | design-lead                                   |
+| `standards/engineering-standards.md` | all of engineering            | tech-lead                                     |
+| `standards/marketing-standards.md`   | marketing + content + SEO     | marketing-lead                                |
+| `protocols/dispatch.md`              | every agent before delegating | rare; protocol changes                        |
+| `plans/PHASE_*.md`                   | when relevant                 | rare; phase planning                          |
 
 ## How to start a feature
 
