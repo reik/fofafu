@@ -8,12 +8,12 @@ team: company
 - [ ] [[features/backend-logger-util]] — chore closing MF-1 from reply-coach review: backend logger util + migrate the three known `console.*` sites
 - [ ] [[features/brand-contrast-fix]] — system-wide WCAG 1.4.3 fix: white-on-`color.brand.primary` is ~3.4:1; introduce `color.brand.primary.pressed` and migrate every CTA
 - [ ] [[features/moderation-report-block]] — community safety
-- [ ] [[features/playdates]] — fofa feature deferred at ultraplan time
 - [ ] [[features/mobile-expo-bootstrap]] — Phase 4 mobile
 
 ## In Progress
 
 ## Review
+- [ ] [[features/playdates]] — availability calendar + playdate request flow; engineering → review (128/128 backend, 109/109 frontend, tsc clean, 3 must-fix resolved); design/marketing sections pending
 - [ ] [[features/feed-avatars]] — author avatar (img or initial-letter circle, neutral placeholder for deleted families) next to display name on AnnouncementCard (Home/FamilyView/AnnouncementDetail); backend authorAvatarUrl via existing LEFT JOIN families on AnnouncementDTO; new shared Avatar component also adopted by FamilyHeader; backend 85/85, frontend 72/72, tsc clean both workspaces; code review 0 must-fix
 - [ ] [[features/ci-pipeline]] — GitHub Actions CI on push/PR; .github/workflows/ci.yml (Node 20, npm ci, typecheck + test --workspaces --if-present); engineering aggregated to Review, 4/4 ACs verified
 
