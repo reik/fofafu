@@ -6,7 +6,7 @@ read_by: [marketing-lead, content-writer, seo-specialist, growth-analyst, fronte
 
 # Marketing Standards
 
-The shared marketing spec. Positioning, voice, and SEO defaults that anyone writing for fofafu's public surface follows. Owned by the marketing-lead; read by anyone producing launch copy, page metadata, or external-facing strings.
+The shared marketing spec. Positioning, voice, and SEO defaults that anyone writing for fofafu's public surface follows. Owned by the [[agents/marketing-lead]]; read by [[agents/content-writer]], [[agents/seo-specialist]], [[agents/growth-analyst]], and [[agents/frontend-dev]] when wiring public-page metadata.
 
 ## Positioning
 
@@ -33,6 +33,6 @@ The shared marketing spec. Positioning, voice, and SEO defaults that anyone writ
 
 ## Ownership
 
-- Positioning changes go through the marketing-lead and are sanity-checked against the team mandate before they land here.
+- Positioning changes go through the [[agents/marketing-lead]] and are sanity-checked against [[teams/marketing]] before they land here.
 - Voice updates land here first, then propagate to any cached examples.
-- SEO defaults are the seo-specialist's territory; marketing-lead approves changes before they land.
+- SEO defaults are [[agents/seo-specialist]]'s territory; [[agents/marketing-lead]] approves changes before they land.

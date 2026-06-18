@@ -6,7 +6,7 @@ read_by: [ui-designer, ux-writer, a11y-auditor, frontend-dev, content-writer]
 
 # Fofafu Design System
 
-The shared design spec. Tokens, voice, and the north-star principles every team references when they touch UI, microcopy, or launch copy. Owned by the design-lead; read by anyone who renders or writes for the product surface.
+The shared design spec. Tokens, voice, and the north-star principles every team references when they touch UI, microcopy, or launch copy. Owned by the [[agents/design-lead]]; read by [[agents/ui-designer]], [[agents/ux-writer]], [[agents/a11y-auditor]], [[agents/frontend-dev]], and [[agents/content-writer]].
 
 *(This file is the team's source of truth for tokens. Update it when tokens change. The Figma reference below is canon for principles only.)*
 
@@ -16,7 +16,7 @@ The shared design spec. Tokens, voice, and the north-star principles every team 
 |---|---|---|
 | `color.surface.warm` | `#FFFBF5` | page background |
 | `color.surface.card` | `#FFFFFF` | card background |
-| `color.surface.subtle` | `#F4ECDF` | low-contrast hover/active fill for text-on-surface pills (e.g. `Edit` / `Keep mine` in chip action rows). A muted derivative of `color.surface.warm`. Introduced 2026-06-10 by design-lead for the reply-coach `CoachChip`; reusable wherever a chip needs a soft pill. |
+| `color.surface.subtle` | `#F4ECDF` | low-contrast hover/active fill for text-on-surface pills (e.g. `Edit` / `Keep mine` in chip action rows). A muted derivative of `color.surface.warm`. Introduced 2026-06-10 by [[agents/design-lead]] for the [[features/reply-coach]] `CoachChip`; reusable wherever a chip needs a soft pill. |
 | `color.ink.lead` | `#1F1B18` | primary text |
 | `color.ink.muted` | `#5E534B` | secondary text (use sparingly — weight, not gray) |
 | `color.brand.primary` | `#4D9463` | primary CTA pill |

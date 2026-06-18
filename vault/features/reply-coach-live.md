@@ -17,7 +17,7 @@ links:
 
 ## Problem
 
-`reply-coach` v1 shipped mock-first per its `## Decisions` block: a swappable `ClaudeClient` interface backed by `MockClaudeClient` returning three canonical fixtures. The endpoint, flag, rate limit, response shape, and tests all live behind that seam. This feature swaps the mock for the real Anthropic SDK so the coach can score arbitrary drafts in production, and lights up the two acceptance criteria carried over from v1: prompt caching and the `ANTHROPIC_API_KEY` boot-refusal.
+[[features/reply-coach]] v1 shipped mock-first per its `## Decisions` block: a swappable `ClaudeClient` interface backed by `MockClaudeClient` returning three canonical fixtures. The endpoint, flag, rate limit, response shape, and tests all live behind that seam. This feature swaps the mock for the real Anthropic SDK so the coach can score arbitrary drafts in production, and lights up the two acceptance criteria carried over from v1: prompt caching and the `ANTHROPIC_API_KEY` boot-refusal.
 
 Success = the live coach produces the same voice the canonical Microcopy Part 2 fixtures lock in; cache-hit rate is observable; and we can flip the flag on for a 50/50 holdback without burning a credit card.
 
