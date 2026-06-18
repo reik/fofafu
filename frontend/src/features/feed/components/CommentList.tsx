@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { deleteComment, feedKeys, type CommentDTO } from '@/api/announcements';
 import { EditIcon, TrashIcon } from '@/components/icons';
 import { formatAuthor } from '@/utils/formatAuthor';
+import { formatTimestamp } from '@/utils/formatTimestamp';
 import { CommentEditForm } from './CommentEditForm';
 
 interface Props {
@@ -51,8 +52,8 @@ export function CommentList({ comments }: Props) {
                       {formatAuthor(c.authorName)}
                     </span>
                   )}
-                <time className="font-mono uppercase tracking-wide">
-                  {new Date(c.createdAt).toLocaleString()}
+                <time className="text-[10px] font-mono tracking-wide">
+                  {formatTimestamp(c.createdAt)}
                 </time>
                 {isEdited && (
                   <span className="italic" aria-label="This comment was edited">(edited)</span>
