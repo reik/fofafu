@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { deleteAnnouncement, feedKeys, type AnnouncementDTO } from '@/api/announcements';
 import { EditIcon, OpenIcon, TrashIcon } from '@/components/icons';
 import { formatAuthor } from '@/utils/formatAuthor';
+import { formatTimestamp } from '@/utils/formatTimestamp';
 import { Avatar } from '@/components/Avatar';
 import { ReactionBar } from './ReactionBar';
 import { AnnouncementEditForm } from './AnnouncementEditForm';
@@ -42,8 +43,8 @@ export function AnnouncementCard({ announcement }: Props) {
                   {formatAuthor(announcement.authorName)}
                 </span>
               )}
-            <time className="font-mono uppercase tracking-wide text-ink-muted">
-              {new Date(announcement.createdAt).toLocaleString()}
+            <time className="text-[10px] font-mono tracking-wide text-ink-muted">
+              {formatTimestamp(announcement.createdAt)}
             </time>
           </div>
         </div>

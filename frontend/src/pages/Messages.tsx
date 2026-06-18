@@ -4,6 +4,7 @@ import { listThreads, messageKeys } from '@/api/messages';
 import { Layout } from '@/components/Layout';
 import { cn } from '@/utils/cn';
 import { formatAuthor } from '@/utils/formatAuthor';
+import { formatTimestamp } from '@/utils/formatTimestamp';
 
 export default function MessagesPage() {
   const { data, isPending, isError, error } = useQuery({
@@ -30,8 +31,8 @@ export default function MessagesPage() {
               <span className={cn('font-semibold truncate', !t.partnerName && 'italic text-ink-muted')}>
                 {formatAuthor(t.partnerName)}
               </span>
-              <time className="text-xs font-mono text-ink-muted">
-                {new Date(t.lastAt).toLocaleString()}
+              <time className="text-[10px] font-mono text-ink-muted">
+                {formatTimestamp(t.lastAt)}
               </time>
             </div>
             <div className="mt-1 flex items-center justify-between gap-3">
