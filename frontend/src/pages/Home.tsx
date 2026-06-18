@@ -2,10 +2,12 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/auth';
 import { Layout } from '@/components/Layout';
+import { Avatar } from '@/components/Avatar/Avatar';
 import { AnnouncementComposer } from '@/features/feed/components/AnnouncementComposer';
 import { AnnouncementCard } from '@/features/feed/components/AnnouncementCard';
 import { listAnnouncements, feedKeys, type FeedPage as FeedPageDTO } from '@/api/announcements';
 import { getRecentCommunity, communityKeys } from '@/api/community';
+import { getMyFamily, familyKeys } from '@/api/family';
 
 const COMMUNITY_LIMIT = 12;
 
@@ -28,6 +30,11 @@ export default function HomePage() {
     queryFn: () => getRecentCommunity(COMMUNITY_LIMIT),
   });
 
+  const myFamily = useQuery({
+    queryKey: familyKeys.me,
+    queryFn: getMyFamily,
+  });
+
   return (
     <Layout wide>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-[240px_minmax(0,1fr)_240px]">
@@ -35,12 +42,12 @@ export default function HomePage() {
           <section className="overflow-hidden rounded-lg bg-surface-card shadow-lift">
             <div className="h-14 bg-brand-primary/15" />
             <div className="-mt-7 flex flex-col items-center px-4 pb-5 text-center">
-              <div
-                aria-hidden="true"
-                className="flex h-14 w-14 items-center justify-center rounded-full border-4 border-surface-card bg-surface-warm text-2xl font-bold text-brand-primary"
-              >
-                {user ? initialBadge(user.name) : '?'}
-              </div>
+              <Avatar
+                avatarUrl={myFamily.data?.avatarUrl}
+                name={user?.name}
+                size="lg"
+                className="h-14 w-14 border-4 border-surface-card bg-surface-warm text-2xl font-bold"
+              />
               <div className="mt-2 font-semibold leading-tight">{user?.name ?? 'You'}</div>
               {user && (
                 <div className="mt-0.5 text-xs text-ink-muted">
