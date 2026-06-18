@@ -111,4 +111,5 @@ Only the dispatcher writes the `status` field on a feature file. Leads can reque
 - **Phase 1 (this commit):** repo + vault + agents + dispatcher + worked example.
 - **Phase 2:** port backend feature-by-feature through the dispatcher.
 - **Phase 3:** port frontend.
-- **Phase 4 (deferred):** Expo mobile.
+- **Phase 4 — Playdates (PR #21, 2026-06-17):** first net-new feature built natively in fofafu. Marks the shift from porting `fofa` to original product development. Availability calendar (week/month), add/edit/delete slots, view other families' free slots with overlap highlighting, send/accept/decline playdate requests. Full dispatcher run: engineering + design + marketing. 128/128 backend tests, 109/109 frontend tests, tsc clean.
+- **Phase 5 (deferred):** Expo mobile.
