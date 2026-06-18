@@ -1,5 +1,6 @@
 import type { MessageDTO } from '@/api/messages';
 import { cn } from '@/utils/cn';
+import { formatTimestamp } from '@/utils/formatTimestamp';
 
 interface Props {
   message: MessageDTO;
@@ -15,8 +16,8 @@ export function MessageBubble({ message }: Props) {
         )}
       >
         <p className="whitespace-pre-line text-sm">{message.content}</p>
-        <time className="mt-1 block text-[10px] font-mono uppercase tracking-wide text-ink-muted">
-          {new Date(message.createdAt).toLocaleString()}
+        <time className="mt-1 block text-[10px] font-mono tracking-wide text-ink-muted">
+          {formatTimestamp(message.createdAt)}
         </time>
       </div>
     </div>
