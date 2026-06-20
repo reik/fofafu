@@ -30,6 +30,11 @@
           {
             "type": "command",
             "command": "echo '[fofafu] Session start — read vault/protocols/dispatch.md before delegating. All work flows through /dispatch.'"
+          },
+          {
+            "type": "command",
+            "command": "npm run backup:db --workspace backend",
+            "async": true
           }
         ]
       }

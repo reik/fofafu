@@ -11,7 +11,8 @@
     "e2e:setup": "tsx src/migrate.ts && tsx scripts/seed-dummy.ts",
     "test": "node --import tsx --test --test-force-exit tests/*.test.ts",
     "test:run": "DB_PATH=:memory: NODE_ENV=test JWT_SECRET=test-secret-please-rotate node --import tsx --test --test-force-exit tests/*.test.ts",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "backup:db": "tsx scripts/backup-db.ts"
   },
   "dependencies": {
     "@types/multer": "^2.1.0",
