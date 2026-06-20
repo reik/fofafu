@@ -8,6 +8,7 @@ import { CommentList } from '@/features/feed/components/CommentList';
 import { CommentForm } from '@/features/feed/components/CommentForm';
 import { AnnouncementEditForm } from '@/features/feed/components/AnnouncementEditForm';
 import { EditIcon, TrashIcon } from '@/components/icons';
+import { formatTimestamp } from '@/utils/formatTimestamp';
 
 export default function AnnouncementDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -59,8 +60,8 @@ export default function AnnouncementDetailPage() {
     <Layout>
       <article className="space-y-3 rounded-lg bg-surface-card p-5 shadow-lift">
         <header className="flex items-center justify-between text-xs">
-          <time className="font-mono uppercase tracking-wide text-ink-muted">
-            {new Date(post.createdAt).toLocaleString()}
+          <time className="text-[10px] font-mono tracking-wide text-ink-muted">
+            {formatTimestamp(post.createdAt)}
           </time>
           {post.isAuthor && !editing && (
             <div className="flex items-center gap-3">

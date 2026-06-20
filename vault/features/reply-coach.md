@@ -24,7 +24,7 @@ Success = the coach reduces reported/edited-after-publish comments without makin
 
 ## Acceptance criteria
 
-- [ ] `POST /api/comments/coach` accepts a draft comment (+ optional thread context) and returns `{ verdict, categories, reasoning, rewrite }` per the contract in `vault/plans/PHASE_2.md`.
+- [ ] `POST /api/comments/coach` accepts a draft comment (+ optional thread context) and returns `{ verdict, categories, reasoning, rewrite }` per the contract in [[plans/PHASE_2]].
 - [ ] Endpoint is gated by `reply_coach_enabled` feature flag (defaults `false`); when off, returns `404` so the frontend can no-op cleanly.
 - [ ] Anthropic prompt caching is configured on the system block; cache-hit rate observable in response logs.
 - [ ] Per-user rate limit: 60 coach calls per hour; returns `429` past the limit.
@@ -42,13 +42,13 @@ Success = the coach reduces reported/edited-after-publish comments without makin
 
 ## Decisions
 
-- **Mock first** *(2026-06-03)*. v1 ships a swappable `ClaudeClient` interface returning canned responses (one neutral, one minimization, one savior-framing fixture at minimum). The real `@anthropic-ai/sdk` integration + `ANTHROPIC_API_KEY` plumbing + prompt caching lands as a follow-up feature (`reply-coach-live`) once this PR is in. Rationale: keeps the first PR free of API-key plumbing and live-call cost while still landing the endpoint, flag, rate limit, response shape, and tests.
+- **Mock first** *(2026-06-03)*. v1 ships a swappable `ClaudeClient` interface returning canned responses (one neutral, one minimization, one savior-framing fixture at minimum). The real `@anthropic-ai/sdk` integration + `ANTHROPIC_API_KEY` plumbing + prompt caching lands as a follow-up feature ([[features/reply-coach-live]]) once this PR is in. Rationale: keeps the first PR free of API-key plumbing and live-call cost while still landing the endpoint, flag, rate limit, response shape, and tests.
   - All acceptance criteria still apply EXCEPT the prompt-caching AC and the `ANTHROPIC_API_KEY` boot-refusal AC — both move to the live-SDK follow-up.
   - Tests run fully offline against the mock; no network calls.
 
 ## Open questions
 
-- Final list of categories (initial six are in `vault/plans/PHASE_2.md` — confirm during spec).
+- Final list of categories (initial six are in [[plans/PHASE_2]] — confirm during spec).
 - Reasoning string returned to the client: included in v1 response or held back until UI design lands?
 - Default rate limit (60/hour proposed) — tune after dogfood pass.
 - Cache-hit metadata in the response body vs. server logs only? *(deferred to the live-SDK follow-up)*
@@ -59,7 +59,7 @@ Success = the coach reduces reported/edited-after-publish comments without makin
 
 ### Backend
 
-**Mock-first v1.** Endpoint, flag, rate limit, fixtures, failure path, and tests all ship now. Live Anthropic SDK + key plumbing + prompt caching + boot-refusal AC defer to `reply-coach-live` per `## Decisions`.
+**Mock-first v1.** Endpoint, flag, rate limit, fixtures, failure path, and tests all ship now. Live Anthropic SDK + key plumbing + prompt caching + boot-refusal AC defer to [[features/reply-coach-live]] per `## Decisions`.
 
 #### Files
 
@@ -127,7 +127,7 @@ Frontend Zod schema (in `### Frontend`) already mirrors this exactly — `verdic
 - 60 calls per user per rolling 60-minute window. Keyed on `req.userId` (JWT sub).
 - Implementation: `Map<userId, number[]>` of unix-ms timestamps; on each call, drop stamps older than `now - WINDOW_MS`, then check length.
 - Past the limit: `429` + `Retry-After: <seconds-until-oldest-stamp-ages-out>`.
-- In-memory only — single-instance v1. Horizontal scaling (post-`reply-coach-live`) swaps to a shared store without changing the call site.
+- In-memory only — single-instance v1. Horizontal scaling (post-[[features/reply-coach-live]]) swaps to a shared store without changing the call site.
 - Mounted at the app level: the generic `express-rate-limit` 200/15min IP budget still applies on top of this per-user budget.
 
 #### Fixture matching rules
@@ -141,7 +141,7 @@ The mock matches `input.draft` against the three canonical strings exact-equal (
 | `You're such a saint for taking him in.` | C — `verdict: 'suggest'`, `categories: ['savior-framing']`, reasoning + rewrite per Microcopy Part 2 |
 | anything else | Fixture A (silent) |
 
-Exact match is deliberate. Fuzzy matching would paper over future system-prompt regressions when `reply-coach-live` lands and the live system prompt is graded against the same strings.
+Exact match is deliberate. Fuzzy matching would paper over future system-prompt regressions when [[features/reply-coach-live]] lands and the live system prompt is graded against the same strings.
 
 #### Privacy / logging
 
@@ -149,7 +149,7 @@ Exact match is deliberate. Fuzzy matching would paper over future system-prompt 
 - No DB writes. No file writes. Drafts and thread context exist only on the request stack during the handler.
 - The app-level error handler (`backend/src/index.ts`) doesn't inspect bodies, so no scrub middleware was needed at the route level.
 
-#### Deferred to `reply-coach-live`
+#### Deferred to [[features/reply-coach-live]]
 
 These ACs from the feature file are explicitly NOT shipped here and move to the live-SDK follow-up:
 
@@ -223,7 +223,7 @@ Request body: `{ draft: string, threadContext?: { postTitle: string, recentComme
 
 **Form integration.** `CommentForm` already uses React Hook Form + Zod per the project rules; the coach hook reads `watch('body')` to feed the debounce input and uses `setValue('body', ...)` from `Accept`/`Edit`. Field-level validation errors on the comment textarea continue to render as today and are unrelated to the chip.
 
-**Styling.** Tailwind utilities only, `cn()` for the chip's conditional states (visible / dismissed / accept-pending). No inline styles, no CSS modules. Visual tokens (color, radius, spacing) come from `vault/standards/design-system.md` via the existing tokens module — frontend-dev does not pick palette here.
+**Styling.** Tailwind utilities only, `cn()` for the chip's conditional states (visible / dismissed / accept-pending). No inline styles, no CSS modules. Visual tokens (color, radius, spacing) come from [[standards/design-system]] via the existing tokens module — frontend-dev does not pick palette here.
 
 **Testing (Phase 3).** Co-located `CoachChip.test.tsx` + `useCoach.test.ts`. Mock at the network boundary with MSW:
 - Renders nothing when API returns `verdict: 'ok'`.
@@ -237,7 +237,7 @@ Request body: `{ draft: string, threadContext?: { postTitle: string, recentComme
 
 ### Test plan
 
-**Scope.** Mock-first v1 only. The two deferred ACs from `## Decisions` (prompt caching, `ANTHROPIC_API_KEY` boot-refusal) are explicitly out of scope here and re-routed to `reply-coach-live`'s test plan. Everything else in `## Acceptance criteria` has at least one corresponding case in `backend/tests/coach.test.ts` and is exercised by `npm run -w backend test`.
+**Scope.** Mock-first v1 only. The two deferred ACs from `## Decisions` (prompt caching, `ANTHROPIC_API_KEY` boot-refusal) are explicitly out of scope here and re-routed to [[features/reply-coach-live]]'s test plan. Everything else in `## Acceptance criteria` has at least one corresponding case in `backend/tests/coach.test.ts` and is exercised by `npm run -w backend test`.
 
 #### 1. Coverage — AC → test mapping
 
@@ -250,8 +250,8 @@ All test names below are quoted verbatim from `backend/tests/coach.test.ts` unde
 | Per-user rate limit: 60 calls / rolling hour; over → `429` + `Retry-After` | `backend/tests/coach.test.ts` | `rate-limits at 60 calls per user per rolling hour (61st returns 429)` | integration | calls 1–60 succeed (200), call 61 returns 429, response carries a `Retry-After` header |
 | On Claude API failure → `200` with `{ verdict: "ok" }` (composer never blocks) | `backend/tests/coach.test.ts` | `returns the silent fallback (200 + verdict=ok) when the Claude client throws` | integration (stub client injected via `setClaudeClientForTests`) | even with `draft` exactly matching the minimization fixture, a throwing client yields 200 + verdict=ok + empty categories + null rewrite |
 | Coach inputs are NOT persisted; bodies scrubbed from log lines | covered structurally — see "Coverage gaps" §2.6 | (no test) | n/a | controller only logs `err.message`; no DB write path exists; flagged as a structural review item, not a test gap |
-| Anthropic prompt caching configured + cache-hit observable | **deferred to `reply-coach-live`** per `## Decisions` | n/a | n/a | n/a in v1 |
-| `ANTHROPIC_API_KEY` env-only; warn-if-absent-and-flag-off; refuse-boot-if-absent-and-flag-on | **deferred to `reply-coach-live`** per `## Decisions` | n/a | n/a | n/a in v1 |
+| Anthropic prompt caching configured + cache-hit observable | **deferred to [[features/reply-coach-live]]** per `## Decisions` | n/a | n/a | n/a in v1 |
+| `ANTHROPIC_API_KEY` env-only; warn-if-absent-and-flag-off; refuse-boot-if-absent-and-flag-on | **deferred to [[features/reply-coach-live]]** per `## Decisions` | n/a | n/a | n/a in v1 |
 
 Tests not bound to a single AC but covering contract surface:
 
@@ -263,13 +263,13 @@ Tests not bound to a single AC but covering contract surface:
 
 #### 2. Coverage gaps and risks
 
-Each gap below is paired with a disposition: **ship-as-is** (current shape is intentional), **patch-now** (add a test before this PR merges), or **defer-to-live** (re-evaluate when `reply-coach-live` lands).
+Each gap below is paired with a disposition: **ship-as-is** (current shape is intentional), **patch-now** (add a test before this PR merges), or **defer-to-live** (re-evaluate when [[features/reply-coach-live]] lands).
 
 1. **Oversized draft (`draft.length > 4000`)** — disposition: **patch-now (low cost)**. Zod schema declares `z.string().min(1).max(4000)`. The 400 path is covered by the `min` case but not the `max` case. Adding a single integration case asserting a 4001-char draft returns 400 is one line and locks the upper bound. Not blocking; nice-to-have before merge.
 2. **`threadContext.recentComments` cap (>10 items)** — disposition: **patch-now (low cost)**. Schema enforces `.max(10)`. No test exercises an 11-item array. Recommend a single case asserting 400. The spec contract documents `<=10`; without a test, future schema-shape drift wouldn't be caught.
 3. **`threadContext` field-length caps (`postTitle` >500, `author` >200, `body` >4000)** — disposition: **defer-to-live**. Three more cases for theoretical inputs the mock ignores anyway. Worth wiring when the live SDK actually forwards them and the upstream's own limits matter; until then the schema enforces them and the typecheck has read the schema.
-4. **Rate-limit window rollover** — disposition: **ship-as-is**. The 60→429 boundary is tested. Boundary on the *other* side (61st call succeeds after the oldest stamp ages out of the rolling window) would require `vi.useFakeTimers()` or threading a `now` argument through the controller. `rateLimit.ts` already accepts `now` as an arg (`consumeCoachCall(userId, now)`) — a unit test against the limiter directly (no Express) could assert rollover without time travel. Recommend adding `backend/tests/coachRateLimit.test.ts` in `reply-coach-live` when horizontal scaling forces re-validation; not worth blocking v1.
-5. **Concurrent rate-limit increments** — disposition: **ship-as-is**. Node single-threaded event loop + the limiter's pure-functional `consumeCoachCall` (no `await` between read and write to the bucket) means there's no realistic interleaving in a single instance. The horizontal-scaling case is explicitly a `reply-coach-live` problem per `### Backend` ("In-memory only — single-instance v1. Horizontal scaling swaps to a shared store without changing the call site"). No test needed in v1.
+4. **Rate-limit window rollover** — disposition: **ship-as-is**. The 60→429 boundary is tested. Boundary on the *other* side (61st call succeeds after the oldest stamp ages out of the rolling window) would require `vi.useFakeTimers()` or threading a `now` argument through the controller. `rateLimit.ts` already accepts `now` as an arg (`consumeCoachCall(userId, now)`) — a unit test against the limiter directly (no Express) could assert rollover without time travel. Recommend adding `backend/tests/coachRateLimit.test.ts` in [[features/reply-coach-live]] when horizontal scaling forces re-validation; not worth blocking v1.
+5. **Concurrent rate-limit increments** — disposition: **ship-as-is**. Node single-threaded event loop + the limiter's pure-functional `consumeCoachCall` (no `await` between read and write to the bucket) means there's no realistic interleaving in a single instance. The horizontal-scaling case is explicitly a [[features/reply-coach-live]] problem per `### Backend` ("In-memory only — single-instance v1. Horizontal scaling swaps to a shared store without changing the call site"). No test needed in v1.
 6. **No-persistence / log-scrub guarantee** — disposition: **ship-as-is (structural)**. There is no DB write path in `coach.controller.ts`, no file write, no append to any logger that takes `req.body`. The only `console.warn` in the failure path logs `{ message: err.message }` only — verified by reading the controller. A test that asserts "the draft does not appear in stdout" is brittle (it asserts a negative about the world); the structural argument is stronger. **If we want defensive coverage**: a test that injects a throwing client with a unique sentinel string in the draft and asserts the captured `console.warn` payload does not contain the sentinel would lock down the no-leak invariant cheaply. Recommended but not blocking.
 7. **`Retry-After` header value sanity** — disposition: **ship-as-is**. Current test asserts the header is *present* but not that the integer value is plausible (`>=1`, `<=3600`). The implementation in `rateLimit.ts` uses `Math.max(1, …)` and caps at the window width by construction, so the upper bound is sound. Optional tightening: assert `Number(over.headers.get('retry-after')) >= 1`.
 8. **`setClaudeClientForTests` exposure to production** — disposition: **ship-as-is with a structural note**. The hook lives in the production module (`backend/src/services/coach/claudeClient.ts`) and is exported alongside `getClaudeClient`. There is no conditional `if (process.env.NODE_ENV === 'test')` guard around the export. In practice this is fine — calling it from a production code path would be the bug, not the export's existence — but if `code-reviewer` flags this we'd accept a narrow patch that makes the symbol no-op outside of test (e.g. `if (process.env.NODE_ENV !== 'test') return;`). Not a defect in v1; flagging for awareness.
@@ -372,11 +372,11 @@ Of the 94, the `reply-coach feature` suite contributes 12 (all passing). No regr
 
 - [x] `POST /api/comments/coach` accepts draft + optional threadContext, returns `{ verdict, categories, reasoning, rewrite }` — confirmed; all four fields present in every fixture path, validated by Zod schema, locked by integration tests.
 - [x] Endpoint gated by `reply_coach_enabled` (defaults `false`); off → `404` — confirmed; `isReplyCoachEnabled()` returns `false` for any value other than the exact string `'true'`; gate runs before auth; two integration tests cover flag-off with and without JWT.
-- [ ] Anthropic prompt caching configured on system block — **deferred to `reply-coach-live`** per `## Decisions`. Not reviewed here.
+- [ ] Anthropic prompt caching configured on system block — **deferred to [[features/reply-coach-live]]** per `## Decisions`. Not reviewed here.
 - [x] Per-user rate limit: 60 calls / rolling hour; `429` + `Retry-After` past limit — confirmed; timestamp-based rolling window; keyed on JWT `sub` (`req.userId`), not IP; `Retry-After` header set; integration test exercises the 60 → 61 boundary.
 - [x] On Claude API failure → `200` with `{ verdict: "ok" }` — confirmed; `try/catch` wraps the client call; catch returns `SILENT_FALLBACK`; integration test injects a throwing stub.
 - [x] Coach inputs NOT persisted; bodies scrubbed from log lines — confirmed structurally: no DB writes, no file writes, no log call touches `req.body` or any user-supplied field; failure-path `console.warn` logs only `{ message }`; app-level error handler uses `_req` (unused); no request-logging middleware mounted.
-- [ ] `ANTHROPIC_API_KEY` env-only; warn/refuse-boot AC — **deferred to `reply-coach-live`** per `## Decisions`. Not reviewed here.
+- [ ] `ANTHROPIC_API_KEY` env-only; warn/refuse-boot AC — **deferred to [[features/reply-coach-live]]** per `## Decisions`. Not reviewed here.
 
 **Audit invariant confirmation**
 
@@ -410,7 +410,7 @@ No lint script is configured for the backend workspace (confirmed by qa-engineer
 
 ### Visual
 
-**Implementation deferred to Phase 3 frontend port** (matches `### Frontend`'s posture). This subsection is the spec the Phase 3 port reads to wire `CoachChip` against `vault/standards/design-system.md` tokens — no code, no screenshots.
+**Implementation deferred to Phase 3 frontend port** (matches `### Frontend`'s posture). This subsection is the spec the Phase 3 port reads to wire `CoachChip` against [[standards/design-system]] tokens — no code, no screenshots.
 
 #### 1. Component anatomy — `CoachChip`
 
@@ -447,7 +447,7 @@ No avatar, no icon, no close-X (Keep mine IS the close). No chevron-only collaps
 
 #### 2. Token references
 
-Pulled from `vault/standards/design-system.md`. All token names below are exact.
+Pulled from [[standards/design-system]]. All token names below are exact.
 
 **Surface & frame**
 
@@ -491,7 +491,7 @@ Pulled from `vault/standards/design-system.md`. All token names below are exact.
 
 **Contrast (closes a11y-auditor flag #4 — contrast)**
 
-Computed pairs against the current palette values in `vault/standards/design-system.md`:
+Computed pairs against the current palette values in [[standards/design-system]]:
 
 | Pair | Foreground | Background | Ratio | WCAG 2.2 AA |
 |---|---|---|---|---|
@@ -574,7 +574,7 @@ None of these block the spec; they are decisions the design-lead can take during
 
 Light editorial addendum from the design-lead aggregator pass — closes the four gaps `ui-designer` flagged in §5. No specialist subsection rewritten.
 
-1. **Secondary / tertiary pill variant — APPROVED Option A.** New token `color.surface.subtle` (`#F4ECDF`) added to `vault/standards/design-system.md` (§ Tokens — Color). Used as the hover/active fill for `chip.action.edit`, `chip.action.dismiss`, and `chip.reasoning.toggle`. Charter rule "Pill-only CTAs" stays intact — these remain pills; the new token only fills the hit area on hover. Rest state is still transparent. Reusable wherever a chip needs a soft pill.
+1. **Secondary / tertiary pill variant — APPROVED Option A.** New token `color.surface.subtle` (`#F4ECDF`) added to [[standards/design-system]] (§ Tokens — Color). Used as the hover/active fill for `chip.action.edit`, `chip.action.dismiss`, and `chip.reasoning.toggle`. Charter rule "Pill-only CTAs" stays intact — these remain pills; the new token only fills the hit area on hover. Rest state is still transparent. Reusable wherever a chip needs a soft pill.
 2. **Primary CTA hover darken AND text-contrast — ACCEPTED FOR THIS FEATURE; SYSTEM-WIDE FIX DEFERRED.** The `#FFFFFF` on `color.brand.primary` (`#4D9463`) pair at ~3.4:1 clears WCAG 1.4.11 (UI component, 3:1) which is the criterion that applies to the pill control as a whole. The 1.4.3 failure (4.5:1 for normal text) is real, but it is a **system-wide property of `color.brand.primary`** affecting every primary CTA in fofafu — coupling this feature to a brand-token revision would balloon scope and require a re-audit of every shipped surface. Disposition: ship the chip as specced; design-lead to request a new feature `brand-contrast-fix` (proposed action for the next dispatcher pass — to introduce `color.brand.primary.pressed` `~#3F7E54` as both hover state and the surface white text is computed against, then propagate). Tracked in design-lead's return notes.
 3. **Hairline divider colour — ACCEPTED AS ONE-OFF.** Phase 3 implements the reasoning-panel divider as `color.ink.muted` at ~12% opacity inline (Tailwind `border-[#5E534B]/[0.12]` or equivalent). No new `color.border.hairline` token until a second consumer appears; promote then.
 4. **Focus ring token — DEFERRED to a11y-auditor for the Phase 3 frontend port.** a11y-auditor's §4 already flagged this for the cross-platform focus pass; the chip inherits whatever ring token lands there. No chip-local override.
@@ -592,7 +592,7 @@ Net: one new token (`color.surface.subtle`) and one new feature request (`brand-
 
 ### Microcopy
 
-The coach's voice is the feature. These rules and strings are **canonical** — the mock fixtures freeze them now, and `reply-coach-live` must match this voice when the live Claude API ships.
+The coach's voice is the feature. These rules and strings are **canonical** — the mock fixtures freeze them now, and [[features/reply-coach-live]] must match this voice when the live Claude API ships.
 
 #### Part 1 — Voice rules (become the live system-prompt constraints)
 
@@ -673,7 +673,7 @@ Notes on the chip labels (these override the backend section's placeholder `Acce
 
 ---
 
-**Canonical note:** These voice rules and rewrite strings are canonical. `reply-coach-live` must match this voice when the live Claude API ships. Any drift between the live model's outputs and these fixtures is a bug in the system prompt, not a new direction.
+**Canonical note:** These voice rules and rewrite strings are canonical. [[features/reply-coach-live]] must match this voice when the live Claude API ships. Any drift between the live model's outputs and these fixtures is a bug in the system prompt, not a new direction.
 
 ### Accessibility
 
@@ -815,7 +815,7 @@ CTA pill: See how it works
 
 **Internal dev-log release note.**
 
-Shipped `POST /api/comments/coach` behind the `reply_coach_enabled` flag (mock client, advisory verdicts, 60/hr rate limit, no draft persistence); live SDK + key plumbing follow in `reply-coach-live`.
+Shipped `POST /api/comments/coach` behind the `reply_coach_enabled` flag (mock client, advisory verdicts, 60/hr rate limit, no draft persistence); live SDK + key plumbing follow in [[features/reply-coach-live]].
 
 ### SEO
 
@@ -829,7 +829,7 @@ Shipped `POST /api/comments/coach` behind the `reply_coach_enabled` flag (mock c
 
 #### 2. Future explainer page (proposal, Phase 3 or later — NOT shipping with this feature)
 
-When the live-SDK follow-up (`reply-coach-live`) lands and the coach is on for real users, we will want a public, indexable explainer page so foster-family communities, partner orgs, and curious press can understand what the coach is and what we do with drafts. Proposed slug:
+When the live-SDK follow-up ([[features/reply-coach-live]]) lands and the coach is on for real users, we will want a public, indexable explainer page so foster-family communities, partner orgs, and curious press can understand what the coach is and what we do with drafts. Proposed slug:
 
 - **Route:** `/help/reply-coach` (preferred — lives under a `/help/*` namespace we can reuse for future feature explainers and keeps the URL semantically clear that it's a docs page, not marketing).
 - **Alternate considered:** `/about/reply-coach` — rejected because `/about/*` should stay reserved for org-level pages (mission, team), not per-feature docs.
@@ -869,17 +869,17 @@ For v1 (this dispatch): **none of the above applies.** No meta tags, no OG image
 
 #### 6. Frontend SEO wiring (Phase 3+)
 
-Nothing to wire for v1. When `reply-coach-live` and/or the explainer page land, the Phase 3 frontend will add a `react-helmet-async` block to the explainer page only. The composer chip itself never sets any document-level meta — it's a sub-component of an already-`noindex` authenticated page.
+Nothing to wire for v1. When [[features/reply-coach-live]] and/or the explainer page land, the Phase 3 frontend will add a `react-helmet-async` block to the explainer page only. The composer chip itself never sets any document-level meta — it's a sub-component of an already-`noindex` authenticated page.
 
 #### Authenticated-views flag
 
-Per role conventions: **this entire feature surface is `noindex` by default in v1.** Documented here so the next dispatcher pass on `reply-coach-live` knows the explainer page is the first (and only) public SEO surface to consider.
+Per role conventions: **this entire feature surface is `noindex` by default in v1.** Documented here so the next dispatcher pass on [[features/reply-coach-live]] knows the explainer page is the first (and only) public SEO surface to consider.
 
 ### Growth
 
-**TL;DR — v1 (this dispatch) has nothing to measure yet.** The endpoint runs against `MockClaudeClient`, so any acceptance-rate number is a measurement of the fixture set, not of the model. This subsection defines the framework that `reply-coach-live` and the Phase 3 frontend port will wire into; it also draws a clear line at what does NOT ship now so the next dispatcher pass doesn't re-derive it.
+**TL;DR — v1 (this dispatch) has nothing to measure yet.** The endpoint runs against `MockClaudeClient`, so any acceptance-rate number is a measurement of the fixture set, not of the model. This subsection defines the framework that [[features/reply-coach-live]] and the Phase 3 frontend port will wire into; it also draws a clear line at what does NOT ship now so the next dispatcher pass doesn't re-derive it.
 
-#### 1. Primary metric (canonical, for `reply-coach-live`)
+#### 1. Primary metric (canonical, for [[features/reply-coach-live]])
 
 **Suggestion-acceptance rate**, defined as:
 
@@ -907,13 +907,13 @@ Both guardrails are **existing platform metrics** per the role conventions — n
 
 #### 3. Aggregate-only signal store
 
-**v1 (this dispatch): no store ships.** Recommended deferral to `reply-coach-live`. Rationale:
+**v1 (this dispatch): no store ships.** Recommended deferral to [[features/reply-coach-live]]. Rationale:
 
 - Aggregate counts collected against `MockClaudeClient` are noise — the fixture distribution does not reflect real draft distribution.
 - The ACs explicitly forbid persisting draft text (*"Coach inputs are NOT persisted; request bodies are scrubbed from any structured log line"*). The store proposed below honours that, but standing it up now means writing a table that has nothing real to record for the duration of v1.
 - Better: land the schema with the live-SDK PR so the first row written is also the first row with real signal.
 
-**Schema sketch (for `reply-coach-live` to land — flagged for the live-SDK PR's backend-dev):**
+**Schema sketch (for [[features/reply-coach-live]] to land — flagged for the live-SDK PR's backend-dev):**
 
 ```sql
 CREATE TABLE coach_events (
@@ -938,7 +938,7 @@ CREATE INDEX idx_coach_events_verdict_outcome ON coach_events(verdict, outcome);
 
 The table records *that* a coach call happened and *how the author responded* — nothing about *what was said*. The `category` field stores the model's classification label only (e.g. `"minimization"`, `"savior-framing"`) — these are taxonomic, not user content.
 
-**Write paths (for `reply-coach-live`):**
+**Write paths (for [[features/reply-coach-live]]):**
 
 1. Backend writes one row per coach call at endpoint exit (verdict + category, outcome=NULL).
 2. Frontend writes the outcome via a separate lightweight `POST /api/comments/coach/outcome` endpoint (or PATCH on the original row's id, returned in the v1 response) when the user clicks Accept / Edit / Dismiss, or after a 60s no-action timeout fires `outcome=no-action`.
@@ -949,7 +949,7 @@ The table records *that* a coach call happened and *how the author responded* �
 | Flag | Scope | Owner | Status |
 |---|---|---|---|
 | `reply_coach_enabled` | v1 (this dispatch) — gates `POST /api/comments/coach` existence | already exists per ACs | rollout plan below |
-| `reply_coach_live_enabled` | `reply-coach-live` — gates the live SDK call path | flagged for the follow-up feature's growth section | n/a for v1 |
+| `reply_coach_live_enabled` | [[features/reply-coach-live]] — gates the live SDK call path | flagged for the follow-up feature's growth section | n/a for v1 |
 
 **v1 rollout plan for `reply_coach_enabled`** (mock-only, no API cost, no PII leakage risk):
 
@@ -961,15 +961,15 @@ The table records *that* a coach call happened and *how the author responded* �
 | 50% | 50% | same gates as above, held for 1 week |
 | 100% | 100% | held for 1 week; no surge in support tickets referencing the chip |
 
-**Why fast rollout is safe for v1 specifically:** the mock client has no per-call cost, no rate-limit risk against an upstream, and the chip is hidden behind the Phase 3 frontend port. Effectively the v1 flag controls a JSON endpoint that nothing consumes yet. The 50% and 100% stages here are forward-leaning — they de-risk the `reply-coach-live` rollout, which uses the same flag-shape but with real Claude API calls.
+**Why fast rollout is safe for v1 specifically:** the mock client has no per-call cost, no rate-limit risk against an upstream, and the chip is hidden behind the Phase 3 frontend port. Effectively the v1 flag controls a JSON endpoint that nothing consumes yet. The 50% and 100% stages here are forward-leaning — they de-risk the [[features/reply-coach-live]] rollout, which uses the same flag-shape but with real Claude API calls.
 
-**Forward-looking note for `reply-coach-live`:** `reply_coach_live_enabled` is the right cutover seam (separate flag from `reply_coach_enabled`, ANDed: the endpoint requires `reply_coach_enabled=true` to exist at all and `reply_coach_live_enabled=true` to call the live SDK instead of the mock). Rollout there should be much more conservative (off → 5% → 25% → 50% holdback experiment — see §5).
+**Forward-looking note for [[features/reply-coach-live]]:** `reply_coach_live_enabled` is the right cutover seam (separate flag from `reply_coach_enabled`, ANDed: the endpoint requires `reply_coach_enabled=true` to exist at all and `reply_coach_live_enabled=true` to call the live SDK instead of the mock). Rollout there should be much more conservative (off → 5% → 25% → 50% holdback experiment — see §5).
 
 #### 5. Experiment design
 
 **v1 (this dispatch): no experiment.** Mock outputs are deterministic per draft; A/B testing fixture responses measures nothing.
 
-**`reply-coach-live` (forward-looking, flagged for that feature's growth section):**
+**[[features/reply-coach-live]] (forward-looking, flagged for that feature's growth section):**
 
 - **Design:** 50/50 holdback by `user_id` hash, gated by `reply_coach_live_enabled`. Treatment group hits the live Claude API; control group sees no chip (the endpoint returns `verdict: "ok"` unconditionally for control users — same shape as flag-off, same silent UX).
 - **Read horizon:** **8 weeks minimum.** Foster-community traffic is light; weekly comment-publish counts per active user are in the low-double-digits range. Counter-metric (reported-comment delta) is even sparser. An 8-week window is needed to get the standard error on acceptance rate below 5pp at the expected suggest-rate share of total drafts.
@@ -980,7 +980,7 @@ The table records *that* a coach call happened and *how the author responded* �
 
 **v1: N/A** — mock client has no upstream API cost.
 
-**`reply-coach-live` (canonical target, so the live-SDK PR doesn't re-derive):**
+**[[features/reply-coach-live]] (canonical target, so the live-SDK PR doesn't re-derive):**
 
 - **Per-day org-level Anthropic API spend cap: $5/day** (tune upward as confidence grows). When the daily cumulative spend across all users exceeds the cap, the `reply_coach_live_enabled` flag silently degrades to off for the rest of the calendar day (UTC) — the endpoint reverts to returning `verdict: "ok"` for live-flag users, falling back to the same silent UX as control/flag-off.
 - **Why silent degradation:** surfacing a "coach unavailable" state to the author would teach users to notice the chip's absence, which is the opposite of the *"silent on neutral drafts"* design contract. Better to degrade indistinguishably from the neutral case.
@@ -988,9 +988,9 @@ The table records *that* a coach call happened and *how the author responded* �
 
 #### 7. Reporting cadence
 
-**v1: nothing to report.** No standup digest entry for `reply-coach` until `reply-coach-live` ships and the signal store has at least one full 7-day window of data.
+**v1: nothing to report.** No standup digest entry for `reply-coach` until [[features/reply-coach-live]] ships and the signal store has at least one full 7-day window of data.
 
-**`reply-coach-live` onward:** weekly digest line appended to `vault/log/standups/YYYY-WW.md` under the Marketing section, format:
+**[[features/reply-coach-live]] onward:** weekly digest line appended to `vault/log/standups/YYYY-WW.md` under the Marketing section, format:
 
 ```
 - coach: acceptance <NN%> (Δ <±NN%> wow); reports Δ <±NN>; publish rate <NN%>; flag at <NN%>
@@ -1005,17 +1005,17 @@ Per role conventions, growth-analyst owns the post-ship adoption number. For v1 
 - **Sanity signal:** count of `POST /api/comments/coach` requests per day, scoped to non-404 responses (i.e. responses where `reply_coach_enabled=true` for the requesting user). Source: existing backend access logs — no new instrumentation needed.
 - **Expected behaviour in v1:** this count will be **zero** until the Phase 3 frontend port lands the composer chip. That zero is the correct reading and not a regression.
 - **What to actually watch in v1:** confirm the flag is not accidentally off in staging by manually hitting the endpoint after each deploy. If a real client (a Phase 3 preview branch, a curl smoke test) starts hitting it and we see 404s, the flag has drifted off — that's the only alert worth wiring for v1.
-- **Adoption proper** (users-shown-chip / weekly-active-commenters) is a Phase 3 + `reply-coach-live` joint metric and is out of scope for v1.
+- **Adoption proper** (users-shown-chip / weekly-active-commenters) is a Phase 3 + [[features/reply-coach-live]] joint metric and is out of scope for v1.
 
 #### 9. Out of scope for v1 (explicit)
 
-- No experiment infrastructure (deferred to `reply-coach-live` per §5).
+- No experiment infrastructure (deferred to [[features/reply-coach-live]] per §5).
 - No `coach_events` table migration (deferred per §3).
-- No `reply_coach_live_enabled` flag (deferred — that's a `reply-coach-live` deliverable).
+- No `reply_coach_live_enabled` flag (deferred — that's a [[features/reply-coach-live]] deliverable).
 - No spend cap enforcement (no spend exists in v1 per §6).
 - No standup digest line for this feature this week or next (per §7).
 
 #### Flagged for marketing-lead
 
-- The `reply-coach-live` follow-up feature's growth section will need to (a) land the `coach_events` table migration, (b) introduce `reply_coach_live_enabled`, (c) wire the $5/day cost cap with silent degradation, (d) start the 8-week 50/50 holdback experiment, and (e) begin the weekly standup digest line. All five are canonicalised here so the follow-up's growth-analyst pass is a re-statement, not a re-derivation.
-- Counter-metric (reported-comment delta) requires the `moderation_reports` table to have a column linking a report back to the composer-instance it was authored from. If it doesn't today, that's a small schema add the `reply-coach-live` backend pass needs to include — flag for tech-lead during that dispatch.
+- The [[features/reply-coach-live]] follow-up feature's growth section will need to (a) land the `coach_events` table migration, (b) introduce `reply_coach_live_enabled`, (c) wire the $5/day cost cap with silent degradation, (d) start the 8-week 50/50 holdback experiment, and (e) begin the weekly standup digest line. All five are canonicalised here so the follow-up's growth-analyst pass is a re-statement, not a re-derivation.
+- Counter-metric (reported-comment delta) requires the `moderation_reports` table to have a column linking a report back to the composer-instance it was authored from. If it doesn't today, that's a small schema add the [[features/reply-coach-live]] backend pass needs to include — flag for tech-lead during that dispatch.

@@ -3,9 +3,11 @@ kanban-plugin: basic
 team: marketing
 ---
 
+> Navigation: [[kanban/company]] · [[teams/marketing]] · [[standards/marketing-standards]]
 ## Backlog
 
 ## In Progress
+- [ ] [[features/playdates]] @marketing — launch copy + growth metric for the new /playdates page and cross-family request flow
 
 ## Review
 
