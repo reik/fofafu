@@ -3,7 +3,7 @@ slug: ci-pipeline
 title: CI Pipeline
 owner: engineering            # primary team: engineering | design | marketing
 collaborators: []             # additional teams; dispatcher infers if empty
-status: review                 # drafting | speced | building | review | shipped | blocked | abandoned
+status: shipped                # drafting | speced | building | review | shipped | blocked | abandoned
 priority: P2
 created: 2026-06-13
 target: null                  # YYYY-MM-DD or null
