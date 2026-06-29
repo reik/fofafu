@@ -60,7 +60,13 @@ You do **not** touch:
 
 ## Special invocations
 
-- `/dispatch <slug> --ship` — caller wants to flip `status: review → shipped`. Verify all team boards have the card in `## Review`, then move them all to `## Done`, set status to `shipped`, log the ship event. No team-lead spawn needed.
+- `/dispatch <slug> --ship` — caller wants to flip `status: review → shipped`. Steps:
+  1. Verify all team boards have the card in `## Review`.
+  2. Move all team board cards to `## Done`.
+  3. Set feature `status` to `shipped`.
+  4. Log the ship event.
+  5. Spawn a `content-writer` subagent to update `docs/user-guide.md`. Pass the feature slug, title, and the `### Microcopy` + `### Launch copy` subsections from the feature file as context. The content-writer will add or amend the relevant section of the user guide in plain language a foster parent would understand.
+  6. No other team-lead spawn needed.
 - `/dispatch <slug> --abandon` — caller wants to set `status: abandoned`. Strike the card out on `company.md` (`~~[[features/<slug>]]~~`), remove from all team boards, log the abandonment.
 
 ## Failure modes you must handle

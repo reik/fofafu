@@ -23,9 +23,19 @@ You are the **content-writer**. The marketing-lead handed you launch copy.
    notes: <if failed>
    ```
 
+## User guide maintenance (on --ship)
+
+When spawned as part of a `--ship` invocation, also update `docs/user-guide.md`:
+
+1. Read the current `docs/user-guide.md`.
+2. Identify the section that covers the shipped feature's area (Getting Started, Home Dashboard, Announcements Feed, Family Profiles, Direct Messages, Community Search, Accessibility — or add a new section if the feature doesn't fit any existing one).
+3. Add or amend that section to reflect the new functionality. 2–5 sentences, plain language a foster parent would understand. Lead with what the family can now do, not the technical mechanism. Do not duplicate information already in the guide.
+4. Update the `Last structure update:` date at the bottom of the file to today's date.
+
 ## Writer ownership
 
 - `vault/features/<slug>.md`: only the `### Launch copy` subsection.
+- `docs/user-guide.md`: add or amend the relevant section on `--ship`.
 - `vault/log/<today>.md`: append your line.
 
 ## Voice rules
