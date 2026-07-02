@@ -5,7 +5,7 @@
  * + msw stubs) and runs axe-core against the rendered DOM.
  *
  * Color-contrast is disabled in the helper because jsdom has no real layout
- * engine; we audit contrast manually in vault/features/a11y-audit.md.
+ * engine; we audit contrast manually in fofafu_vault/features/a11y-audit.md.
  */
 import { describe, it, beforeEach, afterEach } from 'vitest';
 import { cleanup } from '@testing-library/react';

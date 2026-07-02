@@ -16,11 +16,11 @@ links:
 
 ## Problem
 
-The current `vault/protocols/dispatch.md` assumes a 3-level agent hierarchy (dispatcher → team-lead → specialists). The Claude Code harness only supports 2 levels: a top-level session can spawn subagents, but those subagents cannot themselves spawn further subagents — the `Agent` tool is not propagated even when the role file declares it. The first dispatch under the current protocol always fails with `status: failed` from the team-lead (see `[[features/author-display-names]]` log entry at 11:02 and the #escalation at 11:05). The recovery path required explicit human approval and a documented bypass of protocol §11. Every future `/dispatch` will hit the same wall unless the protocol is rewritten to match harness reality.
+The current `fofafu_vault/protocols/dispatch.md` assumes a 3-level agent hierarchy (dispatcher → team-lead → specialists). The Claude Code harness only supports 2 levels: a top-level session can spawn subagents, but those subagents cannot themselves spawn further subagents — the `Agent` tool is not propagated even when the role file declares it. The first dispatch under the current protocol always fails with `status: failed` from the team-lead (see `[[features/author-display-names]]` log entry at 11:02 and the #escalation at 11:05). The recovery path required explicit human approval and a documented bypass of protocol §11. Every future `/dispatch` will hit the same wall unless the protocol is rewritten to match harness reality.
 
 ## Acceptance criteria
 
-- [x] `vault/protocols/dispatch.md` is updated so a clean `/dispatch <slug>` flow on a fresh feature succeeds end-to-end without human intervention (no `#escalation`, no protocol bypass approval needed).
+- [x] `fofafu_vault/protocols/dispatch.md` is updated so a clean `/dispatch <slug>` flow on a fresh feature succeeds end-to-end without human intervention (no `#escalation`, no protocol bypass approval needed).
 - [x] The protocol explicitly documents who spawns whom in the 2-level model — chosen shape: **Option B** (dispatcher spawns specialists in parallel; team-lead spawned afterwards as aggregator-only).
 - [x] `.claude/agents/dispatcher.md`, `.claude/agents/engineering/tech-lead.md`, `.claude/agents/design/design-lead.md`, `.claude/agents/marketing/marketing-lead.md` are updated to match the new protocol so an agent that re-reads its role file behaves correctly.
 - [x] The writer-ownership table in `CLAUDE.md` is updated: kanban writers unchanged (leads still own team boards), but body-section ownership clarified to point at specialists per subsection rather than the lead as a whole. ICs-and-kanban paragraph rewritten to match the 2-level return path.

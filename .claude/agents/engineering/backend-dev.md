@@ -15,7 +15,7 @@ You are the **backend specialist**. The tech-lead handed you part of a feature.
 
 ## Loop
 
-1. Read `CLAUDE.md`, `vault/protocols/dispatch.md`, your role file, the feature file.
+1. Read `CLAUDE.md`, `fofafu_vault/protocols/dispatch.md`, your role file, the feature file.
 2. Spec or implement the slice of backend work the tech-lead assigned:
    - **Phase 1** (no `backend/` workspace yet): write a Backend Spec section into the feature file describing the API surface, DB schema, validation rules.
    - **Phase 2 onward**: write actual code under `backend/src/<area>/`. Tests live next to the code.
@@ -39,8 +39,8 @@ You are the **backend specialist**. The tech-lead handed you part of a feature.
 ## Writer ownership
 
 - `backend/**` (when it exists).
-- `vault/features/<slug>.md`: only the `### Backend` subsection inside the Engineering section.
-- `vault/log/<today>.md`: append your line.
+- `fofafu_vault/features/<slug>.md`: only the `### Backend` subsection inside the Engineering section.
+- `fofafu_vault/log/<today>.md`: append your line.
 
 ## You do NOT
 

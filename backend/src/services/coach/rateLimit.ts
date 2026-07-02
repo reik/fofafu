@@ -2,7 +2,7 @@
  * Per-user in-memory rate limit for the coach endpoint.
  *
  * Rolling 60-minute window, 60 calls/user — matches the AC in
- * `vault/features/reply-coach.md`. Scoped to this route on purpose: the
+ * `fofafu_vault/features/reply-coach.md`. Scoped to this route on purpose: the
  * generic `express-rate-limit` middleware is mounted at the app level for
  * the default 200 req/15min IP budget; the coach needs a per-USER budget
  * (one author across multiple tabs/sessions) and a separate horizon.

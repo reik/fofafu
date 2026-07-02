@@ -42,7 +42,7 @@ These are listed here for the retro narrative, not as remaining work.
 ### In scope (closing Phase 2)
 
 1. **Reply coach feature** (new):
-   - Feature file: `vault/features/reply-coach.md` *(scaffolded 2026-06-03)*
+   - Feature file: `fofafu_vault/features/reply-coach.md` *(scaffolded 2026-06-03)*
    - Backend: `POST /api/comments/coach` — accepts a draft comment + thread context, returns `{ verdict: "ok" | "suggest", reasoning: string, rewrite?: string, categories?: string[] }`
    - Anthropic SDK integration with **prompt caching** on the system prompt (warmth/voice rules + foster-context anti-patterns) — keeps cost down on hot paths
    - Server-side rate limiting per user (coach calls are cheap individually, expensive in aggregate)
@@ -89,7 +89,7 @@ Content-Type: application/json
 
 - Coach is **advisory, never blocking**. The composer always lets the user publish their original draft.
 - Coach is **silent on neutral comments**. `verdict=ok` returns nothing visible to the user; no banner, no green check.
-- Coach speaks **warmly, briefly, and never lectures**. Voice rules live in `vault/standards/design-system.md` and are extended for this feature in the spec.
+- Coach speaks **warmly, briefly, and never lectures**. Voice rules live in `fofafu_vault/standards/design-system.md` and are extended for this feature in the spec.
 - Coach **does not moderate opinions** — it flags phrasings known to land badly in foster contexts, not viewpoints.
 
 ### Categories it watches for (initial list — refined during spec phase)
@@ -123,7 +123,7 @@ Content-Type: application/json
 | 2d | `/dispatch messaging-dms` | ✅ shipped |
 | 2e | `/dispatch community-search` | ✅ shipped |
 | 2f | `/new-feature reply-coach` → `/dispatch reply-coach` | feature file scaffolded 2026-06-03; dispatch pending |
-| 2g | Phase 2 retro into `vault/log/standups/` | pending — runs after 2f ships |
+| 2g | Phase 2 retro into `fofafu_vault/log/standups/` | pending — runs after 2f ships |
 
 2f is the only remaining build sub-phase. It depends on the announcements feed (2b) for end-to-end testing against real comment shapes, which is already in place.
 
@@ -141,7 +141,7 @@ Content-Type: application/json
 ## Exit criteria for Phase 2
 
 - ✅ All five backend feature ports merged, tested, and visible on the engineering kanban in `Done`.
-- `vault/features/reply-coach.md` is `shipped`; coach endpoint live behind the flag; sample-output review documented in the feature spec's `### Test plan`.
+- `fofafu_vault/features/reply-coach.md` is `shipped`; coach endpoint live behind the flag; sample-output review documented in the feature spec's `### Test plan`.
 - Anthropic key handling, rate limiting, and prompt-caching configuration are documented in `backend/README.md`.
 - Growth-analyst has recorded the baseline metric (calls/day, cache hit rate, cost/day, suggestion-acceptance rate) in the feature spec's `### Growth` section.
 - Phase 2 retro written into the standup log for the closing week.

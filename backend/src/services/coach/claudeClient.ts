@@ -12,7 +12,7 @@ export interface ClaudeClient {
 
 /**
  * Canonical fixtures, mirrored byte-for-byte from
- * `vault/features/reply-coach.md` -> `### Microcopy` Part 2.
+ * `fofafu_vault/features/reply-coach.md` -> `### Microcopy` Part 2.
  *
  * Any drift here is a bug in this file, not a redesign. When `reply-coach-live`
  * lands, the live system prompt is graded against the SAME strings.
