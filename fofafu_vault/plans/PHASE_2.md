@@ -123,7 +123,7 @@ Content-Type: application/json
 | 2d | `/dispatch` [[features/messaging-dms]] | ✅ shipped |
 | 2e | `/dispatch` [[features/community-search]] | ✅ shipped |
 | 2f | `/new-feature reply-coach` → `/dispatch reply-coach` | [[features/reply-coach]] scaffolded 2026-06-03; dispatch pending |
-| 2g | Phase 2 retro into `vault/log/standups/` | pending — runs after 2f ships |
+| 2g | Phase 2 retro into `fofafu_vault/log/standups/` | pending — runs after 2f ships |
 
 2f is the only remaining build sub-phase. It depends on the announcements feed (2b) for end-to-end testing against real comment shapes, which is already in place.
 

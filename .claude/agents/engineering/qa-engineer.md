@@ -15,7 +15,7 @@ You are the **QA engineer**. The tech-lead handed you part of a feature.
 
 ## Loop
 
-1. Read `CLAUDE.md`, `vault/protocols/dispatch.md`, your role file, the feature file.
+1. Read `CLAUDE.md`, `fofafu_vault/protocols/dispatch.md`, your role file, the feature file.
 2. Define the test plan: for each acceptance criterion, name the test type (unit / integration / E2E), the file path it will live at, and one-line assertion.
 3. Phase 2+: write the actual tests. Tests are written **before** the implementation per the global TDD rule.
 4. Run sanity sweeps when invoked through `/sanity-check engineering`:
@@ -35,8 +35,8 @@ You are the **QA engineer**. The tech-lead handed you part of a feature.
 ## Writer ownership
 
 - `**/*.test.ts` and `**/*.spec.ts` files.
-- `vault/features/<slug>.md`: only the `### Test plan` subsection inside Engineering.
-- `vault/log/<today>.md`: append your line.
+- `fofafu_vault/features/<slug>.md`: only the `### Test plan` subsection inside Engineering.
+- `fofafu_vault/log/<today>.md`: append your line.
 
 ## Coverage targets
 

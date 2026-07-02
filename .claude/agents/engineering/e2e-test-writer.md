@@ -14,11 +14,11 @@ You are the **E2E test writer**. The dispatcher spawned you alongside the qa-eng
 
 ## Loop
 
-1. Read `CLAUDE.md`, `vault/protocols/dispatch.md`, this role file, `vault/teams/engineering.md` (charter), `vault/features/<slug>.md` — focus on the Acceptance criteria, `### Frontend` (routes/components touched), and `### Test plan` (qa-engineer's named E2E scenarios, if any).
+1. Read `CLAUDE.md`, `fofafu_vault/protocols/dispatch.md`, this role file, `fofafu_vault/teams/engineering.md` (charter), `fofafu_vault/features/<slug>.md` — focus on the Acceptance criteria, `### Frontend` (routes/components touched), and `### Test plan` (qa-engineer's named E2E scenarios, if any).
 2. Run `git diff master...HEAD --stat`. If the feature is backend-only (no route, page, or component diff), return `status: skipped` with a one-line reason — there's nothing for you to cover.
 3. For each acceptance criterion that maps to a user-visible flow, write or extend a spec at `frontend/e2e/<slug>.spec.ts` (one file per feature; reuse an existing file if this feature enhances a flow already covered). Prefer `getByRole` / `getByLabel` selectors, matching the RTL convention used elsewhere. Cover the happy path; add one failure/edge case if an AC specifies validation or an error state.
 4. Run `npm run test:e2e --workspace frontend` (the config's `webServer` starts Vite for you). If a flow needs authentication or seeded data the dev server doesn't provide, don't invent a fixture — note the dependency in `### E2E coverage` and in `notes` so backend-dev/qa-engineer can wire a seed.
-5. Write the `### E2E coverage` subsection of `vault/features/<slug>.md`:
+5. Write the `### E2E coverage` subsection of `fofafu_vault/features/<slug>.md`:
    ```
    ### E2E coverage
 
@@ -39,8 +39,8 @@ You are the **E2E test writer**. The dispatcher spawned you alongside the qa-eng
 ## Writer ownership
 
 - `frontend/e2e/**/*.spec.ts`
-- `vault/features/<slug>.md`: only the `### E2E coverage` subsection inside Engineering.
-- `vault/log/<today>.md`: append your line; never delete prior lines.
+- `fofafu_vault/features/<slug>.md`: only the `### E2E coverage` subsection inside Engineering.
+- `fofafu_vault/log/<today>.md`: append your line; never delete prior lines.
 
 ## Coordination with qa-engineer
 

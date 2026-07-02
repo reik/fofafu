@@ -990,7 +990,7 @@ The table records *that* a coach call happened and *how the author responded* �
 
 **v1: nothing to report.** No standup digest entry for `reply-coach` until [[features/reply-coach-live]] ships and the signal store has at least one full 7-day window of data.
 
-**[[features/reply-coach-live]] onward:** weekly digest line appended to `vault/log/standups/YYYY-WW.md` under the Marketing section, format:
+**[[features/reply-coach-live]] onward:** weekly digest line appended to `fofafu_vault/log/standups/YYYY-WW.md` under the Marketing section, format:
 
 ```
 - coach: acceptance <NN%> (Δ <±NN%> wow); reports Δ <±NN>; publish rate <NN%>; flag at <NN%>

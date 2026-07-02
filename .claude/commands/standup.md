@@ -1,5 +1,5 @@
 ---
-description: "Aggregate this week's log entries and current kanban state into vault/log/standups/YYYY-WW.md."
+description: "Aggregate this week's log entries and current kanban state into fofafu_vault/log/standups/YYYY-WW.md."
 argument-hint: ""
 ---
 
@@ -8,9 +8,9 @@ argument-hint: ""
 You have been invoked via `/standup`.
 
 1. Determine the current ISO week: `<YYYY>-W<WW>`.
-2. Read every `vault/log/YYYY-MM-DD.md` for the dates in this ISO week (Mon–Sun).
+2. Read every `fofafu_vault/log/YYYY-MM-DD.md` for the dates in this ISO week (Mon–Sun).
 3. Read all four kanban files (`engineering.md`, `design.md`, `marketing.md`, `company.md`).
-4. Write `vault/log/standups/<YYYY-WW>.md` with this structure:
+4. Write `fofafu_vault/log/standups/<YYYY-WW>.md` with this structure:
 
 ```markdown
 # Standup — Week <WW> of <YYYY> (<Mon>–<Sun>)

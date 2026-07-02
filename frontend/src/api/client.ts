@@ -47,6 +47,12 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     window.location.href = '/login';
     return new Promise<never>(() => {});
   }
+  if (res.status === 401 && !path.startsWith('/auth/')) {
+    useAuthStore.getState().clear();
+    window.location.href = '/login';
+    return new Promise<never>(() => {});
+  }
+
   if (!res.ok) {
     throw new ApiError({
       status: res.status,
