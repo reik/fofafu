@@ -276,7 +276,7 @@ export default function PlaydatesPage() {
             <h2 className="font-semibold text-[1.1rem] text-ink-lead">Playdate Requests</h2>
             {pendingIncoming.length > 0 && (
               /* color.request.pending bg+fg */
-              <span className="text-[0.72rem] font-bold bg-[#FBF1DC] text-[#A8732A] px-2 py-[2px] rounded-full">
+              <span className="text-[0.72rem] font-bold bg-[#FBF1DC] text-[#8A5D1F] px-2 py-[2px] rounded-full">
                 {pendingIncoming.length} pending
               </span>
             )}

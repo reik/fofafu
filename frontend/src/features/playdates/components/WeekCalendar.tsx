@@ -75,15 +75,15 @@ export function WeekCalendar({
   });
 
   return (
-    <div className="overflow-x-auto rounded bg-surface-card shadow-lift border border-[#EDE3D4]">
-      {/* color.border.subtle = #EDE3D4 */}
+    <div className="overflow-x-auto rounded bg-surface-card shadow-lift border border-[#C9B896]">
+      {/* color.neutral.200 = #C9B896 (structural grid borders, ≥3:1) */}
 
       {/* Header row */}
       <div
-        className="grid border-b border-[#EDE3D4]"
+        className="grid border-b border-[#C9B896]"
         style={{ gridTemplateColumns: `${LABEL_COL}px repeat(7, minmax(80px, 1fr))` }}
       >
-        <div className="border-r border-[#EDE3D4]" />
+        <div className="border-r border-[#C9B896]" />
         {days.map((d, i) => {
           const iso = isoDate(d);
           const isToday = iso === today;
@@ -91,7 +91,7 @@ export function WeekCalendar({
             <div
               key={iso}
               className={cn(
-                'text-center py-2 text-[0.78rem] font-bold border-r border-[#EDE3D4] last:border-r-0',
+                'text-center py-2 text-[0.78rem] font-bold border-r border-[#C9B896] last:border-r-0',
                 isToday ? 'text-brand-primary bg-brand-primary/10' : 'text-ink-muted',
               )}
             >
@@ -113,7 +113,7 @@ export function WeekCalendar({
         }}
       >
         {/* Time labels */}
-        <div className="border-r border-[#EDE3D4] relative">
+        <div className="border-r border-[#C9B896] relative">
           {HOURS.map((h) => (
             <div
               key={h}
@@ -133,14 +133,14 @@ export function WeekCalendar({
           return (
             <div
               key={iso}
-              className="relative border-r border-[#EDE3D4] last:border-r-0"
+              className="relative border-r border-[#C9B896] last:border-r-0"
               style={{ height: `${HOURS.length * SLOT_HEIGHT}px` }}
             >
               {/* Hour grid lines */}
               {HOURS.map((h) => (
                 <div
                   key={h}
-                  className="absolute w-full border-t border-[#EDE3D4]/60"
+                  className="absolute w-full border-t border-[#C9B896]/60"
                   style={{ top: (h - GRID_START_HOUR) * SLOT_HEIGHT }}
                 />
               ))}
@@ -167,12 +167,12 @@ export function WeekCalendar({
                 const isMatch = matchingSlotIds?.has(slot.id) ?? false;
 
                 // color.slot.match = #F0B24F bg (brand.warm), ink.lead text, ring
-                // color.slot.free = brand.primary (#4D9463)
+                // color.slot.free = brand.primary (#4D9463); fg must be ink.lead, not white (fails AA)
                 // color.slot.busy = #E4D9C8 bg, ink.muted text
                 const slotColor = isMatch
                   ? 'bg-[#F0B24F] border-[#D4921F] text-ink-lead ring-2 ring-[#F0B24F]/60 ring-offset-1'
                   : isFree
-                  ? 'bg-brand-primary/90 border-brand-primary text-white'
+                  ? 'bg-brand-primary/90 border-brand-primary text-ink-lead'
                   : 'bg-[#E4D9C8] border-[#C8B99A] text-ink-muted';
 
                 const isClickable = mode === 'own' || (mode === 'view' && isFree);
