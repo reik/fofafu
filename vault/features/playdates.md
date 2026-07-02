@@ -559,10 +559,127 @@ flagging for design-lead to decide naming convention before promoting to
 `design-system.md`.
 
 ### Microcopy
-*(filled by ux-writer)*
+
+| key | string |
+|---|---|
+| playdates.page.title | Playdates |
+| playdates.page.subtitle | Manage your availability and playdate requests |
+| playdates.page.addSlot | + Add Slot |
+| playdates.calendar.legend.free | Free |
+| playdates.calendar.legend.busy | Busy |
+| playdates.calendar.hint.own | Click a slot to edit · click a cell to add |
+| playdates.calendar.today | Today |
+| playdates.calendar.toggle.week | Week |
+| playdates.calendar.toggle.month | Month |
+| playdates.calendar.empty | No slots this week. Add one to let other families know when you're free. |
+| playdates.calendar.loadError | We couldn't load this calendar. Try again in a moment. |
+| slotForm.title.add | Add Availability Slot |
+| slotForm.title.edit | Edit Slot |
+| slotForm.field.date | Date |
+| slotForm.field.startTime | Start time |
+| slotForm.field.endTime | End time |
+| slotForm.field.status | Status |
+| slotForm.status.free | Free |
+| slotForm.status.busy | Busy |
+| slotForm.field.note | Note (optional) |
+| slotForm.field.note.placeholder | e.g. Park visit, indoor only… |
+| slotForm.error.endBeforeStart | End time must be after start time |
+| slotForm.button.cancel | Cancel |
+| slotForm.button.save | Save |
+| slotForm.button.add | Add Slot |
+| slotForm.button.delete | Delete |
+| slotForm.confirmDelete | Delete this slot? This can't be undone. |
+| toast.slot.saved | Slot saved |
+| toast.slot.added | Slot added to your calendar |
+| toast.slot.deleted | Slot deleted |
+| toast.slot.error | We couldn't save that slot. Check the times and try again. |
+| familyAvailability.title | {familyName}'s availability |
+| familyAvailability.subtitle | Click a free slot to request a playdate |
+| familyAvailability.legend.free | Free |
+| familyAvailability.legend.match | Matches your availability |
+| familyAvailability.hint | Click a slot to request |
+| familyAvailability.empty | {familyName} hasn't shared any free time yet. Check back later. |
+| familyAvailability.loadError | We couldn't load {familyName}'s availability. Try again in a moment. |
+| requestModal.title | Request a Playdate |
+| requestModal.slotSummary.title | {familyName}'s free slot |
+| requestModal.matchBanner | Matching availability — this time range overlaps with your free schedule |
+| requestModal.field.message | Message (optional) |
+| requestModal.field.message.placeholder | Say something to the {familyName} family… |
+| requestModal.button.cancel | Cancel |
+| requestModal.button.send | Send Request |
+| requestModal.disabled.pending | You already have a pending request for this slot |
+| requestModal.disabled.ownSlot | You can't request your own slot |
+| toast.request.sent | Request sent |
+| toast.request.error | We couldn't send that request. Try again in a moment. |
+| toast.request.accepted | Playdate accepted |
+| toast.request.declined | Playdate declined |
+| toast.request.respondError | We couldn't update that request. Try again in a moment. |
+| requestsSidebar.title | Playdate Requests |
+| requestsSidebar.pendingBadge | {count} pending |
+| requestsSidebar.section.needsResponse | NEEDS YOUR RESPONSE |
+| requestsSidebar.section.other | ALL REQUESTS |
+| requestsSidebar.empty | No playdate requests yet |
+| requestsSidebar.loadError | We couldn't load your requests. Try again in a moment. |
+| requestCard.status.pending | pending |
+| requestCard.status.accepted | accepted |
+| requestCard.status.declined | declined |
+| requestCard.requestedBy | Requested |
+| requestCard.youRequested | You requested |
+| requestCard.button.accept | Accept |
+| requestCard.button.decline | Decline |
 
 ### Accessibility
-*(filled by a11y-auditor)*
+
+WCAG 2.2 AA audit of the spec in `### Visual` (spec-only, Phase 1 — no build to run axe-core against yet). Ratios computed against `standards/design-system.md` hex values plus the new tokens table above.
+
+#### Contrast
+
+| Pair | Ratio | Verdict |
+|---|---|---|
+| `color.slot.free` (`#4D9463`) bg + **white** text (per "white text per contrast" note in States) | **3.66:1** | **FAIL at AA** (needs 4.5:1 for normal-size text; only meets the 3:1 large-text/UI-component threshold). |
+| `color.slot.free` (`#4D9463`) bg + `color.ink.lead` (`#1F1B18`) text | 4.67:1 | Pass AA (normal text), fail AAA. |
+| `color.slot.busy` bg (`#E4D9C8`) + `color.ink.muted` (`#5E534B`) text | 5.35:1 | Pass AA, fail AAA. |
+| `color.slot.match` bg (`#F0B24F`) + `color.ink.lead` text (star glyph + chip label) | 9.10:1 | Pass AA and AAA. |
+| `color.request.pending` bg (`#FBF1DC`) + fg (`#A8732A`) | **3.63:1** | **FAIL at AA** — badge text is `0.72rem` (~11.5px), well under the large-text threshold, so 4.5:1 is required. |
+| `color.request.accepted` bg (`#E3EFE7`) + fg (`#2F6B41`) | 5.38:1 | Pass AA, fail AAA. |
+| `color.request.declined` bg (`#F6E2E2`) + fg (`#8C2E2E`) | 6.63:1 | Pass AA, fail AAA (needs 7:1). |
+| `color.border.subtle` (`#EDE3D4`) vs `color.surface.card` (`#FFFFFF`) | **1.27:1** | **FAIL** — well under the 3:1 non-text/UI-component threshold (WCAG 1.4.11). This is the calendar grid's only structural divider between day columns / hour rows; it's not decorative, it's how sighted low-vision users parse the grid. Blocking for the calendar grid use; non-blocking for purely cosmetic card hairlines. |
+| `color.brand.primary` (`#4D9463`) as focus-visible ring vs `color.surface.card` | 3.66:1 | Pass (meets 3:1 non-text/focus-indicator threshold). |
+| `color.feedback.error` (`#B83B3B`) bg + white text (Delete/Decline pills) | 5.63:1 | Pass AA and AAA. |
+| `color.brand.primary` (`#4D9463`) bg + white text (Save/Send Request/Accept pills) | 3.66:1 | Pass only if button labels render as bold ≥14px ("large text" 3:1 threshold) — this is an existing app-wide pill convention, not a new token, so flagging as **non-blocking carryover** rather than a new failure. Confirm button text is bold; if it's regular weight below 18.66px it also fails AA and should go back to ui-designer as a systemic issue, not scoped to this feature. |
+
+**Verdict: 3 blocking contrast failures on new/newly-combined tokens** — `color.slot.free` + white text, `color.request.pending` badge, and `color.border.subtle` on the calendar grid. Returning `status: failed` per protocol so design-lead can route back to ui-designer for an adjusted palette. Fixes are narrow:
+- Use `color.ink.lead` (not white) as the text/star-glyph color on `color.slot.free` fills — already passes at 4.67:1, no new token needed.
+- Darken `color.request.pending` fg (e.g. toward `#8A5D1F`) or lighten/desaturate the bg tint to hit 4.5:1 — recompute before promoting to `design-system.md`.
+- `color.border.subtle` needs either a darker value (target ~`#C9B896` or darker to clear 3:1 against white) for the calendar-grid use case specifically, or the grid should stop relying on border color alone and add a background-tint zebra/row-shading cue as a second signal — ui-designer's call.
+
+#### Keyboard
+
+- **Prev/Next/Today/Week|Month toggle**: standard tab stops, in visual left-to-right order. Week|Month toggle should expose `aria-pressed` (if implemented as two buttons) or `role="radiogroup"` with `aria-checked` (if a segmented control) — not bare unstyled buttons with only color to show active state.
+- **Calendar grid (`WeekCalendar`/`MonthCalendar`)**: do **not** make every `SlotCell`/empty day-cell an individual tab stop — a 7-day × 13-hour week grid is 91+ cells, which is an unusable tab sequence. Recommend `role="grid"` on the grid container with **roving tabindex**: one cell is `tabindex="0"` at a time, arrow keys move focus between cells (Up/Down within a day column across hours, Left/Right across days), Enter/Space activates (open `SlotForm` on an own-mode cell, open `RequestPlaydateModal` on a view-mode free slot). This matches the ARIA APG grid pattern and is the standard fix for calendar UIs ported from fofa (fofa's original likely had the same per-cell-tab-stop issue — confirm during port, don't carry it forward).
+- **Month view `SlotChip` stack**: same roving-tabindex model, one chip focusable per cell via arrow keys within the cell, then Down/Up to move to the adjacent day cell's first chip.
+- **`SlotForm` / `RequestPlaydateModal` (both `Modal`-based)**: must be a focus trap — Tab/Shift+Tab cycle only within the modal's focusable elements (do not leak focus to the page behind it), `Escape` closes the modal, and focus returns to the element that opened the modal (the `+ Add Slot` button, the clicked `SlotCell`, etc.) on close. Initial focus lands on the first form field (Date input) for `SlotForm`, not the close (`✕`) button — the close button should still be keyboard-reachable but isn't the natural first stop.
+- **`RequestCard` Accept/Decline**: when a card is in its `loading` state (both buttons disabled per the States section), keep both buttons in the DOM as `disabled` rather than removing them — removing focused elements from the DOM on click can silently drop focus to `<body>`, disorienting keyboard/SR users mid-action.
+- **Escape hatch check**: confirm neither `SlotForm` nor `RequestPlaydateModal` has any tab trap that survives past a successful save/send (i.e. after the async submit resolves and the modal closes, focus must land somewhere sensible — the newly created/edited slot's cell, or back to the trigger — not silently stay on a now-unmounted button).
+
+#### Semantics
+
+- Calendar grid: `role="grid"` on the outer table-like structure, `role="row"` per day-of-week header row and per hour row, `role="columnheader"` on Mon–Sun day labels, `role="gridcell"` on each `SlotCell`/empty cell — needed because this is a genuinely 2D data grid (day × time), not a list, and screen readers announce row/column position when the ARIA grid pattern is used correctly.
+- `RequestStatusBadge` (pending/accepted/declined): do not rely on color alone (already partially addressed by the badge text itself, e.g. "pending"/"accepted"/"declined" — confirm the visible label text is present, not just a colored dot). If a future compact variant drops the text label, it needs `aria-label="Status: pending"` at minimum.
+- Star/match glyph (already proposed in `### Visual`: `aria-label="Matching slot"`) — confirmed good; also apply the same pattern to the `MatchBanner` in `RequestPlaydateModal` (currently a `★` + text combo, so the glyph itself should be `aria-hidden="true"` since the adjacent "Matching availability" text already carries the meaning — don't double-announce).
+- `PendingCountBadge` on the sidebar header ("[2 pending]"): give it an explicit accessible name via `aria-label="2 pending requests"` rather than relying on the bare digit — screen readers can misread a lone "2" out of context.
+- Validation/error surfaces: the toast-based end-time≤start-time error (per States: "existing toast convention") needs `role="alert"` or `aria-live="assertive"` on the toast container (confirm this is already true of the existing toast component — if so, no new work, just confirming it's inherited here).
+- `RequestPlaydateModal` disabled `Send Request` button (flagged by design in `### Visual`): the inline note ("You already have a pending request...") must be programmatically associated via `aria-describedby` pointing at the note's `id` — proximity alone (note rendered "above the button") is not sufficient for screen-reader users, who don't get the same "it's right above the button" spatial cue. This is the fix for the concern design-lead already flagged; a11y confirms it needs `aria-describedby`, not just visual placement.
+- Calendar loading/empty states (`Spinner`, empty-state text): the `Spinner` should carry `role="status"` + `aria-label="Loading availability"` (or similar) so a screen-reader user isn't left in silence while data loads; confirm the existing `Spinner` component already does this app-wide (if so, inherited, no new work).
+
+#### Screen-reader — accessible names
+
+- **Prev/Next/Today** (`WeekCalendar`/`FamilyAvailability` nav row): if these render as icon-only arrow buttons (`←`/`→`), they need explicit accessible names — `aria-label="Previous week"` / `aria-label="Next week"` — not just the glyph. "Today" is presumably a text button already; confirm Prev/Next aren't icon-only without labels.
+- **Delete / Cancel / Save** in `SlotForm`: generic names are fine when only one form is open at a time (standard modal focus scoping handles disambiguation), but confirm the modal `title` ("Add Availability Slot" / "Edit Slot") is exposed via `aria-labelledby` on the `Modal` container so screen-reader users get "Edit Slot dialog" context before hearing "Delete" — without that, "Delete" alone is genuinely ambiguous (delete *what*?).
+- **Accept / Decline** in `RequestCard`: because the sidebar can render multiple `RequestCard`s with visually-identical "Accept"/"Decline" button pairs, each pair needs a card-specific accessible name — e.g. `aria-label="Accept playdate request from The Diaz family"` / `aria-label="Decline playdate request from The Diaz family"` — otherwise a screen-reader user tabbing through the sidebar hears "Accept, button / Decline, button" repeated with no way to tell which request they're acting on.
+- **`+ Add Slot`** (PageHeader CTA) and **CalendarIcon nav link** (Navbar): confirm the Navbar link renders visible text alongside `CalendarIcon` (matches existing Navbar pattern for other icons per the file list in `### Frontend`) — if it's icon-only, it needs `aria-label="Playdates"`.
+- **Week|Month toggle segments**: each segment needs an accessible name distinct from its visual label collision risk — "Week" / "Month" text labels are fine as long as the active/inactive state is exposed via `aria-pressed`/`aria-checked` (see Semantics), not conveyed by fill-color alone (ties back to the `color.brand.primary` active-segment contrast note above).
+- **`SlotCell` in view mode** (`/family/:id`, free slots only): the clickable cell's accessible name should read out the actual slot info for screen-reader users navigating by roving tabindex — e.g. "Free, Saturday June 20, 2:00pm to 4:00pm, matches your availability. Activate to request a playdate." — not just a bare colored `<button>` with no text content (currently implied to be a filled block with no visible text per the wireframe's `█████` glyphs).
 
 ## Marketing — Spec
 
@@ -645,4 +762,49 @@ If the deferred `playdate-notifications` feature (see "Out of scope") ever intro
 | `/family/:id` (extended) | yes (unchanged, per `[[features/user-profile]]`) | unchanged | unchanged | `WebPage` (unchanged) | unchanged (`/family`, priority 0.6, monthly) |
 
 ### Growth
-*(filled by growth-analyst)*
+
+**Primary metric**: % of active families that reach a *completed* playdate
+loop within 14 days of launch — defined as: family adds at least one free
+availability slot, AND either sends or receives a playdate request that gets
+accepted. This is a two-sided loop (post availability -> another family
+requests -> owner accepts), so "one family added a slot" alone doesn't prove
+the feature works; an accepted request is the first real signal that two
+families coordinated a playdate through the app instead of falling back to
+DMs. Plain English: *what fraction of families actually used Playdates to
+successfully set up a playdate, not just poke at the calendar.*
+
+Target: 15% of active families (families with any activity — post, comment,
+DM — in the prior 30 days) complete the loop within 14 days of launch. This
+threshold is a first-cut estimate (no prior fofafu adoption data for a brand
+new two-sided feature); revisit after the first week of real data rather than
+holding it as gospel.
+
+**Guardrail metrics**:
+- DM message volume (family-to-family) should not drop meaningfully post-launch.
+  Playdates is meant to reduce *ad-hoc back-and-forth* DMs about scheduling, not
+  to cannibalize messaging generally — a sharp overall DM volume drop in the
+  first 2 weeks is a signal families are avoiding the app, not that Playdates
+  succeeded, and should be investigated rather than read as a win.
+- Profile view rate on `/family/:id` should hold steady or increase, not drop.
+  The `FamilyAvailability` card adds a reason to visit another family's profile;
+  a decline would suggest the new widget is broken, slow, or causing an error
+  that's driving users away from profile pages generally.
+
+**Experiment**: n/a. This is a same-endpoint-for-everyone feature (there's no
+meaningful control arm to compare against — the "old way" is ad-hoc DMs, which
+isn't instrumented consistently enough to serve as a baseline for an A/B
+split), and it's P2 scope with a single release-note launch, not a redesign of
+an existing surface where a control group makes sense. Instead: track the
+primary metric and guardrails for 14 days post-launch, then a manual go/no-go
+read (not a statistical test) on whether adoption is trending toward the 15%
+target.
+
+**Feature flag**: n/a — ships to all. Justification: this is a net-new page
+(`/playdates`) and a net-new, clearly-scoped widget on `/family/:id` (only
+rendered for non-owners) — there's no existing surface being replaced or risk
+of regressing a high-traffic flow for the whole user base if it underperforms.
+Per the launch copy, it's an authenticated-only, in-app-only launch (no email,
+no landing page), which already caps blast radius to logged-in users who see
+the in-app announcement. If the code-review "must-fix" items (RHF conversion,
+endTime>startTime backend validation) surface real user-facing bugs post-ship,
+the standard rollback path is a hotfix, not a flag toggle.

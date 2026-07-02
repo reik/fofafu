@@ -27,6 +27,21 @@ The shared design spec. Tokens, voice, and the north-star principles every team 
 
 *(These are starting values inherited from the old fofa palette. Adjust as the system stabilizes.)*
 
+### Playdates additions (promoted 2026-07-02, design-lead)
+
+Proposed by ui-designer in `[[features/playdates]]` ### Visual, adjusted per a11y-auditor's blocking contrast findings before promotion. All are derivations of existing hues — no new hue families.
+
+| Semantic name | Value | Use | Notes |
+|---|---|---|---|
+| `color.slot.free` | = `color.brand.primary` (`#4D9463`) | free-slot fill (`SlotCell`/`SlotChip`) | Fg/glyph must be `color.ink.lead`, **not white** — white text fails AA (3.66:1); `ink.lead` passes at 4.67:1. |
+| `color.slot.busy` | bg `#E4D9C8` / fg `color.ink.muted` | busy-slot fill, own-calendar only | Passes AA (5.35:1). |
+| `color.slot.match` | bg `#F0B24F` (= `color.brand.warm`) / fg `color.ink.lead`, `2px` ring @60% | matching-availability slot + `MatchBanner` | Passes AA/AAA (9.10:1). |
+| `color.request.pending` | bg `#FBF1DC` / fg `#8A5D1F` | pending `RequestStatusBadge` | Darkened from ui-designer's original `#A8732A` (3.63:1, failed AA at badge's 0.72rem size) per a11y-auditor's recommended target — clears 4.5:1. |
+| `color.request.accepted` | bg `#E3EFE7` / fg `#2F6B41` | accepted `RequestStatusBadge` | Passes AA (5.38:1). |
+| `color.request.declined` | bg `#F6E2E2` / fg `#8C2E2E` | declined `RequestStatusBadge` | Passes AA (6.63:1). |
+| `color.neutral.100` | `#EDE3D4` | cosmetic-only hairlines/dividers (card outlines, non-structural) | Warm-neutral family, resolves the "Open item for design-lead" flagged in `[[features/playdates]]` — formalized as `neutral.*` rather than a one-off `border.subtle` name. |
+| `color.neutral.200` | `#C9B896` | structural borders needing ≥3:1 against white/card (calendar grid lines, day-column dividers) | Darkened from ui-designer's original `color.border.subtle` (`#EDE3D4`, 1.27:1, failed WCAG 1.4.11) per a11y-auditor's recommended target. Required wherever the border itself carries structural meaning (e.g. the playdates calendar grid). |
+
 ## Tokens — Type
 
 - **Body**: Nunito 400 / 500 / 700 (carried from fofa).

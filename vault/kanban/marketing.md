@@ -6,9 +6,9 @@ team: marketing
 ## Backlog
 
 ## In Progress
-- [ ] [[features/playdates]] @marketing — launch copy + growth metric for the new /playdates page and cross-family request flow
 
 ## Review
+- [ ] [[features/playdates]] @marketing — launch copy + growth metric for the new /playdates page and cross-family request flow
 
 ## Done
 - [x] [[features/reply-coach]] @marketing — launch copy + SEO (N/A in v1; `/help/reply-coach` proposed for follow-up) + Growth (acceptance-rate primary, reported-comment delta counter); merged 2026-06-11 (PR #2)

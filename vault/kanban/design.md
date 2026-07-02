@@ -7,9 +7,9 @@ team: design
 - [ ] [[features/brand-contrast-fix]] @design — system-wide WCAG 1.4.3 token revision; introduce `color.brand.primary.pressed` (~`#3F7E54`) and pick which token white text is composed against
 
 ## In Progress
-- [ ] [[features/playdates]] @design — new /playdates page (calendar week/month views, requests sidebar) + availability/request surface on /family/:id; visual, microcopy, a11y
 
 ## Review
+- [ ] [[features/playdates]] @design — new /playdates page (calendar week/month views, requests sidebar) + availability/request surface on /family/:id; ui-designer + ux-writer + a11y-auditor returned; design-lead resolved 3 a11y-flagged blocking contrast failures + neutral-token naming by promoting adjusted `color.slot.*` / `color.request.*` / `color.neutral.100`/`200` tokens to design-system.md
 
 ## Done
 - [x] [[features/reply-coach]] @design — ui-designer + ux-writer + a11y-auditor; design-lead ratified 4 flagged gaps (added `color.surface.subtle` token; deferred system-wide brand-contrast fix to [[features/brand-contrast-fix]]); merged 2026-06-11 (PR #2)

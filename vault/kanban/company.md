@@ -13,7 +13,7 @@ team: company
 ## In Progress
 
 ## Review
-- [ ] [[features/playdates]] — availability calendar + playdate request flow; engineering → review (128/128 backend, 109/109 frontend, tsc clean, 3 must-fix resolved); design/marketing sections pending
+- [ ] [[features/playdates]] — availability calendar + playdate request flow; all 3 teams → review (engineering 128/128 backend, 109/109 frontend, tsc clean, 3 must-fix resolved; design Visual/Microcopy/Accessibility complete, 3 blocking contrast findings resolved via token promotion to design-system.md — frontend-dev should re-consume corrected `color.slot.*`/`color.request.pending`/`color.neutral.100-200` tokens before ship; marketing Launch copy/SEO(N/A)/Growth complete); awaiting human approval or `/dispatch playdates --ship`
 - [ ] [[features/feed-avatars]] — author avatar (img or initial-letter circle, neutral placeholder for deleted families) next to display name on AnnouncementCard (Home/FamilyView/AnnouncementDetail); backend authorAvatarUrl via existing LEFT JOIN families on AnnouncementDTO; new shared Avatar component also adopted by FamilyHeader; backend 85/85, frontend 72/72, tsc clean both workspaces; code review 0 must-fix
 - [ ] [[features/ci-pipeline]] — GitHub Actions CI on push/PR; .github/workflows/ci.yml (Node 20, npm ci, typecheck + test --workspaces --if-present); engineering aggregated to Review, 4/4 ACs verified
 
