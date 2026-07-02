@@ -12,11 +12,11 @@ interface RequestCardProps {
   onUpdate: () => void;
 }
 
-// color.request.pending  bg=#FBF1DC fg=#A8732A
+// color.request.pending  bg=#FBF1DC fg=#8A5D1F (darkened for AA at badge size)
 // color.request.accepted bg=#E3EFE7 fg=#2F6B41
 // color.request.declined bg=#F6E2E2 fg=#8C2E2E
 const STATUS_BADGE_CLASSES = {
-  pending: 'bg-[#FBF1DC] text-[#A8732A]',
+  pending: 'bg-[#FBF1DC] text-[#8A5D1F]',
   accepted: 'bg-[#E3EFE7] text-[#2F6B41]',
   declined: 'bg-[#F6E2E2] text-[#8C2E2E]',
 } satisfies Record<PlaydateRequest['status'], string>;

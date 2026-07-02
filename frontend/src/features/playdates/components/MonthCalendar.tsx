@@ -58,15 +58,15 @@ export function MonthCalendar({
   });
 
   return (
-    <div className="rounded bg-surface-card shadow-lift overflow-hidden border border-[#EDE3D4]">
-      {/* color.border.subtle = #EDE3D4 */}
+    <div className="rounded bg-surface-card shadow-lift overflow-hidden border border-[#C9B896]">
+      {/* color.neutral.200 = #C9B896 (structural grid borders, ≥3:1) */}
 
       {/* Day-of-week header */}
-      <div className="grid grid-cols-7 border-b border-[#EDE3D4]">
+      <div className="grid grid-cols-7 border-b border-[#C9B896]">
         {DAY_LABELS.map((label) => (
           <div
             key={label}
-            className="text-center py-2 text-[0.75rem] font-bold text-ink-muted uppercase tracking-wide border-r border-[#EDE3D4]/60 last:border-r-0"
+            className="text-center py-2 text-[0.75rem] font-bold text-ink-muted uppercase tracking-wide border-r border-[#C9B896]/60 last:border-r-0"
           >
             {label}
           </div>
@@ -88,7 +88,7 @@ export function MonthCalendar({
             <div
               key={iso}
               className={cn(
-                'min-h-[90px] p-1 border-r border-b border-[#EDE3D4]/60 flex flex-col gap-[3px] transition-colors',
+                'min-h-[90px] p-1 border-r border-b border-[#C9B896]/60 flex flex-col gap-[3px] transition-colors',
                 isLastRow && 'border-b-0',
                 isLastCol && 'border-r-0',
                 isCurrentMonth ? 'bg-surface-card' : 'bg-surface-warm',
@@ -136,12 +136,12 @@ export function MonthCalendar({
                   const isClickable = mode === 'own' || (mode === 'view' && isFree);
 
                   // color.slot.match = #F0B24F bg (brand.warm)
-                  // color.slot.free = brand.primary
+                  // color.slot.free = brand.primary; fg must be ink.lead, not white (fails AA)
                   // color.slot.busy = #E4D9C8 bg
                   const chipColor = isMatch
                     ? 'bg-[#F0B24F] text-ink-lead ring-1 ring-[#D4921F]'
                     : isFree
-                    ? 'bg-brand-primary/85 text-white'
+                    ? 'bg-brand-primary/85 text-ink-lead'
                     : 'bg-[#E4D9C8] text-ink-muted';
 
                   return (
