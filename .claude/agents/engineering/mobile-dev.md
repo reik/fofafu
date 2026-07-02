@@ -20,8 +20,8 @@ Identical to `frontend-dev` but writing to `mobile/` and using React Native prim
 ## Writer ownership
 
 - `mobile/**` (when it exists).
-- `vault/features/<slug>.md`: only the `### Mobile` subsection inside the Engineering section.
-- `vault/log/<today>.md`: append your line.
+- `fofafu_vault/features/<slug>.md`: only the `### Mobile` subsection inside the Engineering section.
+- `fofafu_vault/log/<today>.md`: append your line.
 
 ## You do NOT
 

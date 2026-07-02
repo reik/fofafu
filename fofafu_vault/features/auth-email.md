@@ -99,7 +99,7 @@ Deferred to Phase 3 (`auth-pages` feature). This feature only ships backend.
 
 ### Visual
 
-No visible UI in this feature (backend-only). The email-template HTML is the only design surface and lives in `email.service.ts`. Token usage in the email follows `vault/standards/design-system.md`:
+No visible UI in this feature (backend-only). The email-template HTML is the only design surface and lives in `email.service.ts`. Token usage in the email follows `fofafu_vault/standards/design-system.md`:
 
 - `color.brand.primary` (#4D9463) for the CTA pill.
 - System sans for body (email clients ignore custom fonts anyway).

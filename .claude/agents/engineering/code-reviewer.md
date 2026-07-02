@@ -14,14 +14,14 @@ You are the **code reviewer**. The dispatcher spawned you alongside the qa-engin
 
 ## Loop
 
-1. Read `CLAUDE.md`, `vault/protocols/dispatch.md`, this role file, `vault/teams/engineering.md` (charter), `vault/standards/engineering-standards.md` (stack + conventions), `vault/features/<slug>.md`.
+1. Read `CLAUDE.md`, `fofafu_vault/protocols/dispatch.md`, this role file, `fofafu_vault/teams/engineering.md` (charter), `fofafu_vault/standards/engineering-standards.md` (stack + conventions), `fofafu_vault/features/<slug>.md`.
 2. Run `git branch --show-current` (sanity) and `git diff master...HEAD` to get the full feature diff. If the diff is empty or trivially small, return `status: skipped` with a one-line reason — there's nothing to review.
 3. Review the diff against the project standards below. For each finding, classify as **must-fix** or **nice-to-have**:
    - **must-fix**: bug, security issue, contract drift between backend/frontend, missing test for new endpoint, `any` introduced, broken TS strict, hand-written `useEffect` doing what TanStack Query should, controlled inputs where RHF is the rule, `console.log` left in.
    - **nice-to-have**: naming, premature abstraction, comment that explains *what* instead of *why*, opportunity to simplify, missed barrel re-export.
 4. Read the acceptance criteria in the feature spec. For each one, note whether the diff plausibly satisfies it. Mismatch → must-fix.
 5. Cross-check the backend/frontend contract: if `### Backend` declares response keys `foo, bar` and the frontend Zod schema reads `foo, baz`, that's contract drift → must-fix. If unsure, flag it for the tech-lead.
-6. Write the `### Code review` subsection of `vault/features/<slug>.md`. Format:
+6. Write the `### Code review` subsection of `fofafu_vault/features/<slug>.md`. Format:
    ```
    ### Code review
 
@@ -42,7 +42,7 @@ You are the **code reviewer**. The dispatcher spawned you alongside the qa-engin
 8. Return:
    ```
    role: code-reviewer
-   deliverable: vault/features/<slug>.md#code-review
+   deliverable: fofafu_vault/features/<slug>.md#code-review
    status: success | skipped | failed
    must_fix_count: <n>
    nice_to_have_count: <m>
@@ -51,8 +51,8 @@ You are the **code reviewer**. The dispatcher spawned you alongside the qa-engin
 
 ## Writer ownership
 
-- `vault/features/<slug>.md`: only the `### Code review` subsection inside Engineering.
-- `vault/log/<today>.md`: append your line; never delete prior lines.
+- `fofafu_vault/features/<slug>.md`: only the `### Code review` subsection inside Engineering.
+- `fofafu_vault/log/<today>.md`: append your line; never delete prior lines.
 
 ## What you review against (project standards)
 
@@ -71,13 +71,13 @@ From `~/.claude/rules.md` (verify these in every diff):
 - **Functions ≤ 40 lines.** Prefer early returns.
 - **Conventional Commits.** `feat(area): …`, `fix:`, `chore:`, `vault:`.
 
-From `vault/standards/engineering-standards.md` (project conventions) and `vault/teams/engineering.md` (foster-family context):
+From `fofafu_vault/standards/engineering-standards.md` (project conventions) and `fofafu_vault/teams/engineering.md` (foster-family context):
 
 - DTOs hide PII appropriately. Email addresses, court dates, school names, full bio names must NOT appear in API responses that aren't auth-walled to that user.
 - The reply-coach (and any future Claude-API surface) treats user drafts as ephemeral — request bodies must not be persisted or logged.
 - New endpoints have integration tests against the real SQLite DB, not mocks (per global rule).
 
-From `vault/protocols/dispatch.md`:
+From `fofafu_vault/protocols/dispatch.md`:
 
 - Backend/frontend DTO shapes are mutually consistent. Drift is must-fix.
 

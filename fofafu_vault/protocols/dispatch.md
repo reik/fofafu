@@ -7,20 +7,20 @@ Every agent in this project reads this file before delegating. It defines the fi
 Humans invoke `/dispatch <feature-link>`. Examples:
 
 - `/dispatch [[features/user-profile]]`
-- `/dispatch user-profile` (the dispatcher resolves the slug to `vault/features/user-profile.md`)
+- `/dispatch user-profile` (the dispatcher resolves the slug to `fofafu_vault/features/user-profile.md`)
 
 The [[agents/dispatcher]] is the **only** entry point. ICs are never invoked directly.
 
 ### Precondition: feature branch
 
-Before `/dispatch <slug>` is invoked, the main session must be on `feat/<slug>` (or the appropriate `fix/<slug>` / `vault/<topic>` per `CLAUDE.md` Conventions). The `/dispatch` slash-command body handles this in its main-session pre-flight: if the current branch is `master` / `main`, it runs `git checkout -b feat/<slug>` (carrying over any uncommitted `/new-feature` scaffold) before spawning the dispatcher subagent. The dispatcher itself refuses with `wrong_branch` if it finds `master` / `main` on entry — a subagent's `git checkout` does not affect the parent session, so the fix must happen in the main session.
+Before `/dispatch <slug>` is invoked, the main session must be on `feat/<slug>` (or the appropriate `fix/<slug>` / `fofafu_vault/<topic>` per `CLAUDE.md` Conventions). The `/dispatch` slash-command body handles this in its main-session pre-flight: if the current branch is `master` / `main`, it runs `git checkout -b feat/<slug>` (carrying over any uncommitted `/new-feature` scaffold) before spawning the dispatcher subagent. The dispatcher itself refuses with `wrong_branch` if it finds `master` / `main` on entry — a subagent's `git checkout` does not affect the parent session, so the fix must happen in the main session.
 
 Exception: `--ship` and `--abandon` are vault-only operations that typically run on `master` and skip this precondition.
 
 ## 2. The dispatcher's loop
 
 ```
-1. resolve(feature) → read vault/features/<slug>.md
+1. resolve(feature) → read fofafu_vault/features/<slug>.md
 2. classify(feature) → set([engineering, design, marketing])  ⊆ frontmatter.owner ∪ collaborators
 3. for each team in classification:
      move [[kanban/company]] card to "In Progress"
@@ -33,7 +33,7 @@ Exception: `--ship` and `--abandon` are vault-only operations that typically run
      subsections, moves its team kanban card to Review, returns
 7. await all team-lead aggregator returns
 8. aggregate(lead returns) → update [[kanban/company]], update feature.frontmatter.status
-9. append vault/log/<today>.md entry summarising routing + results
+9. append fofafu_vault/log/<today>.md entry summarising routing + results
 ```
 
 The dispatcher itself never touches a team's kanban — only `company.md` and feature `status`.
@@ -48,10 +48,10 @@ A team-lead is spawned by the dispatcher AFTER its specialists have already retu
 
 ```
 1. read .claude/agents/<team>/<lead>.md (own role)
-2. read vault/teams/<team>.md            — [[teams/engineering]] / [[teams/design]] / [[teams/marketing]]
-3. read vault/standards/<team-spec>.md   — [[standards/engineering-standards]] / [[standards/design-system]] / [[standards/marketing-standards]]
-4. read vault/protocols/dispatch.md      (this file — [[protocols/dispatch]])
-5. read vault/features/<slug>.md         (specialist subsections already written)
+2. read fofafu_vault/teams/<team>.md            — [[teams/engineering]] / [[teams/design]] / [[teams/marketing]]
+3. read fofafu_vault/standards/<team-spec>.md   — [[standards/engineering-standards]] / [[standards/design-system]] / [[standards/marketing-standards]]
+4. read fofafu_vault/protocols/dispatch.md      (this file — [[protocols/dispatch]])
+5. read fofafu_vault/features/<slug>.md         (specialist subsections already written)
 6. audit the specialist subsections for completeness, mutual consistency, basic quality
 7. light editorial consolidation if needed; do NOT rewrite the specialists' work
 8. move kanban/<team>.md card from "In Progress" to "Review"
@@ -65,16 +65,16 @@ Team-leads own their team's kanban. They do not spawn specialists (the dispatche
 
 ```
 1. read .claude/agents/<team>/<role>.md (see [[agents/backend-dev]], [[agents/frontend-dev]], [[agents/qa-engineer]], [[agents/e2e-test-writer]], [[agents/code-reviewer]], [[agents/ui-designer]], [[agents/ux-writer]], [[agents/a11y-auditor]], [[agents/content-writer]], [[agents/seo-specialist]], [[agents/growth-analyst]])
-2. read vault/protocols/dispatch.md
-3. read vault/features/<slug>.md
+2. read fofafu_vault/protocols/dispatch.md
+3. read fofafu_vault/features/<slug>.md
 4. (optional) move kanban/<team>.md card from "Backlog" to "In Progress" if no
    card is there yet — the lead will move it to Review later. Normally the
    dispatcher has already created the In Progress entry implicitly via the
    spawn; this step is a safety net.
 5. do the work (write code / copy / design tokens / tests)
-6. write your subsection into vault/features/<slug>.md (### Backend, ### Frontend,
+6. write your subsection into fofafu_vault/features/<slug>.md (### Backend, ### Frontend,
    ### Visual, ### Microcopy, etc.) — only the section you own
-7. append a log entry to vault/log/<today>.md
+7. append a log entry to fofafu_vault/log/<today>.md
 8. return {role, status, deliverable, test_summary, notes}
 ```
 
@@ -89,7 +89,7 @@ When specialists run in parallel and share a contract (e.g. backend DTO shape co
 ```
 You are <role>. Today is <YYYY-MM-DD>.
 
-Feature: vault/features/<slug>.md
+Feature: fofafu_vault/features/<slug>.md
 Your task scope: <one sentence from the dispatcher's decomposition>
 
 You're being spawned by the dispatcher (not your team-lead) because the
@@ -98,8 +98,8 @@ Your team-lead will audit and aggregate your work AFTER you return.
 
 Required reads:
 1. .claude/agents/<team>/<role>.md
-2. vault/protocols/dispatch.md
-3. vault/features/<slug>.md
+2. fofafu_vault/protocols/dispatch.md
+3. fofafu_vault/features/<slug>.md
 
 Writer ownership (only edit what you own):
 <copied from CLAUDE.md Writer-ownership table for this role>
@@ -120,7 +120,7 @@ Return a structured block:
 ```
 You are <team>-lead. Today is <YYYY-MM-DD>.
 
-Feature: vault/features/<slug>.md
+Feature: fofafu_vault/features/<slug>.md
 Slug: <slug>
 
 The specialists have already returned. Their subsections are already written
@@ -133,9 +133,9 @@ Your duties:
 4. Return the structured block.
 
 Required reads:
-1. vault/features/<slug>.md (focus on your team's section)
-2. vault/kanban/<team>.md (confirm card is in In Progress)
-3. vault/log/<today>.md (confirm specialist entries exist)
+1. fofafu_vault/features/<slug>.md (focus on your team's section)
+2. fofafu_vault/kanban/<team>.md (confirm card is in In Progress)
+3. fofafu_vault/log/<today>.md (confirm specialist entries exist)
 
 Writer ownership:
 <copied from CLAUDE.md>
@@ -198,7 +198,7 @@ Retry is bounded: **one** retry per spawn. Don't loop. Don't recurse. Don't wide
 
 ## 9. Log entry format
 
-Append-only. Never edit existing lines. Today's file is `vault/log/<YYYY-MM-DD>.md`. Under the 2-level model, a typical dispatch produces this sequence:
+Append-only. Never edit existing lines. Today's file is `fofafu_vault/log/<YYYY-MM-DD>.md`. Under the 2-level model, a typical dispatch produces this sequence:
 
 ```
 - 14:32 #team/dispatch [[features/user-profile]] — routed to engineering, design, marketing; spawning specialists in parallel
@@ -219,7 +219,7 @@ Append-only. Never edit existing lines. Today's file is `vault/log/<YYYY-MM-DD>.
 
 ## 10. Standup format
 
-Weekly file: `vault/log/standups/<YYYY-WW>.md` (ISO week). Sections:
+Weekly file: `fofafu_vault/log/standups/<YYYY-WW>.md` (ISO week). Sections:
 
 ```markdown
 # Standup — Week W of YYYY (YYYY-MM-DD → YYYY-MM-DD)

@@ -13,9 +13,9 @@ shipped: 2026-05-15
 2. ✅ `.claude/` agent company: [[agents/dispatcher]] + 4 engineering ([[agents/tech-lead]], [[agents/backend-dev]], [[agents/frontend-dev]], [[agents/qa-engineer]]) + 4 design ([[agents/design-lead]], [[agents/ui-designer]], [[agents/ux-writer]], [[agents/a11y-auditor]]) + 4 marketing ([[agents/marketing-lead]], [[agents/content-writer]], [[agents/seo-specialist]], [[agents/growth-analyst]]) + [[agents/mobile-dev]] (dormant until Phase 4). 13 files total.
 3. ✅ `.claude/commands/`: `dispatch`, `new-feature`, `standup`, `sanity-check`.
 4. ✅ `.claude/settings.json` with permission allowlist + hook stubs documenting the sanity-check cadences. Real schedules deferred to `/schedule` post-Phase-1 once we have measured runtimes.
-5. ✅ `vault/` tree: `.obsidian/community-plugins.json` enabling `obsidian-kanban`; 4 kanban boards ([[kanban/company]], [[kanban/engineering]], [[kanban/design]], [[kanban/marketing]]); team charters ([[teams/engineering]], [[teams/design]], [[teams/marketing]]); [[features/_template]] feature file; daily log file; [[protocols/dispatch]] handoff spec.
+5. ✅ `fofafu_vault/` tree: `.obsidian/community-plugins.json` enabling `obsidian-kanban`; 4 kanban boards ([[kanban/company]], [[kanban/engineering]], [[kanban/design]], [[kanban/marketing]]); team charters ([[teams/engineering]], [[teams/design]], [[teams/marketing]]); [[features/_template]] feature file; daily log file; [[protocols/dispatch]] handoff spec.
 6. ✅ [[agents/dispatcher]] fully wired end-to-end with working team handoffs: writer-ownership table, status state machine, retry/escalation rules, prompt template, kanban transitions all specified in [[protocols/dispatch]].
-7. ✅ Worked example: [[features/user-profile]] flowed through engineering → design → marketing with matching kanban state (all four boards show it in Done) and a complete handoff trail in `vault/log/2026-05-15.md`.
+7. ✅ Worked example: [[features/user-profile]] flowed through engineering → design → marketing with matching kanban state (all four boards show it in Done) and a complete handoff trail in `fofafu_vault/log/2026-05-15.md`.
 8. ✅ Git committed.
 
 ## Key decisions
@@ -45,10 +45,10 @@ shipped: 2026-05-15
 ## Verification (run after this commit)
 
 - `ls -R /Users/reikurata/dev/fofafu/.claude/agents/` -> 13 agent files in correct subdirs.
-- `ls -R /Users/reikurata/dev/fofafu/vault/` -> full tree.
-- Open `vault/` in Obsidian -> install Kanban plugin -> `kanban/company.md` renders as a board with `user-profile` in `Done`. *(Manual; run after first clone.)*
+- `ls -R /Users/reikurata/dev/fofafu/fofafu_vault/` -> full tree.
+- Open `fofafu_vault/` in Obsidian -> install Kanban plugin -> `kanban/company.md` renders as a board with `user-profile` in `Done`. *(Manual; run after first clone.)*
 - Open a fresh Claude Code session at `/Users/reikurata/dev/fofafu` and verify CLAUDE.md auto-loads. *(Manual.)*
-- Run `/new-feature auth-email` -> should create `vault/features/auth-email.md` and Backlog cards. *(Phase 2 starting move.)*
+- Run `/new-feature auth-email` -> should create `fofafu_vault/features/auth-email.md` and Backlog cards. *(Phase 2 starting move.)*
 
 ## What each team does in each phase
 

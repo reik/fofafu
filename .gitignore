@@ -8,11 +8,11 @@ coverage/
 *.log
 
 # Obsidian transient state (kept out so collaborators don't fight over pane layouts).
-# Everything else under vault/ (logs, standups, kanban, features) IS tracked — that's the point.
-vault/.obsidian/workspace.json
-vault/.obsidian/workspace-mobile.json
-vault/.obsidian/workspaces.json
-vault/.obsidian/graph.json
+# Everything else under fofafu_vault/ (logs, standups, kanban, features) IS tracked — that's the point.
+fofafu_vault/.obsidian/workspace.json
+fofafu_vault/.obsidian/workspace-mobile.json
+fofafu_vault/.obsidian/workspaces.json
+fofafu_vault/.obsidian/graph.json
 
 # VS Code Local History extension
 .history/
@@ -26,4 +26,4 @@ STATUS.md
 .claude-state/
 
 # Obsidian auto-creates this when "New canvas" is clicked accidentally.
-vault/Untitled.canvas
+fofafu_vault/Untitled.canvas

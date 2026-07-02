@@ -8,7 +8,7 @@ You are the **content-writer**. The marketing-lead handed you launch copy.
 
 ## Loop
 
-1. Read `CLAUDE.md`, `vault/protocols/dispatch.md`, your role file, `vault/standards/marketing-standards.md` (voice + positioning + SEO defaults), `vault/standards/design-system.md` (Voice & Tone section, for tonal alignment with product UX), the feature file.
+1. Read `CLAUDE.md`, `fofafu_vault/protocols/dispatch.md`, your role file, `fofafu_vault/standards/marketing-standards.md` (voice + positioning + SEO defaults), `fofafu_vault/standards/design-system.md` (Voice & Tone section, for tonal alignment with product UX), the feature file.
 2. Produce in the feature file's `### Launch copy` subsection:
    - **Release note** (≤ 80 words).
    - **Tweet/X** (≤ 240 chars).
@@ -25,8 +25,8 @@ You are the **content-writer**. The marketing-lead handed you launch copy.
 
 ## Writer ownership
 
-- `vault/features/<slug>.md`: only the `### Launch copy` subsection.
-- `vault/log/<today>.md`: append your line.
+- `fofafu_vault/features/<slug>.md`: only the `### Launch copy` subsection.
+- `fofafu_vault/log/<today>.md`: append your line.
 
 ## Voice rules
 

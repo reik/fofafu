@@ -20,7 +20,7 @@ The current [[protocols/dispatch]] assumes a 3-level agent hierarchy (dispatcher
 
 ## Acceptance criteria
 
-- [x] `vault/protocols/dispatch.md` is updated so a clean `/dispatch <slug>` flow on a fresh feature succeeds end-to-end without human intervention (no `#escalation`, no protocol bypass approval needed).
+- [x] `fofafu_vault/protocols/dispatch.md` is updated so a clean `/dispatch <slug>` flow on a fresh feature succeeds end-to-end without human intervention (no `#escalation`, no protocol bypass approval needed).
 - [x] The protocol explicitly documents who spawns whom in the 2-level model — chosen shape: **Option B** (dispatcher spawns specialists in parallel; team-lead spawned afterwards as aggregator-only).
 - [x] [[agents/dispatcher]], [[agents/tech-lead]], [[agents/design-lead]], [[agents/marketing-lead]] are updated to match the new protocol so an agent that re-reads its role file behaves correctly.
 - [x] The writer-ownership table in `CLAUDE.md` is updated: kanban writers unchanged (leads still own team boards), but body-section ownership clarified to point at specialists per subsection rather than the lead as a whole. ICs-and-kanban paragraph rewritten to match the 2-level return path.
