@@ -2,7 +2,7 @@ import { test, expect, type APIRequestContext } from '@playwright/test';
 import { loginAs, SEED_PASSWORD } from './utils/login';
 
 /**
- * Covers vault/features/playdates.md acceptance criteria:
+ * Covers fofafu_vault/features/playdates.md acceptance criteria:
  *  AC1  /playdates page is accessible after login — shows calendar + requests sidebar
  *  AC2  User can add an availability slot
  *  AC3  User can edit an existing slot
