@@ -10,17 +10,17 @@ shipped: 2026-05-15
 ## Scope (delivered)
 
 1. ✅ Repo skeleton: `package.json` (workspaces `backend`, `frontend`), `tsconfig.base.json`, `.gitignore`, `README.md`, `CLAUDE.md`.
-2. ✅ `.claude/` agent company: dispatcher + 4 engineering + 4 design + 4 marketing (mobile-dev included but dormant until Phase 4). 13 files total.
+2. ✅ `.claude/` agent company: [[agents/dispatcher]] + 4 engineering ([[agents/tech-lead]], [[agents/backend-dev]], [[agents/frontend-dev]], [[agents/qa-engineer]]) + 4 design ([[agents/design-lead]], [[agents/ui-designer]], [[agents/ux-writer]], [[agents/a11y-auditor]]) + 4 marketing ([[agents/marketing-lead]], [[agents/content-writer]], [[agents/seo-specialist]], [[agents/growth-analyst]]) + [[agents/mobile-dev]] (dormant until Phase 4). 13 files total.
 3. ✅ `.claude/commands/`: `dispatch`, `new-feature`, `standup`, `sanity-check`.
 4. ✅ `.claude/settings.json` with permission allowlist + hook stubs documenting the sanity-check cadences. Real schedules deferred to `/schedule` post-Phase-1 once we have measured runtimes.
-5. ✅ `fofafu_vault/` tree: `.obsidian/community-plugins.json` enabling `obsidian-kanban`; 4 kanban boards; team charters for eng / design / marketing; `_template.md` feature file; daily log file; protocols/dispatch.md handoff spec.
-6. ✅ Dispatcher fully wired end-to-end with working team handoffs: writer-ownership table, status state machine, retry/escalation rules, prompt template, kanban transitions all specified in `fofafu_vault/protocols/dispatch.md`.
-7. ✅ Worked example: `fofafu_vault/features/user-profile.md` flowed through engineering -> design -> marketing with matching kanban state (all four boards show it in Done) and a complete handoff trail in `fofafu_vault/log/2026-05-15.md`.
+5. ✅ `fofafu_vault/` tree: `.obsidian/community-plugins.json` enabling `obsidian-kanban`; 4 kanban boards ([[kanban/company]], [[kanban/engineering]], [[kanban/design]], [[kanban/marketing]]); team charters ([[teams/engineering]], [[teams/design]], [[teams/marketing]]); [[features/_template]] feature file; daily log file; [[protocols/dispatch]] handoff spec.
+6. ✅ [[agents/dispatcher]] fully wired end-to-end with working team handoffs: writer-ownership table, status state machine, retry/escalation rules, prompt template, kanban transitions all specified in [[protocols/dispatch]].
+7. ✅ Worked example: [[features/user-profile]] flowed through engineering → design → marketing with matching kanban state (all four boards show it in Done) and a complete handoff trail in `fofafu_vault/log/2026-05-15.md`.
 8. ✅ Git committed.
 
 ## Key decisions
 
-- **Writer ownership > locking.** Each file has exactly one writer per turn. This avoids any need for distributed coordination and means agents can run in parallel.
+- **Writer ownership > locking** (see [[protocols/dispatch]] §writer-ownership). Each file has exactly one writer per turn. This avoids any need for distributed coordination and means agents can run in parallel.
 - **Vault fully in git, including logs and standups.** Trade-off: more commits, but the project history is shared verbatim across collaborators. No separate database.
 - **Obsidian Kanban plugin not vendored.** First-run docs say "Install via Community plugins". Cost: one click. Benefit: smaller repo, no plugin-update drift.
 - **`mobile-dev` agent exists but dormant.** Defining the role now means Phase 4 doesn't have to retrofit; the dispatcher will simply not classify into mobile until the flag flips.
@@ -38,8 +38,8 @@ shipped: 2026-05-15
 ## Sequencing
 
 - Phase 1 (this) -> ships dispatcher + protocols + worked example. **Done.**
-- Phase 2 -> port backend, feature-by-feature through the dispatcher. First feature: `auth-email` (the dependency wall for everything else).
-- Phase 3 -> port frontend. First feature: `auth-pages` consuming Phase 2 backend.
+- Phase 2 → port backend, feature-by-feature through the [[agents/dispatcher]]. First feature: [[features/auth-email]] (the dependency wall for everything else).
+- Phase 3 → port frontend. First feature: [[features/auth-pages]] consuming Phase 2 backend.
 - Phase 4 -> mobile-dev wakes up; Expo + RN; share API client with frontend.
 
 ## Verification (run after this commit)

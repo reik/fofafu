@@ -9,7 +9,7 @@ Humans invoke `/dispatch <feature-link>`. Examples:
 - `/dispatch [[features/user-profile]]`
 - `/dispatch user-profile` (the dispatcher resolves the slug to `fofafu_vault/features/user-profile.md`)
 
-The dispatcher is the **only** entry point. ICs are never invoked directly.
+The [[agents/dispatcher]] is the **only** entry point. ICs are never invoked directly.
 
 ### Precondition: feature branch
 
@@ -23,7 +23,7 @@ Exception: `--ship` and `--abandon` are vault-only operations that typically run
 1. resolve(feature) → read fofafu_vault/features/<slug>.md
 2. classify(feature) → set([engineering, design, marketing])  ⊆ frontmatter.owner ∪ collaborators
 3. for each team in classification:
-     move kanban/company.md card to "In Progress"
+     move [[kanban/company]] card to "In Progress"
      decompose the team's work into 1–3 specialist tasks
 4. spawn ALL specialists in parallel — one Agent call block, multiple tool
    invocations, across every classified team. Each gets prompt 5a below.
@@ -32,7 +32,7 @@ Exception: `--ship` and `--abandon` are vault-only operations that typically run
      spawn Agent(<team>-lead, prompt=5b) — lead audits the specialist
      subsections, moves its team kanban card to Review, returns
 7. await all team-lead aggregator returns
-8. aggregate(lead returns) → update kanban/company.md, update feature.frontmatter.status
+8. aggregate(lead returns) → update [[kanban/company]], update feature.frontmatter.status
 9. append fofafu_vault/log/<today>.md entry summarising routing + results
 ```
 
@@ -48,9 +48,9 @@ A team-lead is spawned by the dispatcher AFTER its specialists have already retu
 
 ```
 1. read .claude/agents/<team>/<lead>.md (own role)
-2. read fofafu_vault/teams/<team>.md            (charter: mandate, sanity sweep, escalation)
-3. read fofafu_vault/standards/<team-spec>.md   (shared spec: tokens / stack / positioning)
-4. read fofafu_vault/protocols/dispatch.md      (this file)
+2. read fofafu_vault/teams/<team>.md            — [[teams/engineering]] / [[teams/design]] / [[teams/marketing]]
+3. read fofafu_vault/standards/<team-spec>.md   — [[standards/engineering-standards]] / [[standards/design-system]] / [[standards/marketing-standards]]
+4. read fofafu_vault/protocols/dispatch.md      (this file — [[protocols/dispatch]])
 5. read fofafu_vault/features/<slug>.md         (specialist subsections already written)
 6. audit the specialist subsections for completeness, mutual consistency, basic quality
 7. light editorial consolidation if needed; do NOT rewrite the specialists' work
@@ -64,7 +64,7 @@ Team-leads own their team's kanban. They do not spawn specialists (the dispatche
 ## 4. Specialist's loop
 
 ```
-1. read .claude/agents/<team>/<role>.md
+1. read .claude/agents/<team>/<role>.md (see [[agents/backend-dev]], [[agents/frontend-dev]], [[agents/qa-engineer]], [[agents/e2e-test-writer]], [[agents/code-reviewer]], [[agents/ui-designer]], [[agents/ux-writer]], [[agents/a11y-auditor]], [[agents/content-writer]], [[agents/seo-specialist]], [[agents/growth-analyst]])
 2. read fofafu_vault/protocols/dispatch.md
 3. read fofafu_vault/features/<slug>.md
 4. (optional) move kanban/<team>.md card from "Backlog" to "In Progress" if no
@@ -164,7 +164,7 @@ drafting → speced → building → review → shipped
 
 ## 7. Kanban transitions
 
-| Feature status | Card lives on team boards | Card lives on company board |
+| Feature status | Card lives on team boards | Card lives on [[kanban/company]] |
 |---|---|---|
 | drafting | nowhere (not yet routed) | `Backlog` |
 | speced | nowhere (not yet routed) | `Backlog` |
@@ -243,8 +243,8 @@ Built by aggregating that week's `log/*.md` files and current kanban state.
 
 ## 11. Things you may NOT do
 
-- (dispatcher) Skip the lead-aggregator spawn — the lead still owns the team kanban move and the audit, even though it no longer spawns specialists. Spawning a lead solely to move a kanban card is fine; that's its job under the 2-level model.
-- (lead) Spawn specialists yourself — the dispatcher does that. If the harness ever supports nested spawn and §2 is revised to A-shape, this restriction lifts.
+- ([[agents/dispatcher]]) Skip the lead-aggregator spawn — the lead still owns the team kanban move and the audit, even though it no longer spawns specialists. Spawning a lead solely to move a kanban card is fine; that's its job under the 2-level model.
+- (lead — [[agents/tech-lead]] / [[agents/design-lead]] / [[agents/marketing-lead]]) Spawn specialists yourself — the dispatcher does that. If the harness ever supports nested spawn and §2 is revised to A-shape, this restriction lifts.
 - (specialist) Talk to another team's specialist directly. Cross-team contracts are coordinated through your dispatcher prompt (per §4 "Cross-specialist coordination"); cross-team disagreements escalate via your `notes` field.
 - (anyone) Edit a file outside your writer-ownership.
 - (anyone) Rename or delete a feature file (mark `status: abandoned` instead).

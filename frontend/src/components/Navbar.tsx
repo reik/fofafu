@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/auth';
 import { unreadCount, messageKeys } from '@/api/messages';
-import { CommunityIcon, FamilyIcon, HomeIcon, LogOutIcon, MessageIcon } from '@/components/icons';
+import { CalendarIcon, CommunityIcon, FamilyIcon, HomeIcon, LogOutIcon, MessageIcon } from '@/components/icons';
 
 interface NavLink {
   to: string;
@@ -17,6 +17,7 @@ const NAV_LINKS: NavLink[] = [
   { to: '/family/me', label: 'Family', Icon: FamilyIcon, match: (p) => p.startsWith('/family') },
   { to: '/messages', label: 'Messages', Icon: MessageIcon, match: (p) => p.startsWith('/messages') },
   { to: '/search', label: 'Community', Icon: CommunityIcon, match: (p) => p.startsWith('/search') },
+  { to: '/playdates', label: 'Playdates', Icon: CalendarIcon, match: (p) => p.startsWith('/playdates') },
 ];
 
 function cn(...parts: Array<string | false | null | undefined>) {

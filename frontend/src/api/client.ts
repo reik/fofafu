@@ -42,6 +42,17 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   const text = await res.text();
   const data = text ? JSON.parse(text) : {};
 
+  if (res.status === 401 && !path.startsWith('/auth/')) {
+    useAuthStore.getState().clear();
+    window.location.href = '/login';
+    return new Promise<never>(() => {});
+  }
+  if (res.status === 401 && !path.startsWith('/auth/')) {
+    useAuthStore.getState().clear();
+    window.location.href = '/login';
+    return new Promise<never>(() => {});
+  }
+
   if (!res.ok) {
     throw new ApiError({
       status: res.status,

@@ -17,7 +17,7 @@ links:
 
 ## Problem
 
-`color.brand.primary` is `#4D9463`. White text on that surface lands at **~3.4:1 contrast** — passes WCAG 2.2 AA 1.4.11 (UI component ≥3:1) but **fails 1.4.3 Contrast (Minimum)** for normal text (≥4.5:1). Surfaced by `ui-designer` during the `reply-coach` dispatch (see `fofafu_vault/features/reply-coach.md` `### Visual` "Flagged gaps" §2) and ratified by design-lead as out of scope for that feature because it's a system-wide brand-token concern, not a chip-specific gap.
+`color.brand.primary` is `#4D9463`. White text on that surface lands at **~3.4:1 contrast** — passes WCAG 2.2 AA 1.4.11 (UI component ≥3:1) but **fails 1.4.3 Contrast (Minimum)** for normal text (≥4.5:1). Surfaced by [[agents/ui-designer]] during the [[features/reply-coach]] dispatch (see `### Visual` "Flagged gaps" §2) and ratified by [[agents/design-lead]] as out of scope for that feature because it's a system-wide brand-token concern, not a chip-specific gap.
 
 Every shipped CTA pill that uses white text on the brand surface inherits this failure. The fix needs a system-wide pass, not a one-off chip patch.
 
@@ -25,11 +25,11 @@ Success = the brand token canon offers a darker variant for white-text contexts;
 
 ## Acceptance criteria
 
-- [ ] Introduce `color.brand.primary.pressed` (proposed value `~#3F7E54`) in `fofafu_vault/standards/design-system.md` token canon. Verify white-on-pressed lands ≥ 4.5:1 against the computed contrast.
+- [ ] Introduce `color.brand.primary.pressed` (proposed value `~#3F7E54`) in [[standards/design-system]] token canon. Verify white-on-pressed lands ≥ 4.5:1 against the computed contrast.
 - [ ] Decide which token white text is composed against: the pressed token (recommended — keeps `primary` as the "rest" hue and `pressed` doubles as hover + accessible white-text surface), or darken `primary` itself (cross-cutting blast radius, but simpler tokenization). Document the call in `### Visual`.
 - [ ] Frontend migration: every CTA pill currently rendering `color: white` on `bg: color.brand.primary` switches to the chosen accessible-pair. Audit via grep + a frontend run-through.
 - [ ] Hover state across all migrated CTAs uses the same `pressed` token so the visual hierarchy stays coherent.
-- [ ] Axe sweep (per the project's existing a11y harness — see `fofafu_vault/features/a11y-audit.md`) reports zero 1.4.3 failures across the 11 audited pages after migration.
+- [ ] Axe sweep (per the project's existing a11y harness — see [[features/a11y-audit]]) reports zero 1.4.3 failures across the 11 audited pages after migration.
 - [ ] No regression in `ReplyCoach` chip's `CoachChip.Use this` pill once Phase 3 frontend port lands — it inherits the new token.
 
 ## Out of scope

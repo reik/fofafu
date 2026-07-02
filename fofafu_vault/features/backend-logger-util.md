@@ -17,7 +17,7 @@ links:
 
 ## Problem
 
-The project rule (see `.claude/agents/engineering/code-reviewer.md` “project standards”) is "No `console.log` in committed code — use a logger util." The backend workspace has no logger util, so diagnostics fall back to `console.*` (only `coach.controller.ts` currently carries an `// eslint-disable-next-line no-console` marker). Surfaced as **MF-1** by code-reviewer during the `reply-coach` dispatch (see `fofafu_vault/features/reply-coach.md` `### Code review`). Tech-lead deferred it to this feature.
+The project rule (see `.claude/agents/engineering/code-reviewer.md` “project standards”) is "No `console.log` in committed code — use a logger util." The backend workspace has no logger util, so diagnostics fall back to `console.*` (only `coach.controller.ts` currently carries an `// eslint-disable-next-line no-console` marker). Surfaced as **MF-1** by [[agents/code-reviewer]] during the [[features/reply-coach]] dispatch (see `### Code review`). [[agents/tech-lead]] deferred it to this feature.
 
 Existing offenders to migrate: `backend/src/index.ts` (startup logs), `backend/src/services/email.service.ts` (dev-mode dump), `backend/src/controllers/coach.controller.ts` (client-failure warn — the MF-1 site).
 

@@ -9,7 +9,7 @@ shipped: null
 
 ## Theme
 
-Phase 2's original charter — "port the backend feature-by-feature" — is **already complete**. `auth-email`, `announcements-feed`, `family-profiles`, `messaging-dms`, and `community-search` all shipped through the dispatcher and sit in `Done` on both the engineering and company kanbans. That clears the runway for what Phase 2's closing move now becomes: fofafu's first AI-assisted feature — a **trauma-informed reply coach** built on the Claude API. The coach is the differentiator that distinguishes fofafu from the original fofa — same product surface, smarter conversational floor.
+Phase 2's original charter — "port the backend feature-by-feature" — is **already complete**. [[features/auth-email]], [[features/announcements-feed]], [[features/family-profiles]], [[features/messaging-dms]], and [[features/community-search]] all shipped through the dispatcher and sit in `Done` on both the engineering and company kanbans. That clears the runway for what Phase 2's closing move now becomes: fofafu's first AI-assisted feature — a **trauma-informed reply coach** built on the Claude API. The coach is the differentiator that distinguishes fofafu from the original fofa — same product surface, smarter conversational floor.
 
 ## Why a reply coach (and not the other candidates)
 
@@ -31,18 +31,18 @@ The coach wins on **uniqueness**, **scoped surface area**, and **clarity of valu
 
 The five backend ports are all in `Done`:
 
-- `auth-email` — first port; node:test 9/9
-- `announcements-feed` — posts + comments + reactions; 11/11 feature tests
-- `family-profiles` — auto-create on register; 23/23 backend tests
-- `messaging-dms` — DMs + unread counts; 7/7 feature tests
-- `community-search` — `GET /api/search/families`; 53/53 backend
+- [[features/auth-email]] — first port; node:test 9/9
+- [[features/announcements-feed]] — posts + comments + reactions; 11/11 feature tests
+- [[features/family-profiles]] — auto-create on register; 23/23 backend tests
+- [[features/messaging-dms]] — DMs + unread counts; 7/7 feature tests
+- [[features/community-search]] — `GET /api/search/families`; 53/53 backend
 
 These are listed here for the retro narrative, not as remaining work.
 
 ### In scope (closing Phase 2)
 
 1. **Reply coach feature** (new):
-   - Feature file: `fofafu_vault/features/reply-coach.md` *(scaffolded 2026-06-03)*
+   - Feature file: [[features/reply-coach]] *(scaffolded 2026-06-03)*
    - Backend: `POST /api/comments/coach` — accepts a draft comment + thread context, returns `{ verdict: "ok" | "suggest", reasoning: string, rewrite?: string, categories?: string[] }`
    - Anthropic SDK integration with **prompt caching** on the system prompt (warmth/voice rules + foster-context anti-patterns) — keeps cost down on hot paths
    - Server-side rate limiting per user (coach calls are cheap individually, expensive in aggregate)
@@ -89,7 +89,7 @@ Content-Type: application/json
 
 - Coach is **advisory, never blocking**. The composer always lets the user publish their original draft.
 - Coach is **silent on neutral comments**. `verdict=ok` returns nothing visible to the user; no banner, no green check.
-- Coach speaks **warmly, briefly, and never lectures**. Voice rules live in `fofafu_vault/standards/design-system.md` and are extended for this feature in the spec.
+- Coach speaks **warmly, briefly, and never lectures**. Voice rules live in [[standards/design-system]] and are extended for this feature in the spec.
 - Coach **does not moderate opinions** — it flags phrasings known to land badly in foster contexts, not viewpoints.
 
 ### Categories it watches for (initial list — refined during spec phase)
@@ -117,12 +117,12 @@ Content-Type: application/json
 
 | Sub-phase | What | State |
 |---|---|---|
-| 2a | `/dispatch auth-email` | ✅ shipped |
-| 2b | `/dispatch announcements-feed` | ✅ shipped |
-| 2c | `/dispatch family-profiles` | ✅ shipped |
-| 2d | `/dispatch messaging-dms` | ✅ shipped |
-| 2e | `/dispatch community-search` | ✅ shipped |
-| 2f | `/new-feature reply-coach` → `/dispatch reply-coach` | feature file scaffolded 2026-06-03; dispatch pending |
+| 2a | `/dispatch` [[features/auth-email]] | ✅ shipped |
+| 2b | `/dispatch` [[features/announcements-feed]] | ✅ shipped |
+| 2c | `/dispatch` [[features/family-profiles]] | ✅ shipped |
+| 2d | `/dispatch` [[features/messaging-dms]] | ✅ shipped |
+| 2e | `/dispatch` [[features/community-search]] | ✅ shipped |
+| 2f | `/new-feature reply-coach` → `/dispatch reply-coach` | [[features/reply-coach]] scaffolded 2026-06-03; dispatch pending |
 | 2g | Phase 2 retro into `fofafu_vault/log/standups/` | pending — runs after 2f ships |
 
 2f is the only remaining build sub-phase. It depends on the announcements feed (2b) for end-to-end testing against real comment shapes, which is already in place.
@@ -131,19 +131,19 @@ Content-Type: application/json
 
 | Risk | Mitigation |
 |---|---|
-| Coach gives bad advice and erodes trust | Strict voice rules in the system prompt; small allowed category set; refuse-rather-than-guess instruction; design-lead audits sample outputs before flag flips to default-on. |
+| Coach gives bad advice and erodes trust | Strict voice rules in the system prompt; small allowed category set; refuse-rather-than-guess instruction; [[agents/design-lead]] audits sample outputs before flag flips to default-on. |
 | Latency makes the composer feel slow | Coach is fire-and-forget on the client side (debounced, runs in background, surfaces when ready). Backend SLO p95 < 1.5s; over that we drop the suggestion silently. |
-| Cost runs away | Prompt caching + per-user rate limit + daily cap. Growth-analyst's success metric explicitly tracks cost-per-active-author. |
+| Cost runs away | Prompt caching + per-user rate limit + daily cap. [[agents/growth-analyst]]'s success metric explicitly tracks cost-per-active-author. |
 | Coach inputs leak to logs | Strict PII scrub at the log boundary; coach payloads are NOT persisted beyond the in-memory request. Documented in the backend spec. |
 | API key handling | `ANTHROPIC_API_KEY` env-only. Backend refuses to boot if absent and the flag is on. Never logged. |
-| Feature-flag misuse | `reply_coach_enabled` defaults `false` in production until the design-lead signs off on sample outputs. |
+| Feature-flag misuse | `reply_coach_enabled` defaults `false` in production until the [[agents/design-lead]] signs off on sample outputs. |
 
 ## Exit criteria for Phase 2
 
 - ✅ All five backend feature ports merged, tested, and visible on the engineering kanban in `Done`.
-- `fofafu_vault/features/reply-coach.md` is `shipped`; coach endpoint live behind the flag; sample-output review documented in the feature spec's `### Test plan`.
+- [[features/reply-coach]] is `shipped`; coach endpoint live behind the flag; sample-output review documented in the feature spec's `### Test plan`.
 - Anthropic key handling, rate limiting, and prompt-caching configuration are documented in `backend/README.md`.
-- Growth-analyst has recorded the baseline metric (calls/day, cache hit rate, cost/day, suggestion-acceptance rate) in the feature spec's `### Growth` section.
+- [[agents/growth-analyst]] has recorded the baseline metric (calls/day, cache hit rate, cost/day, suggestion-acceptance rate) in the feature spec's `### Growth` section.
 - Phase 2 retro written into the standup log for the closing week.
 
 ## Verification (manual, run as features land)
