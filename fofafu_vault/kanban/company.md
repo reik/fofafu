@@ -17,7 +17,6 @@ team: company
 - [ ] [[features/feed-virtualization]] — perf: `@tanstack/react-virtual`'s `useWindowVirtualizer` applied to pages/Feed.tsx (windowed list, measureElement for variable-height cards); accumulate-vs-replace pagination interpretation endorsed; cache-desync must-fix resolved via useMemo-derived items from cached feedKeys.page queries; vitest 79/79, playwright 14/14, tsc/build clean
 - [ ] [[features/playdates]] — availability calendar + playdate request flow; engineering → review (128/128 backend, 109/109 frontend, tsc clean, 3 must-fix resolved); design/marketing sections pending
 
-
 ## Done
 - [x] [[features/feed-avatars]] — author avatar (img/initial-circle/neutral-placeholder) next to display name on AnnouncementCard; shared Avatar component; backend 85/85, frontend 72/72, tsc clean; merged to master 2026-06-23
 - [x] [[features/ci-pipeline]] — GitHub Actions CI on push/PR; .github/workflows/ci.yml (Node 20, npm ci, typecheck + test --workspaces --if-present); 4/4 ACs; merged to master 2026-06-23
