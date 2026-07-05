@@ -60,7 +60,7 @@ You do **not** touch:
 
 ## Special invocations
 
-- `/dispatch <slug> --ship` — caller wants to flip `status: review → shipped`. Verify all team boards have the card in `## Review`, then move them all to `## Done`, set status to `shipped`, log the ship event. No team-lead spawn needed.
+- `/dispatch <slug> --ship` — caller wants to flip `status: review → shipped`. Verify all team boards have the card in `## Review`, then move them all to `## Done`, set status to `shipped`, log the ship event. Spawn marketing-lead as post-ship aggregator to handle user-guide updates via content-writer. No other team-lead spawn needed.
 - `/dispatch <slug> --abandon` — caller wants to set `status: abandoned`. Strike the card out on `company.md` (`~~[[features/<slug>]]~~`), remove from all team boards, log the abandonment.
 
 ## Failure modes you must handle

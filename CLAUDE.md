@@ -65,6 +65,7 @@ Multiple agents writing the same file in the same turn = data loss. So:
 | `fofafu_vault/log/<date>.md` | append-only by anyone; never edit existing lines |
 | `fofafu_vault/teams/<team>.md` | the team's lead (charter changes go through them) |
 | `fofafu_vault/standards/<spec>.md` | the team's lead (token / stack / positioning changes go through them) |
+| `docs/user-guide.md` | content-writer (updated automatically on each `--ship`). Structural reorganisation requires `/new-feature` and dispatcher flow. |
 
 ICs never edit kanban boards directly. ICs DO append to the log and write their own subsection of the feature spec. Under the 2-level model, ICs return to the dispatcher (which spawned them); the team-lead is spawned afterwards, reads the spec sections, and moves the team's kanban card to Review.
 
