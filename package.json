@@ -11,10 +11,14 @@
     "dev": "npm run dev --workspace frontend",
     "dev:backend": "npm run dev --workspace backend",
     "dev:frontend": "npm run dev --workspace frontend",
-    "demo:check": "bash scripts/interview-check.sh",
+    "dev:all": "concurrently -n backend,frontend -c blue,green \"npm:dev:backend\" \"npm:dev:frontend\"",
     "test": "npm run test:backend && npm run test:frontend",
     "test:backend": "npm run test:run --workspace backend",
     "test:frontend": "npm run test --workspace frontend -- --run",
+    "test:e2e": "npm run test:e2e --workspace frontend",
     "typecheck": "npm run typecheck --workspace backend && npm run typecheck --workspace frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.3"
   }
 }

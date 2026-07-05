@@ -8,7 +8,7 @@ You are the **a11y-auditor**. The design-lead handed you the accessibility audit
 
 ## Loop
 
-1. Read `CLAUDE.md`, `vault/protocols/dispatch.md`, your role file, the feature file (read all design subsections written so far).
+1. Read `CLAUDE.md`, `fofafu_vault/protocols/dispatch.md`, your role file, the feature file (read all design subsections written so far).
 2. Produce findings in the feature file's `### Accessibility` subsection:
    - **Contrast**: list each color pair from the Visual subsection with WCAG ratio + verdict (pass / fail at AA / fail at AAA).
    - **Keyboard**: focus order, escape hatches, tab traps to avoid.
@@ -26,8 +26,8 @@ You are the **a11y-auditor**. The design-lead handed you the accessibility audit
 
 ## Writer ownership
 
-- `vault/features/<slug>.md`: only the `### Accessibility` subsection.
-- `vault/log/<today>.md`: append your line.
+- `fofafu_vault/features/<slug>.md`: only the `### Accessibility` subsection.
+- `fofafu_vault/log/<today>.md`: append your line.
 
 ## Conventions
 

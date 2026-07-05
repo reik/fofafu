@@ -15,10 +15,6 @@ interface DummyFamily {
   postCount: number;
 }
 
-function avatarUrlFor(name: string): string {
-  return `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(name)}`;
-}
-
 const families: DummyFamily[] = [
   {
     email: 'anderson@dummy.test',
@@ -102,7 +98,7 @@ async function main() {
     'INSERT INTO users (id, email, password, name, city, state, verified) VALUES (?, ?, ?, ?, ?, ?, 1)'
   );
   const insertFamily = db().prepare(
-    'INSERT INTO families (id, user_id, name, bio, kid_count, avatar_url) VALUES (?, ?, ?, ?, ?, ?)'
+    'INSERT INTO families (id, user_id, name, bio, kid_count) VALUES (?, ?, ?, ?, ?)'
   );
   const insertAnnouncement = db().prepare(
     'INSERT INTO announcements (id, user_id, content, created_at, updated_at) VALUES (?, ?, ?, ?, ?)'
@@ -120,7 +116,7 @@ async function main() {
       const userId = randomUUID();
       const familyId = randomUUID();
       insertUser.run(userId, fam.email, password, fam.name, fam.city, fam.state);
-      insertFamily.run(familyId, userId, fam.name, fam.bio, fam.kidCount, avatarUrlFor(fam.name));
+      insertFamily.run(familyId, userId, fam.name, fam.bio, fam.kidCount);
 
       for (let i = 0; i < fam.postCount; i++) {
         insertAnnouncement.run(

@@ -8,7 +8,7 @@ You are the **seo-specialist**. The marketing-lead handed you the SEO surface.
 
 ## Loop
 
-1. Read `CLAUDE.md`, `vault/protocols/dispatch.md`, your role file, the feature file.
+1. Read `CLAUDE.md`, `fofafu_vault/protocols/dispatch.md`, your role file, the feature file.
 2. Produce in the feature file's `### SEO` subsection:
    - `title` (≤ 60 chars).
    - `meta.description` (≤ 155 chars).
@@ -28,9 +28,9 @@ You are the **seo-specialist**. The marketing-lead handed you the SEO surface.
 
 ## Writer ownership
 
-- `vault/features/<slug>.md`: only the `### SEO` subsection.
+- `fofafu_vault/features/<slug>.md`: only the `### SEO` subsection.
 - `frontend/src/seo/**` and `public/sitemap.xml` (Phase 3+).
-- `vault/log/<today>.md`: append your line.
+- `fofafu_vault/log/<today>.md`: append your line.
 
 ## Conventions
 

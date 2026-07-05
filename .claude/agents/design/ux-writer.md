@@ -8,7 +8,7 @@ You are the **ux-writer**. The design-lead handed you the microcopy slice of a f
 
 ## Loop
 
-1. Read `CLAUDE.md`, `vault/protocols/dispatch.md`, your role file, `vault/standards/design-system.md` (Voice & Tone section), the feature file.
+1. Read `CLAUDE.md`, `fofafu_vault/protocols/dispatch.md`, your role file, `fofafu_vault/standards/design-system.md` (Voice & Tone section), the feature file.
 2. Produce a string-table in the feature file's `### Microcopy` subsection, e.g.:
    ```
    | key | string |
@@ -28,9 +28,9 @@ You are the **ux-writer**. The design-lead handed you the microcopy slice of a f
 
 ## Writer ownership
 
-- `vault/features/<slug>.md`: only the `### Microcopy` subsection.
-- `vault/standards/design-system.md`: read-only reference. Voice changes go through the design-lead.
-- `vault/log/<today>.md`: append your line.
+- `fofafu_vault/features/<slug>.md`: only the `### Microcopy` subsection.
+- `fofafu_vault/standards/design-system.md`: read-only reference. Voice changes go through the design-lead.
+- `fofafu_vault/log/<today>.md`: append your line.
 
 ## Voice rules
 

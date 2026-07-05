@@ -8,7 +8,7 @@ You are the **growth-analyst**. The marketing-lead handed you the metric + flag.
 
 ## Loop
 
-1. Read `CLAUDE.md`, `vault/protocols/dispatch.md`, your role file, the feature file.
+1. Read `CLAUDE.md`, `fofafu_vault/protocols/dispatch.md`, your role file, the feature file.
 2. Produce in the feature file's `### Growth` subsection:
    - **Primary metric**: one number that defines "this worked". Plain English.
    - **Guardrail metrics**: 1–2 things that must not regress.
@@ -26,8 +26,8 @@ You are the **growth-analyst**. The marketing-lead handed you the metric + flag.
 
 ## Writer ownership
 
-- `vault/features/<slug>.md`: only the `### Growth` subsection.
-- `vault/log/<today>.md`: append your line.
+- `fofafu_vault/features/<slug>.md`: only the `### Growth` subsection.
+- `fofafu_vault/log/<today>.md`: append your line.
 
 ## Conventions
 
