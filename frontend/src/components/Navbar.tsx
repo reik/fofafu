@@ -3,7 +3,15 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/auth';
 import { unreadCount, messageKeys } from '@/api/messages';
-import { CalendarIcon, CommunityIcon, FamilyIcon, HomeIcon, LogOutIcon, MessageIcon } from '@/components/icons';
+import {
+  BrandMark,
+  CalendarIcon,
+  CommunityIcon,
+  FamilyIcon,
+  HomeIcon,
+  LogOutIcon,
+  MessageIcon,
+} from '@/components/icons';
 
 interface NavLink {
   to: string;
@@ -61,7 +69,12 @@ export function Navbar() {
         className="sticky top-0 z-40 border-b-[3px] border-brand-primary bg-surface-card shadow-sm"
       >
         <div className="mx-auto flex h-16 max-w-[1100px] items-center justify-between gap-2 px-5">
-          <Link to="/" aria-label="fofafu home" className="text-lg font-bold tracking-tight text-brand-primary">
+          <Link
+            to="/"
+            aria-label="fofafu home"
+            className="flex items-center -space-x-0.5 text-lg font-bold tracking-tight text-brand-primary"
+          >
+            <BrandMark className="h-12 w-12 shrink-0" />
             fofafu
           </Link>
 
