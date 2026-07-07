@@ -198,3 +198,24 @@ export function CalendarIcon(props: IconProps) {
     </svg>
   );
 }
+
+export function BrandMark(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 100 100" fill="none" aria-hidden="true" {...props}>
+      <circle cx="50" cy="50" r="46" fill="var(--color-surface-subtle, #F4ECDF)" />
+      <path
+        d="M30 62 C30 44, 42 32, 50 32 C58 32, 70 44, 70 62"
+        stroke="#4D9463"
+        strokeWidth="7"
+        strokeLinecap="round"
+      />
+      <path
+        d="M38 66 C38 52, 45 43, 50 43 C55 43, 62 52, 62 66"
+        stroke="#F0B24F"
+        strokeWidth="7"
+        strokeLinecap="round"
+      />
+      <circle cx="50" cy="66" r="5.5" fill="#4D9463" />
+    </svg>
+  );
+}
