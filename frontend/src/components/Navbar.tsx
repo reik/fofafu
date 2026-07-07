@@ -74,7 +74,7 @@ export function Navbar() {
             aria-label="fofafu home"
             className="flex items-center gap-2 text-lg font-bold tracking-tight text-brand-primary"
           >
-            <BrandMark className="h-8 w-8 shrink-0" />
+            <BrandMark className="h-10 w-10 shrink-0" />
             fofafu
           </Link>
 
