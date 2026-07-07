@@ -72,9 +72,9 @@ export function Navbar() {
           <Link
             to="/"
             aria-label="fofafu home"
-            className="flex items-center gap-2 text-lg font-bold tracking-tight text-brand-primary"
+            className="flex items-center -space-x-0.5 text-lg font-bold tracking-tight text-brand-primary"
           >
-            <BrandMark className="h-10 w-10 shrink-0" />
+            <BrandMark className="h-12 w-12 shrink-0" />
             fofafu
           </Link>
 
