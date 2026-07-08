@@ -118,7 +118,7 @@ export function MonthCalendar({
                   className={cn(
                     'text-[0.8rem] font-bold w-6 h-6 flex items-center justify-center rounded-full leading-none',
                     isToday
-                      ? 'bg-brand-primary text-white'
+                      ? 'bg-brand-primary-pressed text-white'
                       : isCurrentMonth
                       ? 'text-ink-lead'
                       : 'text-ink-muted',
@@ -141,7 +141,7 @@ export function MonthCalendar({
                   const chipColor = isMatch
                     ? 'bg-[#F0B24F] text-ink-lead ring-1 ring-[#D4921F]'
                     : isFree
-                    ? 'bg-brand-primary/85 text-white'
+                    ? 'bg-brand-primary-pressed text-white'
                     : 'bg-[#E4D9C8] text-ink-muted';
 
                   return (

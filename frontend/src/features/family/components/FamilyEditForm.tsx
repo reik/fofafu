@@ -97,7 +97,7 @@ export function FamilyEditForm({ family, onCancel, onSaved }: Props) {
         <button
           type="submit"
           disabled={isSubmitting || mutation.isPending}
-          className="inline-flex items-center gap-1.5 rounded-full bg-brand-primary px-5 py-2.5 font-semibold text-white shadow-lift disabled:opacity-60"
+          className="inline-flex items-center gap-1.5 rounded-full bg-brand-primary-pressed px-5 py-2.5 font-semibold text-white shadow-lift disabled:opacity-60"
         >
           <CheckIcon className="h-4 w-4" />
           {isSubmitting || mutation.isPending ? 'Saving…' : 'Save'}

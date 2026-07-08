@@ -5,12 +5,12 @@ team: design
 
 > Navigation: [[kanban/company]] · [[teams/design]] · [[standards/design-system]]
 ## Backlog
-- [ ] [[features/brand-contrast-fix]] @design — system-wide WCAG 1.4.3 token revision; introduce `color.brand.primary.pressed` (~`#3F7E54`) and pick which token white text is composed against
 
 ## In Progress
 - [ ] [[features/playdates]] @design — new /playdates page (calendar week/month views, requests sidebar) + availability/request surface on /family/:id; visual, microcopy, a11y
 
 ## Review
+- [ ] [[features/brand-contrast-fix]] @design — ui-designer + a11y-auditor returned; token `color.brand.primary.pressed` (#3F7E54, 4.86:1) ratified; migration + axe sweep landed per engineering
 
 ## Done
 - [x] [[features/reply-coach]] @design — ui-designer + ux-writer + a11y-auditor; design-lead ratified 4 flagged gaps (added `color.surface.subtle` token; deferred system-wide brand-contrast fix to [[features/brand-contrast-fix]]); merged 2026-06-11 (PR #2)

@@ -13,7 +13,10 @@ export default {
           muted: '#5E534B',
         },
         brand: {
-          primary: '#4D9463',
+          primary: {
+            DEFAULT: '#4D9463',
+            pressed: '#3F7E54',
+          },
           warm: '#F0B24F',
         },
         feedback: {

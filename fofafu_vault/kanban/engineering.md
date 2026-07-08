@@ -13,6 +13,7 @@ team: engineering
 ## In Progress
 
 ## Review
+- [ ] eng-frontend-18 [[features/brand-contrast-fix]] @engineering — migrated 22 white-on-brand-primary CTA/interactive sites (19 files) to `bg-brand-primary-pressed`; added `brand.primary.pressed` (#3F7E54, 4.86:1) to tailwind.config.js; new static-scan test (brand-contrast.test.ts) + full vitest 119/119, tsc/build clean, 0 must-fix in code review
 - [ ] eng-frontend-12 [[features/feed-virtualization]] @engineering — `@tanstack/react-virtual`'s `useWindowVirtualizer` applied to pages/Feed.tsx (windowed list, measureElement for variable-height cards); accumulate-vs-replace pagination interpretation endorsed; code review's must-fix #1 (accumulated items desync after composer invalidateQueries) fixed by tech-lead via useMemo-derived items from all cached feedKeys.page queries; must-fix #2 (test docstring) also addressed; vitest 79/79, playwright 14/14, tsc/build clean
 - [ ] eng-backend-15 [[features/playdates]] @engineering — availability_slots + playdate_requests tables; /playdates page (week/month calendar); request flow on /family/:id
 

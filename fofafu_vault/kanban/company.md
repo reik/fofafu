@@ -7,13 +7,13 @@ team: company
 ## Backlog
 - [ ] [[features/reply-coach-live]] — Phase 2 follow-up to [[features/reply-coach]]: live Anthropic SDK + key plumbing + prompt caching + $5/day cost cap + 50/50 holdback experiment + `coach_events` aggregate table
 - [ ] [[features/backend-logger-util]] — chore closing MF-1 from reply-coach review: backend logger util + migrate the three known `console.*` sites
-- [ ] [[features/brand-contrast-fix]] — system-wide WCAG 1.4.3 fix: white-on-`color.brand.primary` is ~3.4:1; introduce `color.brand.primary.pressed` and migrate every CTA
 - [ ] [[features/moderation-report-block]] — community safety
 - [ ] [[features/mobile-expo-bootstrap]] — Phase 4 mobile
 
 ## In Progress
 
 ## Review
+- [ ] [[features/brand-contrast-fix]] — WCAG 1.4.3 fix: `color.brand.primary.pressed` (#3F7E54, 4.86:1 vs white, independently verified by ui-designer + a11y-auditor) introduced; 22 CTA sites (19 files) migrated to accessible pair + hover parity; frontend 119/119, tsc/build clean, 0 must-fix code review, 11/11 pages 0 axe violations; both team kanban cards in Review
 - [ ] [[features/feed-virtualization]] — perf: `@tanstack/react-virtual`'s `useWindowVirtualizer` applied to pages/Feed.tsx (windowed list, measureElement for variable-height cards); accumulate-vs-replace pagination interpretation endorsed; cache-desync must-fix resolved via useMemo-derived items from cached feedKeys.page queries; vitest 79/79, playwright 14/14, tsc/build clean
 - [ ] [[features/playdates]] — availability calendar + playdate request flow; engineering → review (128/128 backend, 109/109 frontend, tsc clean, 3 must-fix resolved); design/marketing sections pending
 

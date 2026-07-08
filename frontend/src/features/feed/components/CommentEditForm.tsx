@@ -55,7 +55,7 @@ export function CommentEditForm({ comment, onDone }: Props) {
         <button
           type="submit"
           disabled={isSubmitting || mutation.isPending}
-          className="inline-flex items-center gap-1.5 rounded-full bg-brand-primary px-4 py-1.5 text-sm font-semibold text-white shadow-lift disabled:opacity-60"
+          className="inline-flex items-center gap-1.5 rounded-full bg-brand-primary-pressed px-4 py-1.5 text-sm font-semibold text-white shadow-lift disabled:opacity-60"
         >
           <CheckIcon className="h-4 w-4" />
           {isSubmitting || mutation.isPending ? 'Saving…' : 'Save'}

@@ -171,7 +171,7 @@ export function SlotForm({ initialDate, existing, onSaved, onCancel, onDeleted }
           <button
             type="submit"
             disabled={isSubmitting}
-            className="rounded-full bg-brand-primary px-4 py-2 text-sm font-semibold text-white shadow-lift hover:bg-brand-primary/90 transition-colors disabled:opacity-60"
+            className="rounded-full bg-brand-primary-pressed px-4 py-2 text-sm font-semibold text-white shadow-lift hover:bg-brand-primary-pressed transition-colors disabled:opacity-60"
           >
             {isSubmitting ? 'Saving…' : existing ? 'Save' : 'Add Slot'}
           </button>

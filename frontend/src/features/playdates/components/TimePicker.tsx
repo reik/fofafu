@@ -88,7 +88,7 @@ export function TimePicker({ label, value, onChange }: TimePickerProps) {
               className={cn(
                 'px-3 py-[9px] text-[0.82rem] font-bold border-none cursor-pointer transition-colors',
                 ampm === period
-                  ? 'bg-brand-primary text-white'
+                  ? 'bg-brand-primary-pressed text-white'
                   : 'bg-transparent text-ink-muted hover:bg-brand-primary/10',
               )}
               aria-pressed={ampm === period}
