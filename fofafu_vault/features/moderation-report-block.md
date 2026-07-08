@@ -42,7 +42,7 @@ Success = a foster family can (a) report a specific post, comment, or DM in two 
 - Should blocks hide *historical* comments by the blocked family in already-read threads, or just future ones? (Hiding historical = more complete escape, but breaks thread readability for the blocker.)
 - Where do report categories sit on the spectrum from "vague enough to be safe" to "specific enough to be useful for an admin"? Needs ux-writer.
 - Should reports against the same target deduplicate per reporter, or accumulate? (Dedupe = cleaner data; accumulate = more honest engagement signal.)
-- DM blocks: when family A blocks family B, does the existing thread stay readable for A in case there's prior context A needs, or vanish entirely?
+- ~~DM blocks: when family A blocks family B, does the existing thread stay readable for A in case there's prior context A needs, or vanish entirely?~~ **Resolved (2026-07-08):** conversation history stays readable for the blocker (A). Only new messages from the blocked family (B) are prevented going forward; the thread does not vanish from A's inbox.
 
 <!-- The sections below are written by team-leads during dispatch. -->
 
