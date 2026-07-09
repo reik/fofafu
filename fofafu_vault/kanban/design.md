@@ -11,6 +11,7 @@ team: design
 - [ ] [[features/playdates]] @design — new /playdates page (calendar week/month views, requests sidebar) + availability/request surface on /family/:id; visual, microcopy, a11y
 
 ## Review
+- [ ] [[features/reply-coach-live]] @design — no In Progress card existed for this collaborator-scope feature (never created during the interrupted 07-08 session); added directly to Review. ui-designer + ux-writer (re-audit) + a11y-auditor all returned; Visual N/A (no new surface), Microcopy 10/10 PASS on static voice-rule audit with Part 2 fixture tone-fidelity honestly deferred (no live API key), Accessibility 0 findings/0 blocking. Design-lead audit: consistent across subsections, no gaps.
 
 ## Done
 - [x] [[features/reply-coach]] @design — ui-designer + ux-writer + a11y-auditor; design-lead ratified 4 flagged gaps (added `color.surface.subtle` token; deferred system-wide brand-contrast fix to [[features/brand-contrast-fix]]); merged 2026-06-11 (PR #2)

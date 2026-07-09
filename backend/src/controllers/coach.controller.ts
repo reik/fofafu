@@ -42,7 +42,7 @@ export async function coachComment(req: AuthRequest, res: Response): Promise<voi
   const input = req.body as CoachInput;
 
   try {
-    const result = await getClaudeClient().coach(input);
+    const result = await getClaudeClient(userId).coach(input);
     res.status(200).json(result);
   } catch (err) {
     // Never log the draft, threadContext, or any user-supplied field — only
