@@ -59,7 +59,13 @@ export async function register(req: Request, res: Response): Promise<void> {
     ).run(familyId, userId, name);
   })();
 
-  await sendVerificationEmail({ to: normalised, name, token });
+  try {
+    await sendVerificationEmail({ to: normalised, name, token });
+  } catch (err) {
+    console.error('[register] failed to send verification email', err);
+    res.status(500).json({ error: 'Registration succeeded but the verification email could not be sent. Please try again later.' });
+    return;
+  }
 
   res.status(201).json({
     message: 'Registration successful. Please check your email to verify your account.',
@@ -140,7 +146,11 @@ export async function forgotPassword(req: Request, res: Response): Promise<void>
     'INSERT INTO password_reset_tokens (id, user_id, token, expires_at) VALUES (?, ?, ?, ?)'
   ).run(randomUUID(), user.id, token, expiresAt);
 
-  await sendPasswordResetEmail({ to: user.email, name: user.name, token });
+  try {
+    await sendPasswordResetEmail({ to: user.email, name: user.name, token });
+  } catch (err) {
+    console.error('[forgotPassword] failed to send reset email', err);
+  }
   res.json(genericResponse);
 }
 
