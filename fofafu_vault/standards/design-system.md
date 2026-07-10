@@ -19,7 +19,8 @@ The shared design spec. Tokens, voice, and the north-star principles every team 
 | `color.surface.subtle` | `#F4ECDF` | low-contrast hover/active fill for text-on-surface pills (e.g. `Edit` / `Keep mine` in chip action rows). A muted derivative of `color.surface.warm`. Introduced 2026-06-10 by [[agents/design-lead]] for the [[features/reply-coach]] `CoachChip`; reusable wherever a chip needs a soft pill. |
 | `color.ink.lead` | `#1F1B18` | primary text |
 | `color.ink.muted` | `#5E534B` | secondary text (use sparingly — weight, not gray) |
-| `color.brand.primary` | `#4D9463` | primary CTA pill |
+| `color.brand.primary` | `#4D9463` | primary CTA pill fill for non-text-bearing contexts (borders, icon fills, focus rings, active nav text, calendar-free swatches). White text against this fails 1.4.3 (~3.26:1) — do not compose white text on this token. |
+| `color.brand.primary.pressed` | `#3F7E54` | Accessible white-text pair for CTA pills, and doubles as the hover/press fill (rest + hover use the same value — see acceptance criteria). Contrast vs white `#FFFFFF` = **4.86:1** (WCAG relative-luminance formula), passes 1.4.3 (≥4.5:1 normal text) and 1.4.11 (≥3:1). Introduced 2026-07-08 by [[agents/ui-designer]] for [[features/brand-contrast-fix]] — see that feature's `### Visual` for full audit + rationale (pressed-as-text-pair chosen over darkening `primary` itself, to avoid rippling into non-CTA `primary` usages that already pass their own thresholds). |
 | `color.brand.warm` | `#F0B24F` | accent (used in blocks, not text) |
 | `color.feedback.success` | `#3F8A52` | toasts |
 | `color.feedback.warning` | `#D27A2A` | toasts |

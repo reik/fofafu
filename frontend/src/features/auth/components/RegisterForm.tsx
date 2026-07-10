@@ -61,7 +61,7 @@ export function RegisterForm({ onSuccess }: Props) {
         type="submit"
         disabled={isSubmitting || mutation.isPending}
         className={cn(
-          'w-full rounded-full bg-brand-primary px-5 py-3 font-semibold text-white shadow-lift',
+          'w-full rounded-full bg-brand-primary-pressed px-5 py-3 font-semibold text-white shadow-lift',
           'disabled:opacity-60 disabled:cursor-not-allowed',
         )}
       >

@@ -172,7 +172,7 @@ export function WeekCalendar({
                 const slotColor = isMatch
                   ? 'bg-[#F0B24F] border-[#D4921F] text-ink-lead ring-2 ring-[#F0B24F]/60 ring-offset-1'
                   : isFree
-                  ? 'bg-brand-primary/90 border-brand-primary text-white'
+                  ? 'bg-brand-primary-pressed border-brand-primary-pressed text-white'
                   : 'bg-[#E4D9C8] border-[#C8B99A] text-ink-muted';
 
                 const isClickable = mode === 'own' || (mode === 'view' && isFree);
