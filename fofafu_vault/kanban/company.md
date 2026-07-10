@@ -5,6 +5,7 @@ team: company
 
 > Navigation: [[kanban/engineering]] · [[kanban/design]] · [[kanban/marketing]] · [[README]] · [[protocols/dispatch]]
 ## Backlog
+- [ ] [[features/seed-prod-sample-data]] — production-safe sample family/post seeding so prod site doesn't look empty on first visit
 - [ ] [[features/reply-coach-live]] — Phase 2 follow-up to [[features/reply-coach]]: live Anthropic SDK + key plumbing + prompt caching + $5/day cost cap + 50/50 holdback experiment + `coach_events` aggregate table
 - [ ] [[features/brand-contrast-fix]] — system-wide WCAG 1.4.3 fix: white-on-`color.brand.primary` is ~3.4:1; introduce `color.brand.primary.pressed` and migrate every CTA
 - [ ] [[features/moderation-report-block]] — community safety
