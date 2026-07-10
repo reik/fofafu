@@ -4,12 +4,13 @@
  * `color.brand.primary` (#4D9463) fails WCAG 1.4.3 for normal text when
  * paired with white text (~3.4:1, needs 4.5:1). Every CTA that currently
  * renders `text-white` on `bg-brand-primary` (with no `-pressed`/darker
- * suffix) must migrate to the accessible pair chosen by design (see
- * `### Visual` in the feature spec) before this test can pass.
+ * suffix) has migrated to the accessible pair chosen by design (see
+ * `### Visual` in the feature spec). This test should stay green going
+ * forward — it guards against reintroducing the failing pairing.
  *
  * This is a source-scan, not a rendered-DOM check, because jsdom has no
  * real layout engine and can't compute contrast (see src/tests/a11y.ts).
- * It intentionally fails until frontend-dev's migration lands — per the
+ * It was written before frontend-dev's migration landed — per the
  * project's TDD rule, the test is written first.
  */
 import { describe, it, expect } from 'vitest';

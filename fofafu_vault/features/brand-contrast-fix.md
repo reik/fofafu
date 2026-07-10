@@ -77,7 +77,7 @@ Two layers, since jsdom's axe-core run can't compute real contrast (no layout en
 
 | # | Criterion | Type | File | Assertion |
 |---|---|---|---|---|
-| 1 | No CTA pairs white text with unmigrated `brand.primary` | static/unit | `frontend/src/tests/brand-contrast.test.ts` (new) | scans every `.tsx` under `frontend/src` for `bg-brand-primary` (no `-pressed` suffix, opacity modifiers included) co-occurring with `text-white` on the same class string; asserts zero matches. Written before the migration completed, per the TDD rule — currently red, will go green once frontend-dev finishes. |
+| 1 | No CTA pairs white text with unmigrated `brand.primary` | static/unit | `frontend/src/tests/brand-contrast.test.ts` (new) | scans every `.tsx` under `frontend/src` for `bg-brand-primary` (no `-pressed` suffix, opacity modifiers included) co-occurring with `text-white` on the same class string; asserts zero matches. Written before the migration completed, per the TDD rule — was red pre-migration (see Run 1 below), now green (Run 2). |
 | 2 | Axe sweep reports zero violations (DOM/ARIA layer) across the 11 audited pages post-migration | integration (jsdom) | `frontend/src/tests/a11y.test.tsx` (existing, reused unmodified) | zero axe-core violations per page; confirms the token swap didn't regress anything axe *can* see. Does not itself certify 1.4.3 (see limitation below). |
 | 3 | `pressed` token contrast math (white on `#3F7E54` ≥ 4.5:1) | manual/documented, owned by design | `fofafu_vault/standards/design-system.md` + this file's `### Visual`/`### Accessibility` | 4.86:1, cross-verified independently by both ui-designer and a11y-auditor — not re-derived here, just consumed as the pass/fail oracle for test #1's target token |
 | 4 | No regression elsewhere in the suite from the token migration | regression | full `vitest run` | pass count for all pre-existing tests unchanged |
@@ -268,10 +268,10 @@ Confirmed consistent with ui-designer's plan: collapsing "contrast fix" and "hov
 
 **8. Build audit**
 
-- `frontend/tailwind.config.js` in this worktree does not yet define a `pressed` key under `brand` — the token has not been wired into Tailwind yet, so the migration described in `### Visual` and its table has not landed in code as of this pass. No `axe-core` sweep run this pass — nothing built to audit yet.
-- Per acceptance criteria, **a post-migration axe sweep across the 11 pages referenced in [[features/a11y-audit]] is still required** before this feature can move to `review`. This is a **blocking** gate on the acceptance criteria, not a finding against current code (the current code's contrast failure is itself the finding driving this whole feature).
+- `frontend/tailwind.config.js` now defines a `pressed` key under `brand` — the token is wired into Tailwind and the migration described in `### Visual` and its table has landed in code. The post-migration axe-core sweep has run (see below).
+- Per acceptance criteria, **a post-migration axe sweep across the 11 pages referenced in [[features/a11y-audit]]** has completed: 11/11 clean, 0 violations. This gate is satisfied.
 
-**Summary**: `#4D9463` white-text pairing independently confirmed failing at AA 1.4.3 (my math: 3.66:1; ui-designer's math: 3.26:1 — discrepancy flagged for design-lead, doesn't change the verdict). Proposed `#3F7E54` pressed token independently confirmed passing, with my computation matching ui-designer's exactly (4.86:1, clears AA 1.4.3 and 1.4.11). Migration site list cross-checked against ui-designer's — no gaps found. Axe sweep still outstanding — not run this pass, code not yet migrated in this worktree.
+**Summary**: `#4D9463` white-text pairing independently confirmed failing at AA 1.4.3 (my math: 3.66:1; ui-designer's math: 3.26:1 — discrepancy flagged for design-lead, doesn't change the verdict). Proposed `#3F7E54` pressed token independently confirmed passing, with my computation matching ui-designer's exactly (4.86:1, clears AA 1.4.3 and 1.4.11). Migration site list cross-checked against ui-designer's — no gaps found. Axe sweep complete — 11/11 pages, 0 violations.
 
 ## Marketing — Spec
 
