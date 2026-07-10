@@ -4,6 +4,7 @@ import type { CoachInput, CoachResponse } from '../schemas/coach.schemas.js';
 import { isReplyCoachEnabled } from '../services/coach/featureFlags.js';
 import { getClaudeClient } from '../services/coach/claudeClient.js';
 import { consumeCoachCall } from '../services/coach/rateLimit.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * Silent-fallback shape, returned on Claude failure so the composer never
@@ -42,15 +43,14 @@ export async function coachComment(req: AuthRequest, res: Response): Promise<voi
   const input = req.body as CoachInput;
 
   try {
-    const result = await getClaudeClient().coach(input);
+    const result = await getClaudeClient(userId).coach(input);
     res.status(200).json(result);
   } catch (err) {
     // Never log the draft, threadContext, or any user-supplied field — only
     // the error class/message. The real `LiveClaudeClient` (reply-coach-live)
     // will throw on timeouts and 5xx; the composer must still publish.
     const message = err instanceof Error ? err.message : 'unknown error';
-    // eslint-disable-next-line no-console
-    console.warn('[coach] client failure', { message });
+    logger.warn({ msg: 'coach client failure', message });
     res.status(200).json(SILENT_FALLBACK);
   }
 }

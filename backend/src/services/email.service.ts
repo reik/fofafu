@@ -1,4 +1,5 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
+import { logger } from '../utils/logger.js';
 
 interface VerificationParams {
   to: string;
@@ -11,9 +12,14 @@ export const testInbox: { to: string; subject: string; url: string }[] = [];
 
 function shouldUseFakeMailer(): boolean {
   if (process.env.NODE_ENV === 'test') return true;
-  // No SMTP creds → dev/CI fallback: log the link to stdout instead of crashing.
-  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) return true;
+  // No API key → dev/CI fallback: log the link to stdout instead of crashing.
+  if (!process.env.RESEND_API_KEY) return true;
   return false;
+}
+
+function getFromAddress(): string {
+  // resend.dev is Resend's shared sender for accounts without a verified domain.
+  return process.env.RESEND_FROM ?? 'fofafu <onboarding@resend.dev>';
 }
 
 export async function sendVerificationEmail({ to, name, token }: VerificationParams): Promise<void> {
@@ -23,23 +29,14 @@ export async function sendVerificationEmail({ to, name, token }: VerificationPar
   if (shouldUseFakeMailer()) {
     testInbox.push({ to, subject, url });
     if (process.env.NODE_ENV !== 'test') {
-      console.log(`[email:fake] verify ${to} (${name}) -> ${url}`);
+      logger.info({ msg: 'email:fake verify', to, name, url });
     }
     return;
   }
 
-  const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    auth: {
-      user: process.env.GMAIL_USER,
-      pass: process.env.GMAIL_APP_PASSWORD,
-    },
-  });
-
-  await transporter.sendMail({
-    from: `"fofafu" <${process.env.GMAIL_USER}>`,
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const { error } = await resend.emails.send({
+    from: getFromAddress(),
     to,
     subject,
     html: `
@@ -55,6 +52,10 @@ export async function sendVerificationEmail({ to, name, token }: VerificationPar
       </div>
     `,
   });
+
+  if (error) {
+    throw new Error(`Resend failed to send verification email: ${error.message}`);
+  }
 }
 
 function escapeHtml(s: string): string {
@@ -80,23 +81,14 @@ export async function sendPasswordResetEmail({ to, name, token }: ResetParams): 
   if (shouldUseFakeMailer()) {
     testInbox.push({ to, subject, url });
     if (process.env.NODE_ENV !== 'test') {
-      console.log(`[email:fake] reset ${to} (${name}) -> ${url}`);
+      logger.info({ msg: 'email:fake reset', to, name, url });
     }
     return;
   }
 
-  const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    auth: {
-      user: process.env.GMAIL_USER,
-      pass: process.env.GMAIL_APP_PASSWORD,
-    },
-  });
-
-  await transporter.sendMail({
-    from: `"fofafu" <${process.env.GMAIL_USER}>`,
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const { error } = await resend.emails.send({
+    from: getFromAddress(),
     to,
     subject,
     html: `
@@ -112,4 +104,8 @@ export async function sendPasswordResetEmail({ to, name, token }: ResetParams): 
       </div>
     `,
   });
+
+  if (error) {
+    throw new Error(`Resend failed to send password reset email: ${error.message}`);
+  }
 }

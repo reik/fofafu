@@ -13,6 +13,11 @@ export function db(): Database.Database {
   return instance;
 }
 
+/** Alias for `db()` — some newer modules (reply-coach-live) prefer `getDb()`. */
+export function getDb(): Database.Database {
+  return db();
+}
+
 export function closeDb(): void {
   if (instance) {
     instance.close();
