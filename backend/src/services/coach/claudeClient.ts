@@ -1,4 +1,9 @@
 import type { CoachInput, CoachResponse } from '../../schemas/coach.schemas.js';
+import { COACH_SYSTEM_PROMPT } from './systemPrompt.js';
+import { isReplyCoachLiveEnabled } from './featureFlags.js';
+import { isCoachCostCapExceeded, recordCoachSpend } from './costCap.js';
+import { isInHoldback } from './holdback.js';
+import Anthropic from '@anthropic-ai/sdk';
 
 /**
  * The seam between the coach controller and whatever language model produces
@@ -68,11 +73,124 @@ export class MockClaudeClient implements ClaudeClient {
   }
 }
 
-let cached: ClaudeClient | null = null;
+/**
+ * Minimal shape `LiveClaudeClient` depends on from `@anthropic-ai/sdk`'s
+ * `Anthropic` client. Kept narrow and structural (not `import type { Anthropic
+ * } from '@anthropic-ai/sdk'` directly) so tests can inject a plain object
+ * mock — this is the seam `tests/coach-live.test.ts`'s
+ * `makeFakeAnthropicClient()` targets.
+ */
+export interface AnthropicLikeClient {
+  messages: {
+    create(params: Record<string, unknown>): Promise<{
+      content: Array<{ type: string; text?: string }>;
+      usage?: { input_tokens: number; output_tokens: number };
+    }>;
+  };
+}
 
-export function getClaudeClient(): ClaudeClient {
-  if (!cached) cached = new MockClaudeClient();
-  return cached;
+/**
+ * reply-coach-live: wraps the real Anthropic SDK behind the same
+ * `ClaudeClient` seam `MockClaudeClient` implements. The Anthropic client
+ * itself is injected (constructor param) rather than constructed inline, so
+ * this class never touches the network in tests — see
+ * `tests/coach-live.test.ts`.
+ *
+ * Rough per-call cost is recorded via `recordCoachSpend` (see `costCap.ts`)
+ * using Anthropic's published Haiku per-token pricing as of this writing
+ * ($0.80/M input tokens, $4/M output tokens — Claude 3.5 Haiku). This is an
+ * approximation for the cost-cap AC, not billing-grade accounting; documented
+ * as a simplification in this feature's `### Backend` subsection.
+ */
+const INPUT_USD_PER_TOKEN = 0.8 / 1_000_000;
+const OUTPUT_USD_PER_TOKEN = 4 / 1_000_000;
+
+function buildUserMessage(input: CoachInput): string {
+  const context = input.threadContext
+    ? `\n\nThread context:\n${JSON.stringify(input.threadContext)}`
+    : '';
+  return `Draft comment:\n${input.draft}${context}`;
+}
+
+export class LiveClaudeClient implements ClaudeClient {
+  constructor(
+    private readonly client: AnthropicLikeClient,
+    private readonly model: string = 'claude-3-5-haiku-20241022',
+  ) {}
+
+  async coach(input: CoachInput): Promise<CoachResponse> {
+    const response = await this.client.messages.create({
+      model: this.model,
+      max_tokens: 512,
+      system: [
+        {
+          type: 'text',
+          text: COACH_SYSTEM_PROMPT,
+          cache_control: { type: 'ephemeral' },
+        },
+      ],
+      messages: [{ role: 'user', content: buildUserMessage(input) }],
+    });
+
+    if (response.usage) {
+      const usd =
+        response.usage.input_tokens * INPUT_USD_PER_TOKEN +
+        response.usage.output_tokens * OUTPUT_USD_PER_TOKEN;
+      recordCoachSpend(usd);
+    }
+
+    const block = response.content[0];
+    if (!block || block.type !== 'text' || !block.text) {
+      throw new Error('[coach] LiveClaudeClient: unexpected response shape from Anthropic client');
+    }
+    // Parsing errors (malformed JSON) intentionally propagate — the
+    // controller's existing silent-fallback catch handles it, matching the
+    // "live SDK throws -> verdict=ok" behavior in the acceptance criteria.
+    return JSON.parse(block.text) as CoachResponse;
+  }
+}
+
+let testOverride: ClaudeClient | null = null;
+let mockSingleton: ClaudeClient | null = null;
+let liveSingleton: ClaudeClient | null = null;
+
+function buildLiveClaudeClient(): ClaudeClient {
+  // Lazily constructed and only reached when the live flag is genuinely on
+  // (see `getClaudeClient` below) — never invoked by the test suite, which
+  // never sets REPLY_COACH_LIVE_ENABLED=true.
+  const sdkClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? '' }) as unknown as AnthropicLikeClient;
+  return new LiveClaudeClient(sdkClient);
+}
+
+/**
+ * Registered-client resolver. Precedence:
+ *   1. Test override (`setClaudeClientForTests`) — always wins.
+ *   2. Live client, IF `isReplyCoachLiveEnabled()` AND the daily cost cap is
+ *      not exceeded AND (no userId given, or the userId is not in the
+ *      holdback control arm).
+ *   3. Mock client otherwise — this is also the behavior for the holdback
+ *      control arm and cap-exceeded degrade, per the feature's silent-
+ *      fallback design (indistinguishable from `verdict: 'ok'`).
+ *
+ * `userId` is optional so existing non-controller call sites (and the
+ * `coach-live.test.ts` `getClaudeClient?: () => unknown` typing) keep
+ * working without it.
+ */
+export function getClaudeClient(userId?: string): ClaudeClient {
+  if (testOverride) return testOverride;
+
+  const liveEligible =
+    isReplyCoachLiveEnabled() &&
+    !isCoachCostCapExceeded() &&
+    !(userId !== undefined && isInHoldback(userId));
+
+  if (liveEligible) {
+    if (!liveSingleton) liveSingleton = buildLiveClaudeClient();
+    return liveSingleton;
+  }
+
+  if (!mockSingleton) mockSingleton = new MockClaudeClient();
+  return mockSingleton;
 }
 
 /**
@@ -80,5 +198,5 @@ export function getClaudeClient(): ClaudeClient {
  * exercise the failure path) without monkey-patching the module.
  */
 export function setClaudeClientForTests(client: ClaudeClient | null): void {
-  cached = client;
+  testOverride = client;
 }

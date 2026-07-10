@@ -10,6 +10,7 @@ team: marketing
 - [ ] [[features/playdates]] @marketing — launch copy + growth metric for the new /playdates page and cross-family request flow
 
 ## Review
+- [ ] [[features/reply-coach-live]] @marketing — launch copy (internal release note + Slack line + seo handoff note, backend/ops-only, no live-spend claims) + SEO (/help/reply-coach spec finalized: meta/OG/FAQPage schema/sitemap, page build deferred until after 8-week holdback read-out) + Growth (suggestion-acceptance-rate primary metric restated against live mechanics, 8-week treatment-vs-holdback design, 3 guardrail metrics, coach_events mapping, $5/day cap framed as ops guardrail not growth metric, staged rollout plan) — all three subsections present, mutually consistent; no In Progress card existed for this feature on this board, so added directly to Review (noting the omission)
 
 ## Done
 - [x] [[features/reply-coach]] @marketing — launch copy + SEO (N/A in v1; `/help/reply-coach` proposed for follow-up) + Growth (acceptance-rate primary, reported-comment delta counter); merged 2026-06-11 (PR #2)

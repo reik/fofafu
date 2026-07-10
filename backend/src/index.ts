@@ -6,6 +6,7 @@ import rateLimit from 'express-rate-limit';
 import { apiRouter } from './routes/index.js';
 import { runMigrations } from './migrate.js';
 import { UPLOAD_DIR_ABSOLUTE } from './services/uploads.service.js';
+import { assertCoachBootPreconditions } from './services/coach/bootCheck.js';
 import { logger } from './utils/logger.js';
 
 export function buildApp(): express.Express {
@@ -27,6 +28,7 @@ export function buildApp(): express.Express {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
+  assertCoachBootPreconditions();
   runMigrations();
   const port = Number(process.env.PORT ?? 4000);
   buildApp().listen(port, () => {
