@@ -7,6 +7,7 @@ import { apiRouter } from './routes/index.js';
 import { runMigrations } from './migrate.js';
 import { UPLOAD_DIR_ABSOLUTE } from './services/uploads.service.js';
 import { assertCoachBootPreconditions } from './services/coach/bootCheck.js';
+import { logger } from './utils/logger.js';
 
 export function buildApp(): express.Express {
   const app = express();
@@ -19,7 +20,8 @@ export function buildApp(): express.Express {
   app.use('/uploads', express.static(UPLOAD_DIR_ABSOLUTE, { maxAge: '7d', fallthrough: false }));
   app.use('/api', apiRouter);
   app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-    console.error('[unhandled]', err);
+    const message = err instanceof Error ? err.message : 'unknown error';
+    logger.error({ msg: 'unhandled error', message });
     if (!res.headersSent) res.status(500).json({ error: 'Something went wrong on our end.' });
   });
   return app;
@@ -30,6 +32,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   runMigrations();
   const port = Number(process.env.PORT ?? 4000);
   buildApp().listen(port, () => {
-    console.log(`fofafu backend listening on :${port}`);
+    logger.info({ msg: 'fofafu backend listening', port });
   });
 }

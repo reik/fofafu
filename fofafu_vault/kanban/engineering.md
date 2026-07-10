@@ -5,6 +5,7 @@ team: engineering
 
 > Navigation: [[kanban/company]] · [[teams/engineering]] · [[standards/engineering-standards]]
 ## Backlog
+- [ ] eng-backend-16 [[features/reply-coach-live]] @engineering — swap MockClaudeClient for live `@anthropic-ai/sdk`; prompt caching; ANTHROPIC_API_KEY boot-refusal; new `reply_coach_live_enabled` flag; $5/day cost cap with silent degradation; 50/50 holdback
 - [ ] eng-backend-17 [[features/backend-logger-util]] @engineering — small logger util at `backend/src/utils/logger.ts` + migrate `backend/src/controllers/coach.controller.ts`, `backend/src/services/email.service.ts`, `backend/src/index.ts`; closes MF-1
 - [ ] eng-frontend-13 [[features/moderation-report-block]] @engineering — foster-family safety surface; report + block
 - [ ] eng-mobile-1 [[features/mobile-expo-bootstrap]] @engineering — Phase 4: mobile workspace + shared API client (deferred)
@@ -13,6 +14,7 @@ team: engineering
 
 ## Review
 - [ ] eng-backend-16 [[features/reply-coach-live]] @engineering — LiveClaudeClient wraps @anthropic-ai/sdk behind existing ClaudeClient seam (MockClaudeClient kept as production fallback for flag-off/cap-exceeded/holdback-control, per allowed AC reading); prompt caching configured on system block; ANTHROPIC_API_KEY boot-refusal; reply_coach_live_enabled flag; $5/day cost cap; 50/50 holdback (FNV-1a); coach_events aggregate-only table; backend 141/141 (13/13 coach-live.test.ts, 0 skips), tsc clean; verified no real ANTHROPIC_API_KEY used anywhere; 2 must-fix from code review (unchecked JSON.parse of live SDK response bypassing Zod, cache-hit rate not logged despite cache_control being sent) — non-blocking, tech-lead judgment: flag-gated off by default, no live traffic yet, tracked as fast-follow
+- [ ] eng-backend-17 [[features/backend-logger-util]] @engineering — hand-rolled logger util at `backend/src/utils/logger.ts` (no new dependency, LOG_LEVEL filtering, JSON prod/text dev, shallow-stringify guard against circular refs/PII); migrated coach.controller.ts, email.service.ts, index.ts (plus bonus 4th unhandled-error site); closes MF-1; backend 134/134, tsc clean, code review 0 must-fix (3 non-blocking nice-to-haves)
 - [ ] eng-frontend-12 [[features/feed-virtualization]] @engineering — `@tanstack/react-virtual`'s `useWindowVirtualizer` applied to pages/Feed.tsx (windowed list, measureElement for variable-height cards); accumulate-vs-replace pagination interpretation endorsed; code review's must-fix #1 (accumulated items desync after composer invalidateQueries) fixed by tech-lead via useMemo-derived items from all cached feedKeys.page queries; must-fix #2 (test docstring) also addressed; vitest 79/79, playwright 14/14, tsc/build clean
 - [ ] eng-backend-15 [[features/playdates]] @engineering — availability_slots + playdate_requests tables; /playdates page (week/month calendar); request flow on /family/:id
 
