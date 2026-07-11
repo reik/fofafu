@@ -20,6 +20,30 @@ import { corsHeaders, json, supabaseForRequest } from "../_shared/client.ts";
 
 const REACTION_TYPES = ["like", "love", "hug", "celebrate", "support"] as const;
 type ReactionType = typeof REACTION_TYPES[number];
+const MEDIA_TYPES = ["image", "video"] as const;
+
+// Express validated all of this via Zod middleware (announcement.schemas.ts);
+// ported here as plain checks since there's no equivalent middleware layer.
+function validText(value: unknown, maxLen: number): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (trimmed.length < 1 || trimmed.length > maxLen) return null;
+  return value;
+}
+function validMediaUrl(value: unknown): string | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  if (typeof value !== "string" || value.length > 2048) return undefined;
+  try { new URL(value); return value; } catch { return undefined; }
+}
+function validMediaType(value: unknown): "image" | "video" | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  return (MEDIA_TYPES as readonly string[]).includes(value as string) ? (value as "image" | "video") : undefined;
+}
+function validReactionType(value: unknown): ReactionType | null {
+  return (REACTION_TYPES as readonly string[]).includes(value as string) ? (value as ReactionType) : null;
+}
 
 async function authorLookup(supabase: any, userIds: string[]) {
   if (userIds.length === 0) return new Map<string, { name: string; avatar_url: string | null }>();
@@ -91,9 +115,15 @@ Deno.serve(async (req) => {
   if (req.method === "POST" && segments.length === 0) {
     if (!userId) return json({ error: "Not authenticated" }, 401);
     const body = await req.json().catch(() => ({}));
+    const content = validText(body.content, 4000);
+    if (content === null) return json({ error: "content must be 1-4000 characters" }, 400);
+    const mediaUrl = validMediaUrl(body.mediaUrl);
+    if (mediaUrl === undefined && body.mediaUrl !== undefined) return json({ error: "mediaUrl must be a valid URL" }, 400);
+    const mediaType = validMediaType(body.mediaType);
+    if (mediaType === undefined && body.mediaType !== undefined) return json({ error: "mediaType must be image or video" }, 400);
     const { data, error } = await supabase
       .from("announcements")
-      .insert({ user_id: userId, content: body.content, media_url: body.mediaUrl ?? null, media_type: body.mediaType ?? null })
+      .insert({ user_id: userId, content, media_url: mediaUrl ?? null, media_type: mediaType ?? null })
       .select("*").single();
     if (error) return json({ error: error.message }, 500);
     const authors = await authorLookup(supabase, [userId]);
@@ -104,7 +134,8 @@ Deno.serve(async (req) => {
   // GET /announcement
   if (req.method === "GET" && segments.length === 0) {
     const cursor = url.searchParams.get("cursor");
-    const pageSize = Number(url.searchParams.get("limit") ?? 20);
+    const rawLimit = Number(url.searchParams.get("limit") ?? 20);
+    const pageSize = Number.isInteger(rawLimit) && rawLimit >= 1 && rawLimit <= 100 ? rawLimit : 20;
     const familyId = url.searchParams.get("familyId");
 
     let authorUserId: string | null = null;
@@ -138,8 +169,10 @@ Deno.serve(async (req) => {
     if (req.method === "PATCH") {
       if (row.user_id !== userId) return json({ error: "Only the author can edit this comment." }, 403);
       const body = await req.json().catch(() => ({}));
+      const content = validText(body.content, 2000);
+      if (content === null) return json({ error: "content must be 1-2000 characters" }, 400);
       const { data: updated, error } = await supabase
-        .from("comments").update({ content: body.content, updated_at: new Date().toISOString() })
+        .from("comments").update({ content, updated_at: new Date().toISOString() })
         .eq("id", commentId).select("*").single();
       if (error) return json({ error: error.message }, 500);
       const authors = await authorLookup(supabase, [updated.user_id]);
@@ -162,8 +195,10 @@ Deno.serve(async (req) => {
       const { data: exists } = await supabase.from("announcements").select("id").eq("id", id).maybeSingle();
       if (!exists) return json({ error: "Not found" }, 404);
       const body = await req.json().catch(() => ({}));
+      const content = validText(body.content, 2000);
+      if (content === null) return json({ error: "content must be 1-2000 characters" }, 400);
       const { data, error } = await supabase
-        .from("comments").insert({ announcement_id: id, user_id: userId, content: body.content })
+        .from("comments").insert({ announcement_id: id, user_id: userId, content })
         .select("*").single();
       if (error) return json({ error: error.message }, 500);
       const authors = await authorLookup(supabase, [userId]);
@@ -187,7 +222,8 @@ Deno.serve(async (req) => {
     const { data: exists } = await supabase.from("announcements").select("id").eq("id", id).maybeSingle();
     if (!exists) return json({ error: "Not found" }, 404);
     const body = await req.json().catch(() => ({}));
-    const type = body.type as ReactionType;
+    const type = validReactionType(body.type);
+    if (type === null) return json({ error: "type must be one of like, love, hug, celebrate, support" }, 400);
 
     const { data: existing } = await supabase
       .from("reactions").select("id, type").eq("announcement_id", id).eq("user_id", userId).maybeSingle();
@@ -220,10 +256,20 @@ Deno.serve(async (req) => {
       if (!row) return json({ error: "Not found" }, 404);
       if (row.user_id !== userId) return json({ error: "Only the author can change this post." }, 403);
       const patch = await req.json().catch(() => ({}));
+      const content = patch.content === undefined ? row.content : validText(patch.content, 4000);
+      if (content === null) return json({ error: "content must be 1-4000 characters" }, 400);
+      const mediaUrl = validMediaUrl(patch.mediaUrl);
+      if (mediaUrl === undefined && patch.mediaUrl !== undefined && patch.mediaUrl !== null) {
+        return json({ error: "mediaUrl must be a valid URL" }, 400);
+      }
+      const mediaType = validMediaType(patch.mediaType);
+      if (mediaType === undefined && patch.mediaType !== undefined && patch.mediaType !== null) {
+        return json({ error: "mediaType must be image or video" }, 400);
+      }
       const next = {
-        content: patch.content ?? row.content,
-        media_url: patch.mediaUrl === undefined ? row.media_url : patch.mediaUrl,
-        media_type: patch.mediaType === undefined ? row.media_type : patch.mediaType,
+        content,
+        media_url: patch.mediaUrl === undefined ? row.media_url : mediaUrl,
+        media_type: patch.mediaType === undefined ? row.media_type : mediaType,
         updated_at: new Date().toISOString(),
       };
       const { data: updated, error } = await supabase.from("announcements").update(next).eq("id", id).select("*").single();

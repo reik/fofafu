@@ -14,10 +14,17 @@ Deno.serve(async (req) => {
   const viewer = userData.user?.id ?? null;
 
   const url = new URL(req.url);
-  const q = url.searchParams.get("q") ?? "";
+  const rawQ = url.searchParams.get("q") ?? "";
   const limitParam = url.searchParams.get("limit");
   const pageSize = limitParam ? Number(limitParam) : 20;
-  const needle = `%${q}%`;
+
+  // rawQ is interpolated into PostgREST's .or() filter DSL below, where
+  // comma/paren/quote/backslash have syntactic meaning (they can inject
+  // additional filter clauses). Strip anything but the characters a
+  // city/state/name/bio search term needs; escape ilike's own wildcards
+  // so a literal "%" or "_" in the query doesn't act as a wildcard.
+  const safeQ = rawQ.replace(/[,()"\\]/g, "").slice(0, 100);
+  const needle = `%${safeQ.replace(/[%_]/g, (c) => `\\${c}`)}%`;
 
   const { data, error } = await supabase
     .from("families")

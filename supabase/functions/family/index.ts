@@ -50,12 +50,22 @@ Deno.serve(async (req) => {
   }
 
   if (req.method === "GET" && target) {
-    const { data, error } = await supabase
-      .from("families")
-      .select("*")
-      .or(`id.eq.${target},user_id.eq.${target}`)
-      .maybeSingle();
-    if (error) return json({ error: error.message }, 500);
+    // target may be a family id or an owner's user id (links from
+    // announcements/comments/messages only carry authorId/userId). Two
+    // parameterized .eq() lookups instead of interpolating `target` into
+    // the .or() filter DSL, which would let filter-syntax characters
+    // (comma/paren/quote) in `target` inject additional clauses.
+    const { data: byId, error: byIdErr } = await supabase
+      .from("families").select("*").eq("id", target).maybeSingle();
+    if (byIdErr) return json({ error: byIdErr.message }, 500);
+
+    let data = byId;
+    if (!data) {
+      const { data: byUser, error: byUserErr } = await supabase
+        .from("families").select("*").eq("user_id", target).maybeSingle();
+      if (byUserErr) return json({ error: byUserErr.message }, 500);
+      data = byUser;
+    }
     if (!data) return json({ error: "Family not found" }, 404);
     return json(toDTO(data as FamilyRow, userId));
   }
