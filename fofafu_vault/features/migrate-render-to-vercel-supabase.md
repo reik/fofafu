@@ -36,7 +36,7 @@ Production currently runs on Render: Express + better-sqlite3 backend, static fr
 
 ## Open questions
 
-- Whether Supabase Auth replaces custom auth entirely or custom auth is reimplemented as an Edge Function (currently planned: Supabase Auth)
+- RLS policies for the tables in `supabase/migrations/20260711000000_initial_schema.sql` are deferred to eng-infra-4/5/6 (auth pattern must be settled first); tables are RLS-enabled with zero policies in the meantime, so no anon/authenticated access until then
 
 ## Sub-tickets (kanban/engineering.md)
 
@@ -54,7 +54,7 @@ Production currently runs on Render: Express + better-sqlite3 backend, static fr
 ## Engineering — Acceptance
 
 ### Backend
-*(filled by backend-dev)*
+eng-infra-2 done: `supabase/migrations/20260711000000_initial_schema.sql` translates all 8 sqlite tables from `backend/src/migrate.ts` to Postgres. Deltas: `users` table dropped (folds into `auth.users` — Supabase Auth owns credentials/verification, closes eng-infra-4's open question); `email_tokens`/`password_reset_tokens` dropped (Supabase Auth owns these flows); TEXT ids → uuid; INTEGER booleans → boolean; TEXT timestamps → timestamptz; RLS enabled on all 8 tables with no policies yet (locked down pending eng-infra-4/5/6). Remaining eng-infra-2 work: none — ticket ready to move to Review once a live Supabase project exists to apply the migration against.
 
 ### Frontend
 *(filled by frontend-dev)*

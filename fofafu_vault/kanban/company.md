@@ -5,7 +5,7 @@ team: company
 
 > Navigation: [[kanban/engineering]] · [[kanban/design]] · [[kanban/marketing]] · [[README]] · [[protocols/dispatch]]
 ## Backlog
-- [ ] [[features/migrate-render-to-vercel-supabase]] — Phase 5: full infra migration off Render (frontend→Vercel, backend→Supabase Edge Functions, sqlite→Supabase Postgres, uploads→Supabase Storage, auth→Supabase Auth)
+- [ ] [[features/migrate-render-to-vercel-supabase]] — Phase 5: full infra migration off Render (frontend→Vercel, backend→Supabase Edge Functions, sqlite→Supabase Postgres, uploads→Supabase Storage, auth→Supabase Auth); broken into 8 sub-tickets (eng-infra-1..8) on kanban/engineering.md; eng-infra-2 (schema translation) in Review, rest blocked on user provisioning Supabase/Vercel projects
 - [ ] [[features/reply-coach-live]] — Phase 2 follow-up to [[features/reply-coach]]: live Anthropic SDK + key plumbing + prompt caching + $5/day cost cap + 50/50 holdback experiment + `coach_events` aggregate table
 - [ ] [[features/brand-contrast-fix]] — system-wide WCAG 1.4.3 fix: white-on-`color.brand.primary` is ~3.4:1; introduce `color.brand.primary.pressed` and migrate every CTA
 - [ ] [[features/moderation-report-block]] — community safety
