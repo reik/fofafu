@@ -150,6 +150,10 @@ export function runMigrations(): void {
   // Defensive backfill for columns added after the initial schema. SQLite has
   // no ADD COLUMN IF NOT EXISTS, so we check pragma table_info first.
   ensureColumn('families', 'avatar_url', 'TEXT');
+  // seed-prod-sample-data: marks rows created by scripts/seed-prod-sample-data.ts
+  // so sample content stays distinguishable from real signups and prunable later.
+  ensureColumn('users', 'is_sample', 'INTEGER NOT NULL DEFAULT 0');
+  ensureColumn('families', 'is_sample', 'INTEGER NOT NULL DEFAULT 0');
   // edit-comment: comments.updated_at added in 2026-05-21. SQLite forbids
   // datetime('now') as ADD COLUMN default, so we add a TEXT column then
   // backfill from created_at for any existing rows.
