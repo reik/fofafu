@@ -48,7 +48,7 @@ export default function SearchPage() {
         />
         <button
           type="submit"
-          className="inline-flex items-center gap-1.5 rounded-full bg-brand-primary px-5 py-2 text-sm font-semibold text-white shadow-lift"
+          className="inline-flex items-center gap-1.5 rounded-full bg-brand-primary-pressed px-5 py-2 text-sm font-semibold text-white shadow-lift"
         >
           <SearchIcon className="h-4 w-4" />
           Search
