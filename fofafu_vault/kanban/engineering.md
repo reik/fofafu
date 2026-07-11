@@ -5,6 +5,7 @@ team: engineering
 
 > Navigation: [[kanban/company]] · [[teams/engineering]] · [[standards/engineering-standards]]
 ## Backlog
+- [ ] eng-infra-1 [[features/migrate-render-to-vercel-supabase]] @engineering — Phase 5: migrate off Render entirely; frontend→Vercel, backend Express→Supabase Edge Functions, sqlite→Supabase Postgres, uploads→Supabase Storage, auth→Supabase Auth (forced password reset, no hash migration)
 - [ ] eng-backend-16 [[features/reply-coach-live]] @engineering — swap MockClaudeClient for live `@anthropic-ai/sdk`; prompt caching; ANTHROPIC_API_KEY boot-refusal; new `reply_coach_live_enabled` flag; $5/day cost cap with silent degradation; 50/50 holdback
 - [ ] eng-backend-17 [[features/backend-logger-util]] @engineering — small logger util at `backend/src/utils/logger.ts` + migrate `backend/src/controllers/coach.controller.ts`, `backend/src/services/email.service.ts`, `backend/src/index.ts`; closes MF-1
 - [ ] eng-frontend-13 [[features/moderation-report-block]] @engineering — foster-family safety surface; report + block

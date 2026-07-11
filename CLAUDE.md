@@ -113,3 +113,4 @@ Only the dispatcher writes the `status` field on a feature file. Leads can reque
 - **Phase 2:** port backend feature-by-feature through the dispatcher.
 - **Phase 3:** port frontend.
 - **Phase 4 (deferred):** Expo mobile.
+- **Phase 5 (in progress):** infra migration off Render — [[features/migrate-render-to-vercel-supabase]]. Frontend → Vercel, backend Express → Supabase Edge Functions, sqlite → Supabase Postgres, uploads → Supabase Storage, auth → Supabase Auth. Blocked on user creating Supabase + Vercel projects and sharing connection details.
