@@ -54,7 +54,7 @@ Production currently runs on Render: Express + better-sqlite3 backend, static fr
 ## Engineering — Acceptance
 
 ### Backend
-eng-infra-2 done: `supabase/migrations/20260711000000_initial_schema.sql` translates all 8 sqlite tables from `backend/src/migrate.ts` to Postgres. Deltas: `users` table dropped (folds into `auth.users` — Supabase Auth owns credentials/verification, closes eng-infra-4's open question); `email_tokens`/`password_reset_tokens` dropped (Supabase Auth owns these flows); TEXT ids → uuid; INTEGER booleans → boolean; TEXT timestamps → timestamptz; RLS enabled on all 8 tables with no policies yet (locked down pending eng-infra-4/5/6). Remaining eng-infra-2 work: none — ticket ready to move to Review once a live Supabase project exists to apply the migration against.
+eng-infra-2 done: `supabase/migrations/20260711000000_initial_schema.sql` translates all 8 sqlite tables from `backend/src/migrate.ts` to Postgres. Deltas: `users` table dropped (folds into `auth.users` — Supabase Auth owns credentials/verification, closes eng-infra-4's open question); `email_tokens`/`password_reset_tokens` dropped (Supabase Auth owns these flows); TEXT ids → uuid; INTEGER booleans → boolean; TEXT timestamps → timestamptz; RLS enabled on all 8 tables with no policies yet (locked down pending eng-infra-4/5/6). Verified against live project `rlizubjugevyxsfzmpny` via `supabase link` + `supabase db push`; `supabase migration list` confirms remote matches local. eng-infra-2 Done.
 
 ### Frontend
 *(filled by frontend-dev)*
