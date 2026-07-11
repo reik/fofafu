@@ -36,8 +36,18 @@ Production currently runs on Render: Express + better-sqlite3 backend, static fr
 
 ## Open questions
 
-- Exact route/controller inventory to map 1:1 to Edge Functions (backend-dev to enumerate at speccing time)
-- Whether Supabase Auth replaces custom auth entirely or custom auth is reimplemented as an Edge Function
+- Whether Supabase Auth replaces custom auth entirely or custom auth is reimplemented as an Edge Function (currently planned: Supabase Auth)
+
+## Sub-tickets (kanban/engineering.md)
+
+- eng-infra-1 — parent ticket, closes when all below are Done and Render is decommissioned
+- eng-infra-2 — schema translation (sqlite → Postgres DDL): families, users, announcements, comments, reactions, messages, playdates, coach_events
+- eng-infra-3 — data migration script (sqlite → Supabase Postgres, row-count + FK verification)
+- eng-infra-4 — auth: auth.controller.ts/auth.routes.ts → Supabase Auth, forced password reset for existing users
+- eng-infra-5 — Edge Functions batch 1: announcement, community, family, search
+- eng-infra-6 — Edge Functions batch 2: message, playdates, coach (keep MockClaudeClient/LiveClaudeClient seam)
+- eng-infra-7 — uploads: local disk → Supabase Storage + signed URLs; update ImagePicker/Avatar consumers
+- eng-infra-8 — Vercel deploy + staging cutover + full test suite green + Render decommission
 
 <!-- The sections below are written by team-leads during dispatch. -->
 

@@ -5,7 +5,14 @@ team: engineering
 
 > Navigation: [[kanban/company]] · [[teams/engineering]] · [[standards/engineering-standards]]
 ## Backlog
-- [ ] eng-infra-1 [[features/migrate-render-to-vercel-supabase]] @engineering — Phase 5: migrate off Render entirely; frontend→Vercel, backend Express→Supabase Edge Functions, sqlite→Supabase Postgres, uploads→Supabase Storage, auth→Supabase Auth (forced password reset, no hash migration)
+- [ ] eng-infra-1 [[features/migrate-render-to-vercel-supabase]] @engineering — Phase 5 parent ticket: migrate off Render entirely. Sub-tickets eng-infra-2..8 below track each workstream; this closes when all sub-tickets are Done and Render is decommissioned.
+- [ ] eng-infra-2 [[features/migrate-render-to-vercel-supabase]] @engineering — schema translation: sqlite schema (backend/src/migrate.ts) → Postgres DDL for Supabase; covers families/users/announcements/comments/reactions/messages/playdates/coach_events tables
+- [ ] eng-infra-3 [[features/migrate-render-to-vercel-supabase]] @engineering — data migration script: dump sqlite rows, bulk-insert into Supabase Postgres, verify row counts + FK integrity
+- [ ] eng-infra-4 [[features/migrate-render-to-vercel-supabase]] @engineering — auth: replace backend/src/controllers/auth.controller.ts + auth.routes.ts with Supabase Auth; forced password reset flow for existing users (no hash migration)
+- [ ] eng-infra-5 [[features/migrate-render-to-vercel-supabase]] @engineering — Edge Functions port, batch 1: announcement, community, family, search controllers/routes → Supabase Edge Functions
+- [ ] eng-infra-6 [[features/migrate-render-to-vercel-supabase]] @engineering — Edge Functions port, batch 2: message, playdates, coach controllers/routes (coach keeps existing MockClaudeClient/LiveClaudeClient seam) → Supabase Edge Functions
+- [ ] eng-infra-7 [[features/migrate-render-to-vercel-supabase]] @engineering — uploads: uploads.controller.ts/uploads.service.ts local-disk storage → Supabase Storage buckets + signed URLs; update frontend ImagePicker/Avatar consumers
+- [ ] eng-infra-8 [[features/migrate-render-to-vercel-supabase]] @engineering — Vercel deploy: frontend build config + env vars pointed at Supabase; staging cutover, full test suite (vitest + playwright) green against new stack, then decommission Render
 - [ ] eng-backend-16 [[features/reply-coach-live]] @engineering — swap MockClaudeClient for live `@anthropic-ai/sdk`; prompt caching; ANTHROPIC_API_KEY boot-refusal; new `reply_coach_live_enabled` flag; $5/day cost cap with silent degradation; 50/50 holdback
 - [ ] eng-backend-17 [[features/backend-logger-util]] @engineering — small logger util at `backend/src/utils/logger.ts` + migrate `backend/src/controllers/coach.controller.ts`, `backend/src/services/email.service.ts`, `backend/src/index.ts`; closes MF-1
 - [ ] eng-frontend-13 [[features/moderation-report-block]] @engineering — foster-family safety surface; report + block
