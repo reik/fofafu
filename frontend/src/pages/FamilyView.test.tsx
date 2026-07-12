@@ -3,7 +3,7 @@ import { screen } from '@testing-library/react';
 import { Routes, Route } from 'react-router-dom';
 import { http, HttpResponse } from 'msw';
 import { renderWithProviders } from '@/tests/render';
-import { server } from '@/tests/msw-server';
+import { server, FUNCTIONS_BASE } from '@/tests/msw-server';
 import { useAuthStore } from '@/stores/auth';
 import FamilyViewPage from './FamilyView';
 
@@ -41,8 +41,8 @@ describe('FamilyView — Recent posts integration', () => {
   it('renders the Recent posts section on a non-owner family page (below header + Message CTA)', async () => {
     setAuthed();
     server.use(
-      http.get(`/api/family/${VIEWED_FAMILY_ID}`, () => HttpResponse.json(otherFamily)),
-      http.get('/api/announcements', () =>
+      http.get(`${FUNCTIONS_BASE}/family/${VIEWED_FAMILY_ID}`, () => HttpResponse.json(otherFamily)),
+      http.get(`${FUNCTIONS_BASE}/announcement`, () =>
         HttpResponse.json({
           items: [
             {
@@ -81,8 +81,8 @@ describe('FamilyView — Recent posts integration', () => {
   it('renders the empty-state copy when the family has no posts', async () => {
     setAuthed();
     server.use(
-      http.get(`/api/family/${VIEWED_FAMILY_ID}`, () => HttpResponse.json(otherFamily)),
-      http.get('/api/announcements', () =>
+      http.get(`${FUNCTIONS_BASE}/family/${VIEWED_FAMILY_ID}`, () => HttpResponse.json(otherFamily)),
+      http.get(`${FUNCTIONS_BASE}/announcement`, () =>
         HttpResponse.json({ items: [], nextCursor: null }),
       ),
     );
@@ -97,8 +97,8 @@ describe('FamilyView — Recent posts integration', () => {
     setAuthed();
     let captured: string | null = null;
     server.use(
-      http.get(`/api/family/${VIEWED_FAMILY_ID}`, () => HttpResponse.json(otherFamily)),
-      http.get('/api/announcements', ({ request }) => {
+      http.get(`${FUNCTIONS_BASE}/family/${VIEWED_FAMILY_ID}`, () => HttpResponse.json(otherFamily)),
+      http.get(`${FUNCTIONS_BASE}/announcement`, ({ request }) => {
         captured = new URL(request.url).searchParams.get('familyId');
         return HttpResponse.json({ items: [], nextCursor: null });
       }),

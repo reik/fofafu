@@ -3,7 +3,7 @@ import { screen, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { renderWithProviders } from '@/tests/render';
-import { server } from '@/tests/msw-server';
+import { server, FUNCTIONS_BASE } from '@/tests/msw-server';
 import FeedPage from './Feed';
 import type { AnnouncementDTO, FeedPage as FeedPageDTO } from '@/api/announcements';
 
@@ -107,7 +107,7 @@ const PAGE_2: FeedPageDTO = {
 
 function mockFeed({ delayMs = 0 }: { delayMs?: number } = {}) {
   server.use(
-    http.get('/api/announcements', async ({ request }) => {
+    http.get(`${FUNCTIONS_BASE}/announcement`, async ({ request }) => {
       if (delayMs > 0) await new Promise((r) => setTimeout(r, delayMs));
       const url = new URL(request.url);
       const cursor = url.searchParams.get('cursor');
@@ -128,7 +128,7 @@ describe('FeedPage', () => {
 
   it('shows an error state when the feed request fails', async () => {
     server.use(
-      http.get('/api/announcements', () =>
+      http.get(`${FUNCTIONS_BASE}/announcement`, () =>
         HttpResponse.json({ error: 'Could not load the feed.' }, { status: 500 }),
       ),
     );
@@ -139,7 +139,7 @@ describe('FeedPage', () => {
 
   it('shows an empty state when there are no posts', async () => {
     server.use(
-      http.get('/api/announcements', () =>
+      http.get(`${FUNCTIONS_BASE}/announcement`, () =>
         HttpResponse.json({ items: [], nextCursor: null } satisfies FeedPageDTO),
       ),
     );
