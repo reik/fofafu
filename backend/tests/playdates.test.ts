@@ -46,13 +46,13 @@ async function register(creds: typeof userA): Promise<{ jwt: string; userId: str
   const login = await call('POST', '/api/auth/login', { email: creds.email, password: creds.password });
   const loginBody = login.body as Json;
   const userId = (loginBody['user'] as Json)['id'] as string;
-  const familyRow = db().prepare('SELECT id FROM families WHERE user_id = ?').get(userId) as { id: string };
+  const familyRow = (await db().prepare('SELECT id FROM families WHERE user_id = ?').get(userId)) as { id: string };
   return { jwt: loginBody['token'] as string, userId, familyId: familyRow.id };
 }
 
-function resetDb(): void {
-  closeDb();
-  runMigrations();
+async function resetDb(): Promise<void> {
+  await closeDb();
+  await runMigrations();
   testInbox.length = 0;
 }
 
@@ -63,8 +63,8 @@ const SLOT_BODY = {
 };
 
 describe('playdates feature', () => {
-  before(() => { runMigrations(); });
-  beforeEach(() => { resetDb(); });
+  before(async () => { await runMigrations(); });
+  beforeEach(async () => { await resetDb(); });
   after(() => { if (server) server.close(); });
 
   // ── POST /api/playdates/availability ─────────────────────────────────────

@@ -47,23 +47,23 @@ async function register(creds: typeof userA): Promise<{ jwt: string; userId: str
   return { jwt: loginBody['token'] as string, userId: (loginBody['user'] as Json)['id'] as string };
 }
 
-function resetDb(): void {
-  closeDb();
-  runMigrations();
+async function resetDb(): Promise<void> {
+  await closeDb();
+  await runMigrations();
   testInbox.length = 0;
 }
 
-function dropFamilyFor(userId: string): void {
-  db().prepare('DELETE FROM families WHERE user_id = ?').run(userId);
+async function dropFamilyFor(userId: string): Promise<void> {
+  await db().prepare('DELETE FROM families WHERE user_id = ?').run(userId);
 }
 
-function setAvatarFor(userId: string, avatarUrl: string): void {
-  db().prepare('UPDATE families SET avatar_url = ? WHERE user_id = ?').run(avatarUrl, userId);
+async function setAvatarFor(userId: string, avatarUrl: string): Promise<void> {
+  await db().prepare('UPDATE families SET avatar_url = ? WHERE user_id = ?').run(avatarUrl, userId);
 }
 
 describe('author-display-names — DTO hydration', () => {
-  before(() => { runMigrations(); });
-  beforeEach(() => { resetDb(); });
+  before(async () => { await runMigrations(); });
+  beforeEach(async () => { await resetDb(); });
   after(() => { if (server) server.close(); });
 
   describe('announcements', () => {
@@ -99,7 +99,7 @@ describe('author-display-names — DTO hydration', () => {
       const created = await call('POST', '/api/announcements', { content: 'orphan post' }, { authorization: `Bearer ${a.jwt}` });
       const id = (created.body as Json)['id'] as string;
 
-      dropFamilyFor(a.userId);
+      await dropFamilyFor(a.userId);
 
       const got = await call('GET', `/api/announcements/${id}`, undefined, { authorization: `Bearer ${b.jwt}` });
       assert.equal(got.status, 200);
@@ -109,7 +109,7 @@ describe('author-display-names — DTO hydration', () => {
 
     it('GET /api/announcements/:id and list return authorAvatarUrl matching families.avatar_url when set', async () => {
       const a = await register(userA);
-      setAvatarFor(a.userId, 'https://cdn.example.com/avatars/garcia.png');
+      await setAvatarFor(a.userId, 'https://cdn.example.com/avatars/garcia.png');
 
       const created = await call('POST', '/api/announcements', { content: 'with avatar' }, { authorization: `Bearer ${a.jwt}` });
       const id = (created.body as Json)['id'] as string;
@@ -140,7 +140,7 @@ describe('author-display-names — DTO hydration', () => {
       const created = await call('POST', '/api/announcements', { content: 'orphan avatar' }, { authorization: `Bearer ${a.jwt}` });
       const id = (created.body as Json)['id'] as string;
 
-      dropFamilyFor(a.userId);
+      await dropFamilyFor(a.userId);
 
       const got = await call('GET', `/api/announcements/${id}`, undefined, { authorization: `Bearer ${b.jwt}` });
       assert.equal(got.status, 200);
@@ -157,7 +157,7 @@ describe('author-display-names — DTO hydration', () => {
       await new Promise((r) => setTimeout(r, 1100));
       await call('POST', `/api/announcements/${id}/comments`, { content: 'from B' }, { authorization: `Bearer ${b.jwt}` });
 
-      dropFamilyFor(b.userId);
+      await dropFamilyFor(b.userId);
 
       const list = await call('GET', `/api/announcements/${id}/comments`, undefined, { authorization: `Bearer ${a.jwt}` });
       const items = list.body as Json[];
@@ -201,7 +201,7 @@ describe('author-display-names — DTO hydration', () => {
       const b = await register(userB);
       await call('POST', '/api/messages', { to: a.userId, content: 'hi A' }, { authorization: `Bearer ${b.jwt}` });
 
-      dropFamilyFor(b.userId);
+      await dropFamilyFor(b.userId);
 
       const threads = await call('GET', '/api/messages/threads', undefined, { authorization: `Bearer ${a.jwt}` });
       const items = threads.body as Json[];

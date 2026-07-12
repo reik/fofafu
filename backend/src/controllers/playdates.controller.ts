@@ -90,8 +90,8 @@ const REQUEST_SELECT = `
 
 // ── Helper: resolve family row id from JWT userId ─────────────────────────────
 
-function getFamilyId(userId: string): string | null {
-  const row = db().prepare('SELECT id FROM families WHERE user_id = ?').get(userId) as
+async function getFamilyId(userId: string): Promise<string | null> {
+  const row = (await db().prepare('SELECT id FROM families WHERE user_id = ?').get(userId)) as
     | { id: string }
     | undefined;
   return row?.id ?? null;
@@ -99,73 +99,69 @@ function getFamilyId(userId: string): string | null {
 
 // ── GET /playdates/availability/:familyId ─────────────────────────────────────
 
-export function getAvailability(req: AuthRequest, res: Response): void {
+export async function getAvailability(req: AuthRequest, res: Response): Promise<void> {
   const userId = req.userId;
   if (!userId) { res.status(401).json({ error: 'Not authenticated' }); return; }
 
   const { familyId } = req.params;
-  const myFamilyId = getFamilyId(userId);
+  const myFamilyId = await getFamilyId(userId);
   const isSelf = myFamilyId === familyId;
 
   const rows = isSelf
-    ? (db()
+    ? ((await db()
         .prepare('SELECT * FROM availability_slots WHERE family_id = ? ORDER BY date, start_time')
-        .all(familyId) as SlotRow[])
-    : (db()
+        .all(familyId)) as SlotRow[])
+    : ((await db()
         .prepare(
           "SELECT * FROM availability_slots WHERE family_id = ? AND status = 'free' ORDER BY date, start_time",
         )
-        .all(familyId) as SlotRow[]);
+        .all(familyId)) as SlotRow[]);
 
   res.json(rows.map(toSlotDTO));
 }
 
 // ── POST /playdates/availability ──────────────────────────────────────────────
 
-export function addSlot(req: AuthRequest, res: Response): void {
+export async function addSlot(req: AuthRequest, res: Response): Promise<void> {
   const userId = req.userId;
   if (!userId) { res.status(401).json({ error: 'Not authenticated' }); return; }
 
-  const familyId = getFamilyId(userId);
+  const familyId = await getFamilyId(userId);
   if (!familyId) { res.status(404).json({ error: 'Family not found' }); return; }
 
   const { date, startTime, endTime, status = 'free', note } = req.body as AvailabilitySlotInput;
   const id = randomUUID();
 
-  db()
+  await db()
     .prepare(
       `INSERT INTO availability_slots (id, family_id, date, start_time, end_time, status, note)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
     )
     .run(id, familyId, date, startTime, endTime, status, note ?? null);
 
-  const slot = db()
-    .prepare('SELECT * FROM availability_slots WHERE id = ?')
-    .get(id) as SlotRow;
+  const slot = (await db().prepare('SELECT * FROM availability_slots WHERE id = ?').get(id)) as SlotRow;
   res.status(201).json(toSlotDTO(slot));
 }
 
 // ── PUT /playdates/availability/:id ───────────────────────────────────────────
 
-export function updateSlot(req: AuthRequest, res: Response): void {
+export async function updateSlot(req: AuthRequest, res: Response): Promise<void> {
   const userId = req.userId;
   if (!userId) { res.status(401).json({ error: 'Not authenticated' }); return; }
 
   const { id } = req.params;
-  const slot = db()
-    .prepare('SELECT * FROM availability_slots WHERE id = ?')
-    .get(id) as SlotRow | undefined;
+  const slot = (await db().prepare('SELECT * FROM availability_slots WHERE id = ?').get(id)) as SlotRow | undefined;
   if (!slot) { res.status(404).json({ error: 'Slot not found' }); return; }
 
-  const myFamilyId = getFamilyId(userId);
+  const myFamilyId = await getFamilyId(userId);
   if (slot.family_id !== myFamilyId) { res.status(403).json({ error: 'Forbidden' }); return; }
 
   const { date, startTime, endTime, status, note } = req.body as AvailabilitySlotPatch;
 
-  db()
+  await db()
     .prepare(
       `UPDATE availability_slots
-       SET date = ?, start_time = ?, end_time = ?, status = ?, note = ?, updated_at = datetime('now')
+       SET date = ?, start_time = ?, end_time = ?, status = ?, note = ?, updated_at = now()
        WHERE id = ?`,
     )
     .run(
@@ -177,69 +173,65 @@ export function updateSlot(req: AuthRequest, res: Response): void {
       id,
     );
 
-  const updated = db()
-    .prepare('SELECT * FROM availability_slots WHERE id = ?')
-    .get(id) as SlotRow;
+  const updated = (await db().prepare('SELECT * FROM availability_slots WHERE id = ?').get(id)) as SlotRow;
   res.json(toSlotDTO(updated));
 }
 
 // ── DELETE /playdates/availability/:id ────────────────────────────────────────
 
-export function deleteSlot(req: AuthRequest, res: Response): void {
+export async function deleteSlot(req: AuthRequest, res: Response): Promise<void> {
   const userId = req.userId;
   if (!userId) { res.status(401).json({ error: 'Not authenticated' }); return; }
 
   const { id } = req.params;
-  const slot = db()
-    .prepare('SELECT * FROM availability_slots WHERE id = ?')
-    .get(id) as SlotRow | undefined;
+  const slot = (await db().prepare('SELECT * FROM availability_slots WHERE id = ?').get(id)) as SlotRow | undefined;
   if (!slot) { res.status(404).json({ error: 'Slot not found' }); return; }
 
-  const myFamilyId = getFamilyId(userId);
+  const myFamilyId = await getFamilyId(userId);
   if (slot.family_id !== myFamilyId) { res.status(403).json({ error: 'Forbidden' }); return; }
 
-  db().prepare('DELETE FROM availability_slots WHERE id = ?').run(id);
+  await db().prepare('DELETE FROM availability_slots WHERE id = ?').run(id);
   res.json({ success: true });
 }
 
 // ── GET /playdates/requests ───────────────────────────────────────────────────
 
-export function getRequests(req: AuthRequest, res: Response): void {
+export async function getRequests(req: AuthRequest, res: Response): Promise<void> {
   const userId = req.userId;
   if (!userId) { res.status(401).json({ error: 'Not authenticated' }); return; }
 
-  const myFamilyId = getFamilyId(userId);
+  const myFamilyId = await getFamilyId(userId);
   if (!myFamilyId) { res.json([]); return; }
 
-  const rows = db()
+  const rows = (await db()
     .prepare(
       `${REQUEST_SELECT}
        WHERE pr.requester_family_id = ? OR pr.owner_family_id = ?
        ORDER BY pr.created_at DESC`,
     )
-    .all(myFamilyId, myFamilyId) as RequestRow[];
+    .all(myFamilyId, myFamilyId)) as RequestRow[];
 
   res.json(rows.map(toRequestDTO));
 }
 
 // ── POST /playdates/requests ──────────────────────────────────────────────────
 
-export function createRequest(req: AuthRequest, res: Response): void {
+export async function createRequest(req: AuthRequest, res: Response): Promise<void> {
   const userId = req.userId;
   if (!userId) { res.status(401).json({ error: 'Not authenticated' }); return; }
 
-  const myFamilyId = getFamilyId(userId);
+  const myFamilyId = await getFamilyId(userId);
   if (!myFamilyId) { res.status(404).json({ error: 'Family not found' }); return; }
 
   const { slotId, message } = req.body as PlaydateRequestInput;
 
-  const slot = db()
+  const slot = (await db()
     .prepare("SELECT * FROM availability_slots WHERE id = ? AND status = 'free'")
-    .get(slotId) as SlotRow | undefined;
+    .get(slotId)) as SlotRow | undefined;
   if (!slot) { res.status(404).json({ error: 'Slot not found or not available' }); return; }
   if (slot.family_id === myFamilyId) { res.status(400).json({ error: 'Cannot request your own slot' }); return; }
 
-  const existing = db()
+  const existing = await db()
     .prepare(
       "SELECT id FROM playdate_requests WHERE requester_family_id = ? AND slot_id = ? AND status = 'pending'",
     )
@@ -247,42 +239,38 @@ export function createRequest(req: AuthRequest, res: Response): void {
   if (existing) { res.status(400).json({ error: 'You already have a pending request for this slot' }); return; }
 
   const id = randomUUID();
-  db()
+  await db()
     .prepare(
       `INSERT INTO playdate_requests (id, slot_id, requester_family_id, owner_family_id, message)
        VALUES (?, ?, ?, ?, ?)`,
     )
     .run(id, slotId, myFamilyId, slot.family_id, message ?? null);
 
-  const row = db()
-    .prepare(`${REQUEST_SELECT} WHERE pr.id = ?`)
-    .get(id) as RequestRow;
+  const row = (await db().prepare(`${REQUEST_SELECT} WHERE pr.id = ?`).get(id)) as RequestRow;
   res.status(201).json(toRequestDTO(row));
 }
 
 // ── PUT /playdates/requests/:id/respond ──────────────────────────────────────
 
-export function respondToRequest(req: AuthRequest, res: Response): void {
+export async function respondToRequest(req: AuthRequest, res: Response): Promise<void> {
   const userId = req.userId;
   if (!userId) { res.status(401).json({ error: 'Not authenticated' }); return; }
 
   const { id } = req.params;
-  const request = db()
-    .prepare('SELECT * FROM playdate_requests WHERE id = ?')
-    .get(id) as RequestRow | undefined;
+  const request = (await db().prepare('SELECT * FROM playdate_requests WHERE id = ?').get(id)) as
+    | RequestRow
+    | undefined;
   if (!request) { res.status(404).json({ error: 'Request not found' }); return; }
 
-  const myFamilyId = getFamilyId(userId);
+  const myFamilyId = await getFamilyId(userId);
   if (request.owner_family_id !== myFamilyId) { res.status(403).json({ error: 'Forbidden' }); return; }
   if (request.status !== 'pending') { res.status(400).json({ error: 'Request already resolved' }); return; }
 
   const { status } = req.body as PlaydateRequestRespondInput;
-  db()
-    .prepare("UPDATE playdate_requests SET status = ?, updated_at = datetime('now') WHERE id = ?")
+  await db()
+    .prepare("UPDATE playdate_requests SET status = ?, updated_at = now() WHERE id = ?")
     .run(status, id);
 
-  const updated = db()
-    .prepare(`${REQUEST_SELECT} WHERE pr.id = ?`)
-    .get(id) as RequestRow;
+  const updated = (await db().prepare(`${REQUEST_SELECT} WHERE pr.id = ?`).get(id)) as RequestRow;
   res.json(toRequestDTO(updated));
 }

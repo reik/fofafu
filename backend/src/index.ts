@@ -29,7 +29,7 @@ export function buildApp(): express.Express {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   assertCoachBootPreconditions();
-  runMigrations();
+  await runMigrations();
   const port = Number(process.env.PORT ?? 4000);
   buildApp().listen(port, () => {
     logger.info({ msg: 'fofafu backend listening', port });

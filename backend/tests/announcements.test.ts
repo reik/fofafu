@@ -41,15 +41,15 @@ async function register(creds: typeof userA): Promise<string> {
   return login.body['token'] as string;
 }
 
-function resetDb(): void {
-  closeDb();
-  runMigrations();
+async function resetDb(): Promise<void> {
+  await closeDb();
+  await runMigrations();
   testInbox.length = 0;
 }
 
 describe('announcements-feed feature', () => {
-  before(() => { runMigrations(); });
-  beforeEach(() => { resetDb(); });
+  before(async () => { await runMigrations(); });
+  beforeEach(async () => { await resetDb(); });
   after(() => { if (server) server.close(); });
 
   it('creates and reads back an announcement', async () => {
@@ -242,10 +242,10 @@ describe('announcements-feed feature', () => {
 
   it('AnnouncementDTO authorName is null when family record is missing (orphaned author)', async () => {
     const jwt = await register(userA);
-    const aRow = db().prepare('SELECT id FROM users WHERE email = ?').get(userA.email) as { id: string };
-    db().prepare('INSERT INTO announcements (id, user_id, content) VALUES (?, ?, ?)')
+    const aRow = (await db().prepare('SELECT id FROM users WHERE email = ?').get(userA.email)) as { id: string };
+    await db().prepare('INSERT INTO announcements (id, user_id, content) VALUES (?, ?, ?)')
       .run('11111111-1111-1111-1111-111111111111', aRow.id, 'orphan post');
-    db().prepare('DELETE FROM families WHERE user_id = ?').run(aRow.id);
+    await db().prepare('DELETE FROM families WHERE user_id = ?').run(aRow.id);
 
     const got = await call('GET', '/api/announcements/11111111-1111-1111-1111-111111111111', undefined, { authorization: `Bearer ${jwt}` });
     assert.equal(got.status, 200);
@@ -261,8 +261,8 @@ describe('announcements-feed feature', () => {
     const cB = await call('POST', `/api/announcements/${postId}/comments`, { content: 'B says hi' }, { authorization: `Bearer ${jwtB}` });
     assert.equal(cB.body['authorName'], userB.name);
 
-    const bRow = db().prepare('SELECT id FROM users WHERE email = ?').get(userB.email) as { id: string };
-    db().prepare('DELETE FROM families WHERE user_id = ?').run(bRow.id);
+    const bRow = (await db().prepare('SELECT id FROM users WHERE email = ?').get(userB.email)) as { id: string };
+    await db().prepare('DELETE FROM families WHERE user_id = ?').run(bRow.id);
 
     const list = await call('GET', `/api/announcements/${postId}/comments`, undefined, { authorization: `Bearer ${jwtA}` });
     const items = list.body as unknown as Json[];

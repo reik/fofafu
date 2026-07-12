@@ -65,8 +65,13 @@ function toCommentDTO(row: CommentRow, viewerUserId: string | undefined): Record
 
 const REACTION_TYPES: ReactionType[] = ['like', 'love', 'hug', 'celebrate', 'support'];
 
-function aggregateReactions(announcementId: string, viewerUserId: string | undefined): { reactions: Record<ReactionType, number>; myReaction: ReactionType | null } {
-  const rows = db().prepare('SELECT type, user_id FROM reactions WHERE announcement_id = ?').all(announcementId) as { type: ReactionType; user_id: string }[];
+async function aggregateReactions(
+  announcementId: string,
+  viewerUserId: string | undefined
+): Promise<{ reactions: Record<ReactionType, number>; myReaction: ReactionType | null }> {
+  const rows = (await db().prepare('SELECT type, user_id FROM reactions WHERE announcement_id = ?').all(
+    announcementId
+  )) as { type: ReactionType; user_id: string }[];
   const reactions = Object.fromEntries(REACTION_TYPES.map((t) => [t, 0])) as Record<ReactionType, number>;
   let myReaction: ReactionType | null = null;
   for (const r of rows) {
@@ -76,8 +81,8 @@ function aggregateReactions(announcementId: string, viewerUserId: string | undef
   return { reactions, myReaction };
 }
 
-function toAnnouncementDTO(row: AnnouncementRow, viewerUserId: string | undefined): Record<string, unknown> {
-  const { reactions, myReaction } = aggregateReactions(row.id, viewerUserId);
+async function toAnnouncementDTO(row: AnnouncementRow, viewerUserId: string | undefined): Promise<Record<string, unknown>> {
+  const { reactions, myReaction } = await aggregateReactions(row.id, viewerUserId);
   return {
     id: row.id,
     authorId: row.user_id,
@@ -94,19 +99,19 @@ function toAnnouncementDTO(row: AnnouncementRow, viewerUserId: string | undefine
   };
 }
 
-export function createAnnouncement(req: AuthRequest, res: Response): void {
+export async function createAnnouncement(req: AuthRequest, res: Response): Promise<void> {
   const userId = req.userId;
   if (!userId) { res.status(401).json({ error: 'Not authenticated' }); return; }
   const { content, mediaUrl, mediaType } = req.body as CreateAnnouncementInput;
   const id = randomUUID();
-  db().prepare(
-    'INSERT INTO announcements (id, user_id, content, media_url, media_type) VALUES (?, ?, ?, ?, ?)'
-  ).run(id, userId, content, mediaUrl ?? null, mediaType ?? null);
-  const row = db().prepare(`${ANNOUNCEMENT_SELECT} WHERE a.id = ?`).get(id) as AnnouncementRow;
-  res.status(201).json(toAnnouncementDTO(row, userId));
+  await db()
+    .prepare('INSERT INTO announcements (id, user_id, content, media_url, media_type) VALUES (?, ?, ?, ?, ?)')
+    .run(id, userId, content, mediaUrl ?? null, mediaType ?? null);
+  const row = (await db().prepare(`${ANNOUNCEMENT_SELECT} WHERE a.id = ?`).get(id)) as AnnouncementRow;
+  res.status(201).json(await toAnnouncementDTO(row, userId));
 }
 
-export function listAnnouncements(req: AuthRequest, res: Response): void {
+export async function listAnnouncements(req: AuthRequest, res: Response): Promise<void> {
   const { cursor, limit, familyId } = req.query as unknown as ListAnnouncementsQuery;
   const pageSize = limit ?? 20;
 
@@ -116,7 +121,9 @@ export function listAnnouncements(req: AuthRequest, res: Response): void {
   // detail endpoint is the right place to surface a 404 for a missing family.
   let authorUserId: string | null = null;
   if (familyId !== undefined) {
-    const fam = db().prepare('SELECT user_id FROM families WHERE id = ?').get(familyId) as { user_id: string } | undefined;
+    const fam = (await db().prepare('SELECT user_id FROM families WHERE id = ?').get(familyId)) as
+      | { user_id: string }
+      | undefined;
     if (!fam) {
       res.json({ items: [], nextCursor: null });
       return;
@@ -126,42 +133,40 @@ export function listAnnouncements(req: AuthRequest, res: Response): void {
 
   let rows: AnnouncementRow[];
   if (authorUserId !== null && cursor) {
-    rows = db().prepare(
-      `${ANNOUNCEMENT_SELECT} WHERE a.user_id = ? AND a.created_at < ? ORDER BY a.created_at DESC LIMIT ?`
-    ).all(authorUserId, cursor, pageSize) as AnnouncementRow[];
+    rows = (await db()
+      .prepare(`${ANNOUNCEMENT_SELECT} WHERE a.user_id = ? AND a.created_at < ? ORDER BY a.created_at DESC LIMIT ?`)
+      .all(authorUserId, cursor, pageSize)) as AnnouncementRow[];
   } else if (authorUserId !== null) {
-    rows = db().prepare(
-      `${ANNOUNCEMENT_SELECT} WHERE a.user_id = ? ORDER BY a.created_at DESC LIMIT ?`
-    ).all(authorUserId, pageSize) as AnnouncementRow[];
+    rows = (await db()
+      .prepare(`${ANNOUNCEMENT_SELECT} WHERE a.user_id = ? ORDER BY a.created_at DESC LIMIT ?`)
+      .all(authorUserId, pageSize)) as AnnouncementRow[];
   } else if (cursor) {
-    rows = db().prepare(
-      `${ANNOUNCEMENT_SELECT} WHERE a.created_at < ? ORDER BY a.created_at DESC LIMIT ?`
-    ).all(cursor, pageSize) as AnnouncementRow[];
+    rows = (await db()
+      .prepare(`${ANNOUNCEMENT_SELECT} WHERE a.created_at < ? ORDER BY a.created_at DESC LIMIT ?`)
+      .all(cursor, pageSize)) as AnnouncementRow[];
   } else {
-    rows = db().prepare(
-      `${ANNOUNCEMENT_SELECT} ORDER BY a.created_at DESC LIMIT ?`
-    ).all(pageSize) as AnnouncementRow[];
+    rows = (await db().prepare(`${ANNOUNCEMENT_SELECT} ORDER BY a.created_at DESC LIMIT ?`).all(pageSize)) as AnnouncementRow[];
   }
 
-  const items = rows.map((r) => toAnnouncementDTO(r, req.userId));
+  const items = await Promise.all(rows.map((r) => toAnnouncementDTO(r, req.userId)));
   const nextCursor = rows.length === pageSize ? rows[rows.length - 1]?.created_at ?? null : null;
   res.json({ items, nextCursor });
 }
 
-export function getAnnouncement(req: AuthRequest, res: Response): void {
+export async function getAnnouncement(req: AuthRequest, res: Response): Promise<void> {
   const { id } = req.params as unknown as AnnouncementIdParams;
-  const row = db().prepare(`${ANNOUNCEMENT_SELECT} WHERE a.id = ?`).get(id) as AnnouncementRow | undefined;
+  const row = (await db().prepare(`${ANNOUNCEMENT_SELECT} WHERE a.id = ?`).get(id)) as AnnouncementRow | undefined;
   if (!row) { res.status(404).json({ error: 'Not found' }); return; }
-  res.json(toAnnouncementDTO(row, req.userId));
+  res.json(await toAnnouncementDTO(row, req.userId));
 }
 
-export function patchAnnouncement(req: AuthRequest, res: Response): void {
+export async function patchAnnouncement(req: AuthRequest, res: Response): Promise<void> {
   const userId = req.userId;
   if (!userId) { res.status(401).json({ error: 'Not authenticated' }); return; }
   const { id } = req.params as unknown as AnnouncementIdParams;
   const patch = req.body as PatchAnnouncementInput;
 
-  const row = db().prepare(`${ANNOUNCEMENT_SELECT} WHERE a.id = ?`).get(id) as AnnouncementRow | undefined;
+  const row = (await db().prepare(`${ANNOUNCEMENT_SELECT} WHERE a.id = ?`).get(id)) as AnnouncementRow | undefined;
   if (!row) { res.status(404).json({ error: 'Not found' }); return; }
   if (row.user_id !== userId) { res.status(403).json({ error: 'Only the author can change this post.' }); return; }
 
@@ -170,104 +175,104 @@ export function patchAnnouncement(req: AuthRequest, res: Response): void {
     media_url: patch.mediaUrl === undefined ? row.media_url : patch.mediaUrl,
     media_type: patch.mediaType === undefined ? row.media_type : patch.mediaType,
   };
-  db().prepare(
-    `UPDATE announcements SET content=?, media_url=?, media_type=?, updated_at=datetime('now') WHERE id=?`
-  ).run(next.content, next.media_url, next.media_type, id);
-  const updated = db().prepare(`${ANNOUNCEMENT_SELECT} WHERE a.id = ?`).get(id) as AnnouncementRow;
-  res.json(toAnnouncementDTO(updated, userId));
+  await db()
+    .prepare(`UPDATE announcements SET content=?, media_url=?, media_type=?, updated_at=now() WHERE id=?`)
+    .run(next.content, next.media_url, next.media_type, id);
+  const updated = (await db().prepare(`${ANNOUNCEMENT_SELECT} WHERE a.id = ?`).get(id)) as AnnouncementRow;
+  res.json(await toAnnouncementDTO(updated, userId));
 }
 
-export function deleteAnnouncement(req: AuthRequest, res: Response): void {
+export async function deleteAnnouncement(req: AuthRequest, res: Response): Promise<void> {
   const userId = req.userId;
   if (!userId) { res.status(401).json({ error: 'Not authenticated' }); return; }
   const { id } = req.params as unknown as AnnouncementIdParams;
-  const row = db().prepare('SELECT user_id FROM announcements WHERE id = ?').get(id) as { user_id: string } | undefined;
+  const row = (await db().prepare('SELECT user_id FROM announcements WHERE id = ?').get(id)) as
+    | { user_id: string }
+    | undefined;
   if (!row) { res.status(404).json({ error: 'Not found' }); return; }
   if (row.user_id !== userId) { res.status(403).json({ error: 'Only the author can delete this post.' }); return; }
-  db().prepare('DELETE FROM announcements WHERE id = ?').run(id);
+  await db().prepare('DELETE FROM announcements WHERE id = ?').run(id);
   res.status(204).end();
 }
 
-export function createComment(req: AuthRequest, res: Response): void {
+export async function createComment(req: AuthRequest, res: Response): Promise<void> {
   const userId = req.userId;
   if (!userId) { res.status(401).json({ error: 'Not authenticated' }); return; }
   const { id: announcementId } = req.params as unknown as AnnouncementIdParams;
   const { content } = req.body as CreateCommentInput;
-  const exists = db().prepare('SELECT 1 FROM announcements WHERE id = ?').get(announcementId);
+  const exists = await db().prepare('SELECT 1 FROM announcements WHERE id = ?').get(announcementId);
   if (!exists) { res.status(404).json({ error: 'Not found' }); return; }
   const id = randomUUID();
-  db().prepare(
-    'INSERT INTO comments (id, announcement_id, user_id, content) VALUES (?, ?, ?, ?)'
-  ).run(id, announcementId, userId, content);
-  const row = db().prepare(`${COMMENT_SELECT} WHERE c.id = ?`).get(id) as CommentRow;
+  await db()
+    .prepare('INSERT INTO comments (id, announcement_id, user_id, content) VALUES (?, ?, ?, ?)')
+    .run(id, announcementId, userId, content);
+  const row = (await db().prepare(`${COMMENT_SELECT} WHERE c.id = ?`).get(id)) as CommentRow;
   res.status(201).json(toCommentDTO(row, userId));
 }
 
-export function listComments(req: AuthRequest, res: Response): void {
+export async function listComments(req: AuthRequest, res: Response): Promise<void> {
   const { id: announcementId } = req.params as unknown as AnnouncementIdParams;
-  const exists = db().prepare('SELECT 1 FROM announcements WHERE id = ?').get(announcementId);
+  const exists = await db().prepare('SELECT 1 FROM announcements WHERE id = ?').get(announcementId);
   if (!exists) { res.status(404).json({ error: 'Not found' }); return; }
-  const rows = db().prepare(
-    `${COMMENT_SELECT} WHERE c.announcement_id = ? ORDER BY c.created_at ASC`
-  ).all(announcementId) as CommentRow[];
+  const rows = (await db()
+    .prepare(`${COMMENT_SELECT} WHERE c.announcement_id = ? ORDER BY c.created_at ASC`)
+    .all(announcementId)) as CommentRow[];
   res.json(rows.map((r) => toCommentDTO(r, req.userId)));
 }
 
-export function patchComment(req: AuthRequest, res: Response): void {
+export async function patchComment(req: AuthRequest, res: Response): Promise<void> {
   const userId = req.userId;
   if (!userId) { res.status(401).json({ error: 'Not authenticated' }); return; }
   const { id } = req.params as unknown as CommentIdParams;
   const { content } = req.body as PatchCommentInput;
 
-  const row = db().prepare('SELECT user_id FROM comments WHERE id = ?').get(id) as { user_id: string } | undefined;
+  const row = (await db().prepare('SELECT user_id FROM comments WHERE id = ?').get(id)) as { user_id: string } | undefined;
   if (!row) { res.status(404).json({ error: 'Not found' }); return; }
   if (row.user_id !== userId) { res.status(403).json({ error: 'Only the author can edit this comment.' }); return; }
 
-  db().prepare(
-    `UPDATE comments SET content = ?, updated_at = datetime('now') WHERE id = ?`
-  ).run(content, id);
-  const updated = db().prepare(`${COMMENT_SELECT} WHERE c.id = ?`).get(id) as CommentRow;
+  await db().prepare(`UPDATE comments SET content = ?, updated_at = now() WHERE id = ?`).run(content, id);
+  const updated = (await db().prepare(`${COMMENT_SELECT} WHERE c.id = ?`).get(id)) as CommentRow;
   res.json(toCommentDTO(updated, userId));
 }
 
-export function deleteComment(req: AuthRequest, res: Response): void {
+export async function deleteComment(req: AuthRequest, res: Response): Promise<void> {
   const userId = req.userId;
   if (!userId) { res.status(401).json({ error: 'Not authenticated' }); return; }
   const { id } = req.params as unknown as AnnouncementIdParams;
-  const row = db().prepare('SELECT user_id FROM comments WHERE id = ?').get(id) as { user_id: string } | undefined;
+  const row = (await db().prepare('SELECT user_id FROM comments WHERE id = ?').get(id)) as { user_id: string } | undefined;
   if (!row) { res.status(404).json({ error: 'Not found' }); return; }
   if (row.user_id !== userId) { res.status(403).json({ error: 'Only the author can delete this comment.' }); return; }
-  db().prepare('DELETE FROM comments WHERE id = ?').run(id);
+  await db().prepare('DELETE FROM comments WHERE id = ?').run(id);
   res.status(204).end();
 }
 
-export function toggleReaction(req: AuthRequest, res: Response): void {
+export async function toggleReaction(req: AuthRequest, res: Response): Promise<void> {
   const userId = req.userId;
   if (!userId) { res.status(401).json({ error: 'Not authenticated' }); return; }
   const { id: announcementId } = req.params as unknown as AnnouncementIdParams;
   const { type } = req.body as ReactInput;
 
-  const exists = db().prepare('SELECT 1 FROM announcements WHERE id = ?').get(announcementId);
+  const exists = await db().prepare('SELECT 1 FROM announcements WHERE id = ?').get(announcementId);
   if (!exists) { res.status(404).json({ error: 'Not found' }); return; }
 
-  const existing = db().prepare(
-    'SELECT id, type FROM reactions WHERE announcement_id = ? AND user_id = ?'
-  ).get(announcementId, userId) as { id: string; type: ReactionType } | undefined;
+  const existing = (await db()
+    .prepare('SELECT id, type FROM reactions WHERE announcement_id = ? AND user_id = ?')
+    .get(announcementId, userId)) as { id: string; type: ReactionType } | undefined;
 
   let toggled: 'added' | 'removed' | 'switched';
   if (!existing) {
-    db().prepare(
-      'INSERT INTO reactions (id, announcement_id, user_id, type) VALUES (?, ?, ?, ?)'
-    ).run(randomUUID(), announcementId, userId, type);
+    await db()
+      .prepare('INSERT INTO reactions (id, announcement_id, user_id, type) VALUES (?, ?, ?, ?)')
+      .run(randomUUID(), announcementId, userId, type);
     toggled = 'added';
   } else if (existing.type === type) {
-    db().prepare('DELETE FROM reactions WHERE id = ?').run(existing.id);
+    await db().prepare('DELETE FROM reactions WHERE id = ?').run(existing.id);
     toggled = 'removed';
   } else {
-    db().prepare('UPDATE reactions SET type = ? WHERE id = ?').run(type, existing.id);
+    await db().prepare('UPDATE reactions SET type = ? WHERE id = ?').run(type, existing.id);
     toggled = 'switched';
   }
 
-  const { reactions, myReaction } = aggregateReactions(announcementId, userId);
+  const { reactions, myReaction } = await aggregateReactions(announcementId, userId);
   res.json({ toggled, reactions, myReaction });
 }

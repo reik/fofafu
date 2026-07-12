@@ -44,15 +44,15 @@ async function registerAndVerify(creds: typeof userA): Promise<string> {
   return (login.body as Json)['token'] as string;
 }
 
-function resetDb(): void {
-  closeDb();
-  runMigrations();
+async function resetDb(): Promise<void> {
+  await closeDb();
+  await runMigrations();
   testInbox.length = 0;
 }
 
 describe('community-recent feature', () => {
-  before(() => { runMigrations(); });
-  beforeEach(() => { resetDb(); });
+  before(async () => { await runMigrations(); });
+  beforeEach(async () => { await resetDb(); });
   after(() => { if (server) server.close(); });
 
   it('returns other families, ordered by updated_at desc, excluding the caller', async () => {

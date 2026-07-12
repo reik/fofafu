@@ -43,20 +43,20 @@ async function register(creds: typeof userA): Promise<{ jwt: string }> {
   return { jwt: login.body['token'] as string };
 }
 
-function resetDb(): void {
-  closeDb();
-  runMigrations();
+async function resetDb(): Promise<void> {
+  await closeDb();
+  await runMigrations();
   testInbox.length = 0;
 }
 
 describe('family-profiles feature', () => {
-  before(() => { runMigrations(); });
-  beforeEach(() => { resetDb(); });
+  before(async () => { await runMigrations(); });
+  beforeEach(async () => { await resetDb(); });
   after(() => { if (server) server.close(); });
 
   it('registration auto-creates a families row with the user name as family name', async () => {
     await register(userA);
-    const row = db().prepare('SELECT name, bio, kid_count FROM families').get() as { name: string; bio: string; kid_count: number | null };
+    const row = (await db().prepare('SELECT name, bio, kid_count FROM families').get()) as { name: string; bio: string; kid_count: number | null };
     assert.deepEqual(row, { name: 'Garcia', bio: '', kid_count: null });
   });
 

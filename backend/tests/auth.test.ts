@@ -39,9 +39,9 @@ async function listen(): Promise<number> {
   return (server!.address() as { port: number }).port;
 }
 
-function resetDb(): void {
-  closeDb();
-  runMigrations();
+async function resetDb(): Promise<void> {
+  await closeDb();
+  await runMigrations();
   testInbox.length = 0;
 }
 
@@ -54,12 +54,12 @@ const validRegister = {
 };
 
 describe('auth-email feature', () => {
-  before(() => {
-    runMigrations();
+  before(async () => {
+    await runMigrations();
   });
 
-  beforeEach(() => {
-    resetDb();
+  beforeEach(async () => {
+    await resetDb();
   });
 
   it('registers a new user and queues a verification email', async () => {
@@ -67,11 +67,11 @@ describe('auth-email feature', () => {
     assert.equal(res.status, 201);
     assert.match(res.body['message'] as string, /verify/i);
 
-    const userRow = db().prepare('SELECT email, verified FROM users WHERE email = ?').get(validRegister.email);
-    assert.deepEqual(userRow, { email: 'jane@example.com', verified: 0 });
+    const userRow = await db().prepare('SELECT email, verified FROM users WHERE email = ?').get(validRegister.email);
+    assert.deepEqual(userRow, { email: 'jane@example.com', verified: false });
 
-    const tokenRow = db().prepare('SELECT used FROM email_tokens').get() as { used: number };
-    assert.equal(tokenRow.used, 0);
+    const tokenRow = (await db().prepare('SELECT used FROM email_tokens').get()) as { used: boolean };
+    assert.equal(tokenRow.used, false);
 
     assert.equal(testInbox.length, 1);
     assert.equal(testInbox[0]?.to, 'jane@example.com');
@@ -96,11 +96,11 @@ describe('auth-email feature', () => {
     const res = await call('GET', `/api/auth/verify?token=${token}`);
     assert.equal(res.status, 200);
 
-    const userRow = db().prepare('SELECT verified FROM users').get() as { verified: number };
-    assert.equal(userRow.verified, 1);
+    const userRow = (await db().prepare('SELECT verified FROM users').get()) as { verified: boolean };
+    assert.equal(userRow.verified, true);
 
-    const tokenRow = db().prepare('SELECT used FROM email_tokens').get() as { used: number };
-    assert.equal(tokenRow.used, 1);
+    const tokenRow = (await db().prepare('SELECT used FROM email_tokens').get()) as { used: boolean };
+    assert.equal(tokenRow.used, true);
   });
 
   it('rejects a second use of the same token', async () => {
@@ -144,8 +144,8 @@ describe('auth-email feature', () => {
 });
 
 describe('auth-password-reset feature', () => {
-  beforeEach(() => {
-    resetDb();
+  beforeEach(async () => {
+    await resetDb();
   });
 
   async function registerAndVerify(): Promise<{ jwt: string }> {
@@ -164,8 +164,8 @@ describe('auth-password-reset feature', () => {
     assert.match(res.body['message'] as string, /reset link/i);
     assert.equal(testInbox.length, 1);
     assert.equal(testInbox[0]?.to, 'jane@example.com');
-    const tokenRow = db().prepare('SELECT used FROM password_reset_tokens').get();
-    assert.deepEqual(tokenRow, { used: 0 });
+    const tokenRow = await db().prepare('SELECT used FROM password_reset_tokens').get();
+    assert.deepEqual(tokenRow, { used: false });
   });
 
   it('forgot-password for an unknown email returns the same 200 with no row and no email', async () => {
@@ -173,8 +173,8 @@ describe('auth-password-reset feature', () => {
     assert.equal(res.status, 200);
     assert.match(res.body['message'] as string, /reset link/i);
     assert.equal(testInbox.length, 0);
-    const count = db().prepare('SELECT COUNT(*) as n FROM password_reset_tokens').get() as { n: number };
-    assert.equal(count.n, 0);
+    const count = (await db().prepare('SELECT COUNT(*) as n FROM password_reset_tokens').get()) as { n: number | string };
+    assert.equal(Number(count.n), 0);
   });
 
   it('reset-password with a valid token rotates the password and burns the token', async () => {
@@ -185,8 +185,8 @@ describe('auth-password-reset feature', () => {
     const res = await call('POST', '/api/auth/reset-password', { token: resetToken, password: 'a-brand-new-passphrase' });
     assert.equal(res.status, 200);
 
-    const burned = db().prepare('SELECT used FROM password_reset_tokens').get() as { used: number };
-    assert.equal(burned.used, 1);
+    const burned = (await db().prepare('SELECT used FROM password_reset_tokens').get()) as { used: boolean };
+    assert.equal(burned.used, true);
 
     const oldLogin = await call('POST', '/api/auth/login', { email: validRegister.email, password: validRegister.password });
     assert.equal(oldLogin.status, 401);

@@ -48,15 +48,15 @@ async function setBio(jwt: string, bio: string): Promise<void> {
   await call('PATCH', '/api/family/me', { bio }, { authorization: `Bearer ${jwt}` });
 }
 
-function resetDb(): void {
-  closeDb();
-  runMigrations();
+async function resetDb(): Promise<void> {
+  await closeDb();
+  await runMigrations();
   testInbox.length = 0;
 }
 
 describe('community-search feature', () => {
-  before(() => { runMigrations(); });
-  beforeEach(() => { resetDb(); });
+  before(async () => { await runMigrations(); });
+  beforeEach(async () => { await resetDb(); });
   after(() => { if (server) server.close(); });
 
   it('matches by family name, case-insensitive', async () => {

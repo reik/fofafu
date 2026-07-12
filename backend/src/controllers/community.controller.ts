@@ -14,27 +14,31 @@ interface FamilyRow {
   updated_at: string;
 }
 
-export function getRecent(req: AuthRequest, res: Response): void {
+export async function getRecent(req: AuthRequest, res: Response): Promise<void> {
   const userId = req.userId;
   if (!userId) { res.status(401).json({ error: 'Not authenticated' }); return; }
   const { limit } = req.query as unknown as RecentCommunityQuery;
   const pageSize = limit ?? 12;
 
-  const rows = db().prepare(
-    `SELECT * FROM families
-     WHERE user_id != ?
-     ORDER BY updated_at DESC
-     LIMIT ?`,
-  ).all(userId, pageSize) as FamilyRow[];
+  const rows = (await db()
+    .prepare(
+      `SELECT * FROM families
+       WHERE user_id != ?
+       ORDER BY updated_at DESC
+       LIMIT ?`,
+    )
+    .all(userId, pageSize)) as FamilyRow[];
 
-  res.json(rows.map((row) => ({
-    id: row.id,
-    ownerId: row.user_id,
-    name: row.name,
-    bio: row.bio,
-    kidCount: null,
-    avatarUrl: row.avatar_url,
-    isOwner: false,
-    updatedAt: row.updated_at,
-  })));
+  res.json(
+    rows.map((row) => ({
+      id: row.id,
+      ownerId: row.user_id,
+      name: row.name,
+      bio: row.bio,
+      kidCount: null,
+      avatarUrl: row.avatar_url,
+      isOwner: false,
+      updatedAt: row.updated_at,
+    })),
+  );
 }

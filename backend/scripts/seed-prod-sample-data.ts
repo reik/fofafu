@@ -111,37 +111,31 @@ function buildBio(): string {
 }
 
 async function main() {
-  const existing = db().prepare('SELECT COUNT(*) AS n FROM families WHERE is_sample = 1').get() as { n: number };
+  const existing = (await db().prepare('SELECT COUNT(*) AS n FROM families WHERE is_sample = TRUE').get()) as {
+    n: number | string;
+  };
 
-  if (existing.n > 0 && !FORCE) {
+  if (Number(existing.n) > 0 && !FORCE) {
     console.log(`${existing.n} sample families already present — skipping. Re-run with --force to wipe and regenerate.`);
-    closeDb();
+    await closeDb();
     return;
   }
 
-  if (existing.n > 0 && FORCE) {
-    const sampleUserIds = db().prepare('SELECT id FROM users WHERE is_sample = 1').all() as { id: string }[];
-    const deleteUser = db().prepare('DELETE FROM users WHERE id = ?'); // cascades to families/announcements/comments/reactions
-    db().transaction(() => {
-      for (const { id } of sampleUserIds) deleteUser.run(id);
+  if (Number(existing.n) > 0 && FORCE) {
+    const sampleUserIds = (await db().prepare('SELECT id FROM users WHERE is_sample = TRUE').all()) as { id: string }[];
+    // cascades to families/announcements/comments/reactions
+    await db().transaction(async () => {
+      for (const { id } of sampleUserIds) {
+        await db().prepare('DELETE FROM users WHERE id = ?').run(id);
+      }
     })();
     console.log(`--force: removed ${sampleUserIds.length} existing sample users and their cascaded data.`);
   }
 
-  const insertUser = db().prepare(
-    'INSERT INTO users (id, email, password, name, city, state, verified, is_sample) VALUES (?, ?, ?, ?, ?, ?, 1, 1)'
-  );
-  const insertFamily = db().prepare(
-    'INSERT INTO families (id, user_id, name, bio, kid_count, avatar_url, is_sample) VALUES (?, ?, ?, ?, ?, ?, 1)'
-  );
-  const insertAnnouncement = db().prepare(
-    'INSERT INTO announcements (id, user_id, content, media_url, media_type, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
-  );
-
   const usedSurnames = new Set<string>();
   const summary: { name: string; city: string; members: number; posts: number; photos: number }[] = [];
 
-  const tx = db().transaction(() => {
+  await db().transaction(async () => {
     for (let i = 0; i < FAMILY_COUNT; i++) {
       let surname = pick(FIRST_NAMES);
       while (usedSurnames.has(surname) && usedSurnames.size < FIRST_NAMES.length) {
@@ -160,8 +154,12 @@ async function main() {
       const password = randomBytes(24).toString('hex');
       const hashed = bcrypt.hashSync(password, 12);
 
-      insertUser.run(userId, email, hashed, name, city, state);
-      insertFamily.run(familyId, userId, name, buildBio(), memberCount, familyAvatarUrl(name));
+      await db()
+        .prepare('INSERT INTO users (id, email, password, name, city, state, verified, is_sample) VALUES (?, ?, ?, ?, ?, ?, TRUE, TRUE)')
+        .run(userId, email, hashed, name, city, state);
+      await db()
+        .prepare('INSERT INTO families (id, user_id, name, bio, kid_count, avatar_url, is_sample) VALUES (?, ?, ?, ?, ?, ?, TRUE)')
+        .run(familyId, userId, name, buildBio(), memberCount, familyAvatarUrl(name));
 
       let photoCount = 0;
       for (let p = 0; p < postCount; p++) {
@@ -172,14 +170,16 @@ async function main() {
         if (hasPhoto) photoCount++;
 
         const createdAt = isoMinusDays(randInt(0, 89), randInt(0, 1439));
-        insertAnnouncement.run(postId, userId, pick(POST_TEMPLATES), mediaUrl, mediaType, createdAt, createdAt);
+        await db()
+          .prepare(
+            'INSERT INTO announcements (id, user_id, content, media_url, media_type, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+          )
+          .run(postId, userId, pick(POST_TEMPLATES), mediaUrl, mediaType, createdAt, createdAt);
       }
 
       summary.push({ name, city: `${city}, ${state}`, members: memberCount, posts: postCount, photos: photoCount });
     }
-  });
-
-  tx();
+  })();
 
   const totalPosts = summary.reduce((sum, f) => sum + f.posts, 0);
   const totalPhotos = summary.reduce((sum, f) => sum + f.photos, 0);
@@ -189,7 +189,7 @@ async function main() {
     console.log(`  ${f.name.padEnd(24)} ${f.city.padEnd(18)} members=${f.members}  posts=${String(f.posts).padStart(2)}  photos=${f.photos}`);
   }
 
-  closeDb();
+  await closeDb();
 }
 
 main().catch((err) => {

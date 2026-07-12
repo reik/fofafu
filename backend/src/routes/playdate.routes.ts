@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.middleware.js';
 import { validate } from '../middleware/validate.middleware.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 import {
   AvailabilitySlotInput,
   AvailabilitySlotPatch,
@@ -27,35 +28,35 @@ playdateRouter.use(authenticate);
 playdateRouter.get(
   '/availability/:familyId',
   validate(AvailabilityFamilyParams, 'params'),
-  getAvailability,
+  asyncHandler(getAvailability),
 );
 playdateRouter.post(
   '/availability',
   validate(AvailabilitySlotInput, 'body'),
-  addSlot,
+  asyncHandler(addSlot),
 );
 playdateRouter.put(
   '/availability/:id',
   validate(SlotIdParams, 'params'),
   validate(AvailabilitySlotPatch, 'body'),
-  updateSlot,
+  asyncHandler(updateSlot),
 );
 playdateRouter.delete(
   '/availability/:id',
   validate(SlotIdParams, 'params'),
-  deleteSlot,
+  asyncHandler(deleteSlot),
 );
 
 // Playdate requests
-playdateRouter.get('/requests', getRequests);
+playdateRouter.get('/requests', asyncHandler(getRequests));
 playdateRouter.post(
   '/requests',
   validate(PlaydateRequestInput, 'body'),
-  createRequest,
+  asyncHandler(createRequest),
 );
 playdateRouter.put(
   '/requests/:id/respond',
   validate(PlaydateRequestIdParams, 'params'),
   validate(PlaydateRequestRespondInput, 'body'),
-  respondToRequest,
+  asyncHandler(respondToRequest),
 );

@@ -15,14 +15,14 @@ export interface CoachEventRow {
   outcome: 'shown' | 'accepted' | 'edited' | 'dismissed' | 'none';
 }
 
-export function recordCoachEvent(row: {
+export async function recordCoachEvent(row: {
   id: string;
   user_id: string;
   verdict: string;
   category?: string | null;
   outcome?: string;
-}): void {
-  db()
+}): Promise<void> {
+  await db()
     .prepare(
       `INSERT INTO coach_events (id, user_id, verdict, category, outcome)
        VALUES (@id, @user_id, @verdict, @category, @outcome)`,
