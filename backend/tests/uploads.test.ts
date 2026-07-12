@@ -62,9 +62,9 @@ const TINY_PNG = Buffer.from(
   'hex'
 );
 
-function resetDb(): void {
-  closeDb();
-  runMigrations();
+async function resetDb(): Promise<void> {
+  await closeDb();
+  await runMigrations();
   testInbox.length = 0;
 }
 
@@ -83,9 +83,9 @@ async function purgeUploadDir(): Promise<void> {
 }
 
 describe('uploads-images feature', () => {
-  before(() => { runMigrations(); });
+  before(async () => { await runMigrations(); });
   beforeEach(async () => {
-    resetDb();
+    await resetDb();
     await purgeUploadDir();
   });
   after(async () => {

@@ -43,15 +43,15 @@ async function register(creds: typeof userA): Promise<{ jwt: string; userId: str
   return { jwt: loginBody['token'] as string, userId: (loginBody['user'] as Json)['id'] as string };
 }
 
-function resetDb(): void {
-  closeDb();
-  runMigrations();
+async function resetDb(): Promise<void> {
+  await closeDb();
+  await runMigrations();
   testInbox.length = 0;
 }
 
 describe('messaging-dms feature', () => {
-  before(() => { runMigrations(); });
-  beforeEach(() => { resetDb(); });
+  before(async () => { await runMigrations(); });
+  beforeEach(async () => { await resetDb(); });
   after(() => { if (server) server.close(); });
 
   it('sends a message and the recipient sees it in the thread', async () => {
@@ -139,7 +139,7 @@ describe('messaging-dms feature', () => {
     const a = await register(userA);
     const b = await register(userB);
     await call('POST', '/api/messages', { to: b.userId, content: 'hi B' }, { authorization: `Bearer ${a.jwt}` });
-    db().prepare('DELETE FROM families WHERE user_id = ?').run(b.userId);
+    await db().prepare('DELETE FROM families WHERE user_id = ?').run(b.userId);
 
     const threads = await call('GET', '/api/messages/threads', undefined, { authorization: `Bearer ${a.jwt}` });
     const items = threads.body as Json[];
@@ -154,7 +154,7 @@ describe('messaging-dms feature', () => {
     assert.equal((sent.body as Json)['fromName'], userA.name);
     assert.equal((sent.body as Json)['toName'], userB.name);
 
-    db().prepare('DELETE FROM families WHERE user_id = ?').run(b.userId);
+    await db().prepare('DELETE FROM families WHERE user_id = ?').run(b.userId);
     const thread = await call('GET', `/api/messages/threads/${b.userId}`, undefined, { authorization: `Bearer ${a.jwt}` });
     const items = thread.body as Json[];
     assert.equal(items[0]?.['fromName'], userA.name);

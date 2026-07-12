@@ -201,49 +201,64 @@ describe('reply-coach-live: 50/50 holdback by user_id hash', async () => {
 });
 
 describe('reply-coach-live: coach_events table — aggregate only, no draft text', async () => {
-  const dbMod = await tryImport<{ getDb?: () => { prepare: (sql: string) => { all: () => unknown[]; run: (...args: unknown[]) => unknown } } }>('../src/db.js');
-  const migrateMod = await tryImport<{ runMigrations?: () => void }>('../src/migrate.js');
-  const eventsMod = await tryImport<{ recordCoachEvent?: (row: { id: string; user_id: string; verdict: string; category: string; outcome: string }) => void }>('../src/services/coach/coachEvents.js');
+  const dbMod = await tryImport<{
+    getDb?: () => {
+      prepare: (sql: string) => { all: (...args: unknown[]) => Promise<unknown[]>; run: (...args: unknown[]) => Promise<unknown> };
+      query: (sql: string, params?: unknown[]) => Promise<unknown[]>;
+    };
+  }>('../src/db.js');
+  const migrateMod = await tryImport<{ runMigrations?: () => Promise<void> }>('../src/migrate.js');
+  const eventsMod = await tryImport<{
+    recordCoachEvent?: (row: { id: string; user_id: string; verdict: string; category: string; outcome: string }) => Promise<void>;
+  }>('../src/services/coach/coachEvents.js');
 
-  before(() => {
-    if (migrateMod?.runMigrations) migrateMod.runMigrations();
+  before(async () => {
+    if (migrateMod?.runMigrations) await migrateMod.runMigrations();
     // coach_events.user_id has a FOREIGN KEY REFERENCES users(id) — insert a
     // synthetic user so the fixture row below satisfies the constraint.
     if (dbMod?.getDb) {
-      dbMod.getDb!().prepare(
-        `INSERT OR IGNORE INTO users (id, email, password, name, city, state, verified)
-         VALUES ('user-test-1', 'user-test-1@example.test', 'not-a-real-hash', 'Test User', 'Testville', 'TS', 1)`,
+      await dbMod.getDb!().prepare(
+        `INSERT INTO users (id, email, password, name, city, state, verified)
+         VALUES ('user-test-1', 'user-test-1@example.test', 'not-a-real-hash', 'Test User', 'Testville', 'TS', TRUE)
+         ON CONFLICT (id) DO NOTHING`,
       ).run();
     }
   });
 
-  it('coach_events table exists with exactly the aggregate columns (no draft/rewrite/reasoning)', () => {
+  it('coach_events table exists with exactly the aggregate columns (no draft/rewrite/reasoning)', async () => {
     if (!dbMod?.getDb) return void it.skip('db module getDb not found — pending backend-dev');
-    let columns: Array<{ name: string }>;
+    let columns: Array<{ column_name: string }>;
     try {
-      columns = dbMod.getDb!().prepare('PRAGMA table_info(coach_events)').all() as Array<{ name: string }>;
+      columns = (await dbMod
+        .getDb!()
+        .query("SELECT column_name FROM information_schema.columns WHERE table_name = 'coach_events'")) as Array<{
+        column_name: string;
+      }>;
     } catch {
       return void it.skip('coach_events table does not exist yet — pending backend-dev migration');
     }
     if (columns.length === 0) return void it.skip('coach_events table does not exist yet — pending backend-dev migration');
 
-    const names = columns.map((c) => c.name).sort();
+    const names = columns.map((c) => c.column_name).sort();
     assert.deepEqual(names, ['category', 'created_at', 'id', 'outcome', 'user_id', 'verdict']);
     for (const forbidden of ['draft', 'rewrite', 'reasoning', 'text', 'body']) {
       assert.ok(!names.includes(forbidden), `coach_events must not have a "${forbidden}" column`);
     }
   });
 
-  it('a written row contains only aggregate fields — no draft/rewrite/reasoning values persisted', () => {
+  it('a written row contains only aggregate fields — no draft/rewrite/reasoning values persisted', async () => {
     if (!dbMod?.getDb || !eventsMod?.recordCoachEvent) return void it.skip('pending backend-dev');
-    eventsMod.recordCoachEvent!({
+    await eventsMod.recordCoachEvent!({
       id: 'evt-test-1',
       user_id: 'user-test-1',
       verdict: 'suggest',
       category: 'minimization',
       outcome: 'accepted',
     });
-    const rows = dbMod.getDb!().prepare("SELECT * FROM coach_events WHERE id = 'evt-test-1'").all() as Record<string, unknown>[];
+    const rows = (await dbMod
+      .getDb!()
+      .prepare("SELECT * FROM coach_events WHERE id = 'evt-test-1'")
+      .all()) as Record<string, unknown>[];
     assert.equal(rows.length, 1);
     const row = rows[0]!;
     const rowKeys = Object.keys(row).sort();

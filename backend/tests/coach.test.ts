@@ -44,9 +44,9 @@ async function register(creds: typeof userA): Promise<string> {
   return login.body['token'] as string;
 }
 
-function resetDb(): void {
-  closeDb();
-  runMigrations();
+async function resetDb(): Promise<void> {
+  await closeDb();
+  await runMigrations();
   testInbox.length = 0;
   resetCoachRateLimitForTests();
   setClaudeClientForTests(null);
@@ -54,8 +54,8 @@ function resetDb(): void {
 }
 
 describe('reply-coach feature', () => {
-  before(() => { runMigrations(); });
-  beforeEach(() => { resetDb(); });
+  before(async () => { await runMigrations(); });
+  beforeEach(async () => { await resetDb(); });
   after(() => { if (server) server.close(); });
 
   it('returns the neutral fixture for a benign draft (verdict=ok)', async () => {

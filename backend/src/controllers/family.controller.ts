@@ -28,13 +28,13 @@ function toFamilyDTO(row: FamilyRow, viewerUserId: string | undefined): Record<s
   };
 }
 
-export function getMyFamily(req: AuthRequest, res: Response): void {
+export async function getMyFamily(req: AuthRequest, res: Response): Promise<void> {
   const userId = req.userId;
   if (!userId) {
     res.status(401).json({ error: 'Not authenticated' });
     return;
   }
-  const row = db().prepare('SELECT * FROM families WHERE user_id = ?').get(userId) as FamilyRow | undefined;
+  const row = (await db().prepare('SELECT * FROM families WHERE user_id = ?').get(userId)) as FamilyRow | undefined;
   if (!row) {
     res.status(404).json({ error: 'Family not found' });
     return;
@@ -42,12 +42,14 @@ export function getMyFamily(req: AuthRequest, res: Response): void {
   res.json(toFamilyDTO(row, userId));
 }
 
-export function getFamily(req: AuthRequest, res: Response): void {
+export async function getFamily(req: AuthRequest, res: Response): Promise<void> {
   const { id } = req.params as unknown as FamilyIdParams;
   // Accept either the family's own id (links from community/search) or its
   // owner's user id (links from announcements/comments/messages, which only
   // carry authorId/userId).
-  const row = db().prepare('SELECT * FROM families WHERE id = ? OR user_id = ?').get(id, id) as FamilyRow | undefined;
+  const row = (await db().prepare('SELECT * FROM families WHERE id = ? OR user_id = ?').get(id, id)) as
+    | FamilyRow
+    | undefined;
   if (!row) {
     res.status(404).json({ error: 'Family not found' });
     return;
@@ -55,7 +57,7 @@ export function getFamily(req: AuthRequest, res: Response): void {
   res.json(toFamilyDTO(row, req.userId));
 }
 
-export function patchFamily(req: AuthRequest, res: Response): void {
+export async function patchFamily(req: AuthRequest, res: Response): Promise<void> {
   const userId = req.userId;
   if (!userId) {
     res.status(401).json({ error: 'Not authenticated' });
@@ -63,7 +65,7 @@ export function patchFamily(req: AuthRequest, res: Response): void {
   }
   const patch = req.body as FamilyPatch;
 
-  const row = db().prepare('SELECT * FROM families WHERE user_id = ?').get(userId) as FamilyRow | undefined;
+  const row = (await db().prepare('SELECT * FROM families WHERE user_id = ?').get(userId)) as FamilyRow | undefined;
   if (!row) {
     res.status(404).json({ error: 'Family not found' });
     return;
@@ -76,12 +78,14 @@ export function patchFamily(req: AuthRequest, res: Response): void {
     avatar_url: patch.avatarUrl === undefined ? row.avatar_url : patch.avatarUrl,
   };
 
-  db().prepare(
-    `UPDATE families
-     SET name = ?, bio = ?, kid_count = ?, avatar_url = ?, updated_at = datetime('now')
-     WHERE id = ?`
-  ).run(next.name, next.bio, next.kid_count, next.avatar_url, row.id);
+  await db()
+    .prepare(
+      `UPDATE families
+       SET name = ?, bio = ?, kid_count = ?, avatar_url = ?, updated_at = now()
+       WHERE id = ?`
+    )
+    .run(next.name, next.bio, next.kid_count, next.avatar_url, row.id);
 
-  const updated = db().prepare('SELECT * FROM families WHERE id = ?').get(row.id) as FamilyRow;
+  const updated = (await db().prepare('SELECT * FROM families WHERE id = ?').get(row.id)) as FamilyRow;
   res.json(toFamilyDTO(updated, userId));
 }

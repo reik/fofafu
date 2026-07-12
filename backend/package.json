@@ -11,7 +11,7 @@
     "e2e:setup": "tsx src/migrate.ts && tsx scripts/seed-dummy.ts",
     "seed:prod-sample": "tsx src/migrate.ts && tsx scripts/seed-prod-sample-data.ts",
     "test": "node --import tsx --test --test-force-exit tests/*.test.ts",
-    "test:run": "DB_PATH=:memory: NODE_ENV=test JWT_SECRET=test-secret-please-rotate node --import tsx --test --test-force-exit tests/*.test.ts",
+    "test:run": "NODE_ENV=test JWT_SECRET=test-secret-please-rotate node --import tsx --test --test-concurrency=1 --test-force-exit tests/*.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "backup:db": "tsx scripts/backup-db.ts"
   },
@@ -19,7 +19,6 @@
     "@anthropic-ai/sdk": "^0.32.0",
     "@types/multer": "^2.1.0",
     "bcryptjs": "^2.4.3",
-    "better-sqlite3": "^12.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
@@ -27,13 +26,14 @@
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.1.1",
+    "pg": "^8.13.0",
     "resend": "^6.17.2",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
-    "@types/better-sqlite3": "^7.6.11",
     "@types/cors": "^2.8.17",
+    "@types/pg": "^8.11.10",
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^20.14.0",
