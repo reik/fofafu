@@ -3,7 +3,7 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { renderWithProviders } from '@/tests/render';
-import { server } from '@/tests/msw-server';
+import { server, FUNCTIONS_BASE } from '@/tests/msw-server';
 import { FamilyEditForm } from './FamilyEditForm';
 
 const family = { id: 'f1', ownerId: 'u1', name: 'Garcia', bio: '', kidCount: null, avatarUrl: null, isOwner: true, updatedAt: '2026-05-17' };
@@ -12,7 +12,7 @@ describe('FamilyEditForm', () => {
   it('submits the patch and calls onSaved', async () => {
     let captured: unknown = null;
     server.use(
-      http.patch('/api/family/me', async ({ request }) => {
+      http.patch(`${FUNCTIONS_BASE}/family/me`, async ({ request }) => {
         captured = await request.json();
         return HttpResponse.json({ ...family, name: 'The Garcia Family', bio: 'updated bio', kidCount: 3 });
       }),

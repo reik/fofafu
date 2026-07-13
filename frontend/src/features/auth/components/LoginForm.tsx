@@ -3,14 +3,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { login as loginApi, LoginPayload } from '@/api/auth';
-import { ApiError } from '@/api/client';
-import { useAuthStore } from '@/stores/auth';
+import { AuthError, login as loginApi, LoginPayload } from '@/api/auth';
 import { cn } from '@/utils/cn';
 
 export function LoginForm() {
   const navigate = useNavigate();
-  const setAuth = useAuthStore((s) => s.setAuth);
   const [serverError, setServerError] = useState<string | null>(null);
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginPayload>({
     resolver: zodResolver(LoginPayload),
@@ -19,20 +16,12 @@ export function LoginForm() {
 
   const mutation = useMutation({
     mutationFn: loginApi,
-    onSuccess: (res) => {
-      setAuth({ token: res.token, user: res.user });
+    onSuccess: () => {
+      // useAuthStore is updated by supabase.auth.onAuthStateChange.
       navigate('/');
     },
     onError: (err: unknown) => {
-      if (err instanceof ApiError) {
-        setServerError(
-          err.status === 403 ? 'Verify your email first — check your inbox.'
-          : err.status === 401 ? 'Wrong email or password.'
-          : err.message,
-        );
-      } else {
-        setServerError('Something went wrong. Try again?');
-      }
+      setServerError(err instanceof AuthError ? err.message : 'Something went wrong. Try again?');
     },
   });
 
