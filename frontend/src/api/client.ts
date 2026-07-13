@@ -1,4 +1,5 @@
 import { useAuthStore } from '@/stores/auth';
+import { supabase } from '@/lib/supabaseClient';
 
 const BASE = import.meta.env.VITE_API_URL ?? '/api';
 
@@ -43,13 +44,16 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   const data = text ? JSON.parse(text) : {};
 
   if (res.status === 401 && !path.startsWith('/auth/')) {
+    // Terminate the real Supabase session (not just the local mirror) so a
+    // stale/rejected token can't resurrect itself via getSession() on the
+    // next load and re-trigger this same redirect — see the login-loop bug
+    // where a 401 from this legacy Express backend kept bouncing users back
+    // to /login every reload because the Supabase session was still valid.
+    await supabase.auth.signOut();
     useAuthStore.getState().clear();
-    window.location.href = '/login';
-    return new Promise<never>(() => {});
-  }
-  if (res.status === 401 && !path.startsWith('/auth/')) {
-    useAuthStore.getState().clear();
-    window.location.href = '/login';
+    if (window.location.pathname !== '/login') {
+      window.location.href = '/login';
+    }
     return new Promise<never>(() => {});
   }
 
