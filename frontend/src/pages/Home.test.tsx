@@ -14,7 +14,7 @@ function setAuthed() {
 }
 
 const baseHandlers = [
-  http.get('/api/messages/unread/count', () => HttpResponse.json({ count: 0 })),
+  http.get(`${FUNCTIONS_BASE}/message/unread/count`, () => HttpResponse.json({ count: 0 })),
   http.get(`${FUNCTIONS_BASE}/announcement`, () =>
     HttpResponse.json({ items: [], nextCursor: null }),
   ),

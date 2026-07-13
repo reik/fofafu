@@ -3,7 +3,7 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { renderWithProviders } from '@/tests/render';
-import { server } from '@/tests/msw-server';
+import { server, FUNCTIONS_BASE } from '@/tests/msw-server';
 import { SlotForm } from './SlotForm';
 import type { AvailabilitySlot } from '@/types/playdates';
 
@@ -80,7 +80,7 @@ describe('SlotForm — edit mode', () => {
   it('calls onDeleted after successful delete', async () => {
     const onDeleted = vi.fn();
     server.use(
-      http.delete('/api/playdates/availability/slot-99', () =>
+      http.delete(`${FUNCTIONS_BASE}/playdates/availability/slot-99`, () =>
         HttpResponse.json({ id: 'slot-99' }, { status: 200 }),
       ),
     );
@@ -101,7 +101,7 @@ describe('SlotForm — edit mode', () => {
   it('calls onSaved after successful update', async () => {
     const onSaved = vi.fn();
     server.use(
-      http.put('/api/playdates/availability/slot-99', () =>
+      http.put(`${FUNCTIONS_BASE}/playdates/availability/slot-99`, () =>
         HttpResponse.json({ ...EXISTING_SLOT, note: 'Weekend morning' }, { status: 200 }),
       ),
     );

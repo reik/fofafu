@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { screen } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { renderWithProviders } from '@/tests/render';
-import { server } from '@/tests/msw-server';
+import { server, FUNCTIONS_BASE } from '@/tests/msw-server';
 import { useAuthStore } from '@/stores/auth';
 import MessagesPage from './Messages';
 
@@ -14,7 +14,7 @@ function setAuthed(): void {
 }
 
 const navHandlers = [
-  http.get('/api/messages/unread/count', () => HttpResponse.json({ count: 0 })),
+  http.get(`${FUNCTIONS_BASE}/message/unread/count`, () => HttpResponse.json({ count: 0 })),
 ];
 
 describe('MessagesPage author display', () => {
@@ -22,7 +22,7 @@ describe('MessagesPage author display', () => {
     setAuthed();
     server.use(
       ...navHandlers,
-      http.get('/api/messages/threads', () =>
+      http.get(`${FUNCTIONS_BASE}/message/threads`, () =>
         HttpResponse.json([
           {
             partnerId: 'u-partner-1',
@@ -47,7 +47,7 @@ describe('MessagesPage author display', () => {
     setAuthed();
     server.use(
       ...navHandlers,
-      http.get('/api/messages/threads', () =>
+      http.get(`${FUNCTIONS_BASE}/message/threads`, () =>
         HttpResponse.json([
           {
             partnerId: 'u-partner-deleted',

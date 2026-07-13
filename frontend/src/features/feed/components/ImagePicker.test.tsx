@@ -3,15 +3,19 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { renderWithProviders } from '@/tests/render';
-import { server } from '@/tests/msw-server';
+import { server, handlers, STORAGE_BASE, JANE } from '@/tests/msw-server';
 import { ImagePicker } from './ImagePicker';
 import type { UploadResult } from '@/api/uploads';
 
 describe('ImagePicker', () => {
   it('uploads the chosen file and calls onAttached with the URL', async () => {
+    server.use(handlers.loginOk(), handlers.getUserOk());
+    const { supabase } = await import('@/lib/supabaseClient');
+    await supabase.auth.signInWithPassword({ email: JANE.email, password: 'correct-horse-battery' });
+
     server.use(
-      http.post('/api/uploads', () =>
-        HttpResponse.json({ url: '/uploads/abc.png', mediaType: 'image' }, { status: 201 }),
+      http.post(`${STORAGE_BASE}/object/uploads/*`, () =>
+        HttpResponse.json({ Key: `uploads/${JANE.id}/abc.png` }, { status: 200 }),
       ),
     );
 
@@ -30,7 +34,9 @@ describe('ImagePicker', () => {
 
     // Wait for the mutation to resolve.
     await screen.findByRole('button', { name: /add image/i });
-    expect(attachedResult).toEqual({ url: '/uploads/abc.png', mediaType: 'image' });
+    const result = attachedResult as UploadResult | null;
+    expect(result?.mediaType).toBe('image');
+    expect(result?.url).toContain(`${STORAGE_BASE}/object/public/uploads/${JANE.id}/`);
   });
 
   it('shows the thumbnail and clears via remove button', async () => {

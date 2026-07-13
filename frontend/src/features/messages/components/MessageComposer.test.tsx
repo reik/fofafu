@@ -3,14 +3,14 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { renderWithProviders } from '@/tests/render';
-import { server } from '@/tests/msw-server';
+import { server, FUNCTIONS_BASE } from '@/tests/msw-server';
 import { MessageComposer } from './MessageComposer';
 
 describe('MessageComposer', () => {
   it('sends the message with the to + content payload and clears the textarea', async () => {
     let received: { to: string; content: string } | null = null;
     server.use(
-      http.post('/api/messages', async ({ request }) => {
+      http.post(`${FUNCTIONS_BASE}/message`, async ({ request }) => {
         received = (await request.json()) as { to: string; content: string };
         return HttpResponse.json({
           id: 'm1',

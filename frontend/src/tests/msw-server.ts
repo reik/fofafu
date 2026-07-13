@@ -8,6 +8,7 @@ export const server = setupServer();
 export const SUPABASE_URL = 'https://test-project.supabase.co';
 export const FUNCTIONS_BASE = `${SUPABASE_URL}/functions/v1`;
 export const GOTRUE_BASE = `${SUPABASE_URL}/auth/v1`;
+export const STORAGE_BASE = `${SUPABASE_URL}/storage/v1`;
 
 export interface FakeGoTrueUser {
   id: string;
@@ -62,6 +63,8 @@ export const handlers = {
   updateUserOk: () =>
     http.put(`${GOTRUE_BASE}/user`, () => HttpResponse.json(gotrueSession(JANE).user, { status: 200 })),
   signOutOk: () => http.post(`${GOTRUE_BASE}/logout`, () => new HttpResponse(null, { status: 204 })),
+  getUserOk: (user: FakeGoTrueUser = JANE) =>
+    http.get(`${GOTRUE_BASE}/user`, () => HttpResponse.json(gotrueSession(user).user, { status: 200 })),
 
   // ---- Edge Functions (announcement/family/community/search) ----
   announcementsFeed: (body: JsonBodyType = { items: [], nextCursor: null }) =>
@@ -72,7 +75,8 @@ export const handlers = {
   familyById: (id: string, body: JsonBodyType) => http.get(`${FUNCTIONS_BASE}/family/${id}`, () => HttpResponse.json(body)),
   communityRecent: (body: JsonBodyType = []) => http.get(`${FUNCTIONS_BASE}/community/recent`, () => HttpResponse.json(body)),
   searchFamilies: (body: JsonBodyType = []) => http.get(`${FUNCTIONS_BASE}/search/families`, () => HttpResponse.json(body)),
+  messagesUnreadCount: (count = 0) =>
+    http.get(`${FUNCTIONS_BASE}/message/unread/count`, () => HttpResponse.json({ count })),
 
-  // ---- Legacy Express (unchanged in this migration slice) ----
-  messagesUnreadCount: (count = 0) => http.get('/api/messages/unread/count', () => HttpResponse.json({ count })),
+  // ---- Legacy Express (playdates/uploads/coach, unchanged in this migration slice) ----
 };

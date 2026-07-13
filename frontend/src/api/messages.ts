@@ -1,5 +1,7 @@
 import { z } from 'zod';
-import { apiRequest } from './client';
+import { edgeRequest } from './edgeClient';
+
+const FN = 'message';
 
 export const MessageDTO = z.object({
   id: z.string(),
@@ -24,27 +26,27 @@ export const ThreadDTO = z.object({
 export type ThreadDTO = z.infer<typeof ThreadDTO>;
 
 export async function listThreads(): Promise<ThreadDTO[]> {
-  const data = await apiRequest<unknown>('/messages/threads');
+  const data = await edgeRequest<unknown>(FN, '/threads');
   return z.array(ThreadDTO).parse(data);
 }
 
 export async function getThread(partnerId: string): Promise<MessageDTO[]> {
-  const data = await apiRequest<unknown>(`/messages/threads/${partnerId}`);
+  const data = await edgeRequest<unknown>(FN, `/threads/${partnerId}`);
   return z.array(MessageDTO).parse(data);
 }
 
 export async function sendMessage(input: { to: string; content: string }): Promise<MessageDTO> {
-  const data = await apiRequest<unknown>('/messages', { method: 'POST', body: input });
+  const data = await edgeRequest<unknown>(FN, '', { method: 'POST', body: input });
   return MessageDTO.parse(data);
 }
 
 export async function markThreadRead(partnerId: string): Promise<{ marked: number }> {
-  const data = await apiRequest<{ marked: number }>(`/messages/threads/${partnerId}/read`, { method: 'POST' });
+  const data = await edgeRequest<{ marked: number }>(FN, `/threads/${partnerId}/read`, { method: 'POST' });
   return data;
 }
 
 export async function unreadCount(): Promise<{ count: number }> {
-  return apiRequest<{ count: number }>('/messages/unread/count');
+  return edgeRequest<{ count: number }>(FN, '/unread/count');
 }
 
 export const messageKeys = {
