@@ -16,13 +16,31 @@ jobs:
     name: Typecheck & Test (backend + frontend)
     runs-on: ubuntu-latest
 
+    # Backend tests run against Postgres now (migrated off better-sqlite3 —
+    # see backend/src/db.ts). There is no in-memory fallback, so CI needs a
+    # disposable Postgres instance and TEST_DATABASE_URL pointing at it.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: fofafu_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     # Backend tests rely on these env vars (see backend/package.json's
     # `test:run` script). Setting them here lets us run the plain `npm test`
     # fan-out at the workspace root without modifying any package.json.
     env:
-      DB_PATH: ':memory:'
       NODE_ENV: test
       JWT_SECRET: test-secret-please-rotate
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fofafu_test
 
     steps:
       - name: Checkout
