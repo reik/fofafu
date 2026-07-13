@@ -7,7 +7,7 @@ import { RegisterForm } from './RegisterForm';
 
 describe('RegisterForm', () => {
   it('renders all fields and submits valid input', async () => {
-    server.use(handlers.registerSuccess());
+    server.use(handlers.signUpOk());
     const submissions: string[] = [];
     renderWithProviders(<RegisterForm onSuccess={(email) => submissions.push(email)} />);
 
@@ -23,8 +23,8 @@ describe('RegisterForm', () => {
     expect(submissions).toEqual(['jane@example.com']);
   });
 
-  it('shows a friendly error on duplicate email (409)', async () => {
-    server.use(handlers.registerDuplicate());
+  it('shows a friendly error when Supabase reports the email is already registered', async () => {
+    server.use(handlers.signUpDuplicate());
     renderWithProviders(<RegisterForm onSuccess={() => {}} />);
     const user = userEvent.setup();
     await user.type(screen.getByLabelText(/your name/i), 'Jane');

@@ -3,7 +3,7 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { renderWithProviders } from '@/tests/render';
-import { server } from '@/tests/msw-server';
+import { server, FUNCTIONS_BASE } from '@/tests/msw-server';
 import SearchPage from './Search';
 
 const sampleResult = [{
@@ -21,7 +21,7 @@ describe('SearchPage', () => {
   it('submits the query and renders result cards', async () => {
     let receivedQ: string | null = null;
     server.use(
-      http.get('/api/search/families', ({ request }) => {
+      http.get(`${FUNCTIONS_BASE}/search/families`, ({ request }) => {
         const url = new URL(request.url);
         receivedQ = url.searchParams.get('q');
         return HttpResponse.json(sampleResult);
@@ -40,7 +40,7 @@ describe('SearchPage', () => {
   it('rejects too-short queries client-side without firing the API', async () => {
     let fired = false;
     server.use(
-      http.get('/api/search/families', () => {
+      http.get(`${FUNCTIONS_BASE}/search/families`, () => {
         fired = true;
         return HttpResponse.json([]);
       }),

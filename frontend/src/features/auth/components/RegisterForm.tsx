@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
-import { register as registerApi, RegisterPayload } from '@/api/auth';
-import { ApiError } from '@/api/client';
+import { AuthError, register as registerApi, RegisterPayload } from '@/api/auth';
 import { cn } from '@/utils/cn';
 
 interface Props {
@@ -21,8 +20,8 @@ export function RegisterForm({ onSuccess }: Props) {
     mutationFn: registerApi,
     onSuccess: (_, vars) => onSuccess(vars.email),
     onError: (err: unknown) => {
-      if (err instanceof ApiError) {
-        setServerError(err.status === 409 ? 'That email is already registered.' : err.message);
+      if (err instanceof AuthError) {
+        setServerError(/already registered|already exists/i.test(err.message) ? 'That email is already registered.' : err.message);
       } else {
         setServerError('Something went wrong. Try again?');
       }

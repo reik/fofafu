@@ -5,7 +5,6 @@ team: company
 
 > Navigation: [[kanban/engineering]] · [[kanban/design]] · [[kanban/marketing]] · [[README]] · [[protocols/dispatch]]
 ## Backlog
-- [ ] [[features/migrate-render-to-vercel-supabase]] — Phase 5: full infra migration off Render (frontend→Vercel, backend→Supabase Edge Functions, sqlite→Supabase Postgres, uploads→Supabase Storage, auth→Supabase Auth); broken into 8 sub-tickets (eng-infra-1..8) on kanban/engineering.md; eng-infra-2 (schema translation) in Review, rest blocked on user provisioning Supabase/Vercel projects
 - [ ] [[features/seed-prod-sample-data]] — production-safe sample family/post seeding so prod site doesn't look empty on first visit
 - [ ] [[features/reply-coach-live]] — Phase 2 follow-up to [[features/reply-coach]]: live Anthropic SDK + key plumbing + prompt caching + $5/day cost cap + 50/50 holdback experiment + `coach_events` aggregate table
 - [ ] [[features/backend-logger-util]] — chore closing MF-1 from reply-coach review: backend logger util + migrate the three known `console.*` sites
@@ -14,6 +13,7 @@ team: company
 - [ ] [[features/mobile-expo-bootstrap]] — Phase 4 mobile
 
 ## In Progress
+- [ ] [[features/migrate-render-to-vercel-supabase]] — eng-infra-4 (frontend supabase-js auth swap) + eng-infra-5 (frontend Edge Function wiring for announcements/family/community/search) both closed to Review; frontend 132/132 tests green, tsc/build clean. Same-day correction: an earlier attempt to delete the old Express auth endpoints was a production regression (would have broken messages/playdates/uploads/coach auth entirely), caught before merge — reverted, and auth.middleware.ts now accepts a Supabase session token as a fallback alongside the legacy JWT. Backend 147/147 tests pass, tsc clean. Phase 5 parent (eng-infra-1) remains building — eng-infra-3/6/7/8 still outstanding
 
 ## Review
 - [ ] [[features/brand-contrast-fix]] — WCAG 1.4.3 fix: `color.brand.primary.pressed` (#3F7E54, 4.86:1 vs white, independently verified by ui-designer + a11y-auditor) introduced; 22 CTA sites (19 files) migrated to accessible pair + hover parity; frontend 119/119, tsc/build clean, 0 must-fix code review, 11/11 pages 0 axe violations; both team kanban cards in Review

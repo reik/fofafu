@@ -1,5 +1,12 @@
 import { z } from 'zod';
-import { apiRequest } from './client';
+import { edgeRequest } from './edgeClient';
+
+// Backed by supabase/functions/announcement/index.ts. Route prefix is
+// singular ("/announcement", not "/announcements") and the reaction endpoint
+// is POST /announcement/:id/react (drift from the old Express
+// POST /announcements/:id/reactions — adapted here to match the deployed
+// function).
+const FN = 'announcement';
 
 export const REACTION_TYPES = ['like', 'love', 'hug', 'celebrate', 'support'] as const;
 export const ReactionType = z.enum(REACTION_TYPES);
@@ -62,12 +69,12 @@ export async function listAnnouncements(
   if (opts.limit !== undefined) params.set('limit', String(opts.limit));
   if (opts.familyId) params.set('familyId', opts.familyId);
   const qs = params.toString();
-  const data = await apiRequest<unknown>(`/announcements${qs ? `?${qs}` : ''}`);
+  const data = await edgeRequest<unknown>(FN, qs ? `?${qs}` : '');
   return FeedPage.parse(data);
 }
 
 export async function getAnnouncement(id: string): Promise<AnnouncementDTO> {
-  const data = await apiRequest<unknown>(`/announcements/${id}`);
+  const data = await edgeRequest<unknown>(FN, `/${id}`);
   return AnnouncementDTO.parse(data);
 }
 
@@ -78,22 +85,22 @@ export interface CreateAnnouncementInput {
 }
 
 export async function createAnnouncement(input: CreateAnnouncementInput): Promise<AnnouncementDTO> {
-  const data = await apiRequest<unknown>('/announcements', { method: 'POST', body: input });
+  const data = await edgeRequest<unknown>(FN, '', { method: 'POST', body: input });
   return AnnouncementDTO.parse(data);
 }
 
 export async function listComments(announcementId: string): Promise<CommentDTO[]> {
-  const data = await apiRequest<unknown>(`/announcements/${announcementId}/comments`);
+  const data = await edgeRequest<unknown>(FN, `/${announcementId}/comments`);
   return z.array(CommentDTO).parse(data);
 }
 
 export async function createComment(announcementId: string, input: { content: string }): Promise<CommentDTO> {
-  const data = await apiRequest<unknown>(`/announcements/${announcementId}/comments`, { method: 'POST', body: input });
+  const data = await edgeRequest<unknown>(FN, `/${announcementId}/comments`, { method: 'POST', body: input });
   return CommentDTO.parse(data);
 }
 
 export async function toggleReaction(announcementId: string, type: ReactionType): Promise<ReactionResponse> {
-  const data = await apiRequest<unknown>(`/announcements/${announcementId}/reactions`, { method: 'POST', body: { type } });
+  const data = await edgeRequest<unknown>(FN, `/${announcementId}/react`, { method: 'POST', body: { type } });
   return ReactionResponse.parse(data);
 }
 
@@ -112,19 +119,19 @@ export interface PatchAnnouncementInput {
 }
 
 export async function patchAnnouncement(id: string, input: PatchAnnouncementInput): Promise<AnnouncementDTO> {
-  const data = await apiRequest<unknown>(`/announcements/${id}`, { method: 'PATCH', body: input });
+  const data = await edgeRequest<unknown>(FN, `/${id}`, { method: 'PATCH', body: input });
   return AnnouncementDTO.parse(data);
 }
 
 export async function deleteAnnouncement(id: string): Promise<void> {
-  await apiRequest<unknown>(`/announcements/${id}`, { method: 'DELETE' });
+  await edgeRequest<unknown>(FN, `/${id}`, { method: 'DELETE' });
 }
 
 export async function patchComment(id: string, input: { content: string }): Promise<CommentDTO> {
-  const data = await apiRequest<unknown>(`/comments/${id}`, { method: 'PATCH', body: input });
+  const data = await edgeRequest<unknown>(FN, `/comments/${id}`, { method: 'PATCH', body: input });
   return CommentDTO.parse(data);
 }
 
 export async function deleteComment(id: string): Promise<void> {
-  await apiRequest<unknown>(`/comments/${id}`, { method: 'DELETE' });
+  await edgeRequest<unknown>(FN, `/comments/${id}`, { method: 'DELETE' });
 }
