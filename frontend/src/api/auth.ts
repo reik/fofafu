@@ -34,7 +34,10 @@ export async function register(payload: RegisterPayload): Promise<{ message: str
   const { error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { name, city, state } },
+    options: {
+      data: { name, city, state },
+      emailRedirectTo: window.location.origin,
+    },
   });
   if (error) throw new AuthError(error.message);
   return { message: 'Check your email to confirm your account.' };
