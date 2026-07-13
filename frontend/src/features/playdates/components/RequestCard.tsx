@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { cn } from '@/utils/cn';
 import { respondToRequest } from '@/api/playdates';
-import { ApiError } from '@/api/client';
+import { EdgeApiError } from '@/api/edgeClient';
 import { Avatar } from '@/components/Avatar';
 import type { PlaydateRequest } from '@/types/playdates';
 
@@ -33,7 +33,7 @@ export function RequestCard({ request, myId, onUpdate }: RequestCardProps) {
       await respondToRequest(request.id, status);
       onUpdate();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to respond');
+      setError(err instanceof EdgeApiError ? err.message : 'Failed to respond');
       setResponding(false);
     }
   };
@@ -72,7 +72,7 @@ export function RequestCard({ request, myId, onUpdate }: RequestCardProps) {
               type="button"
               disabled={responding}
               onClick={() => respond('accepted')}
-              className="rounded-full bg-brand-primary px-3 py-1.5 text-xs font-semibold text-white shadow-lift hover:bg-brand-primary/90 disabled:opacity-60 transition-colors"
+              className="rounded-full bg-brand-primary-pressed px-3 py-1.5 text-xs font-semibold text-white shadow-lift hover:bg-brand-primary-pressed disabled:opacity-60 transition-colors"
             >
               {responding ? '…' : 'Accept'}
             </button>

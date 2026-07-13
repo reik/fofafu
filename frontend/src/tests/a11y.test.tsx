@@ -11,7 +11,7 @@ import { describe, it, beforeEach, afterEach } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { renderWithProviders } from '@/tests/render';
-import { server } from '@/tests/msw-server';
+import { server, FUNCTIONS_BASE } from '@/tests/msw-server';
 import { expectNoA11yViolations } from '@/tests/a11y';
 import { useAuthStore } from '@/stores/auth';
 
@@ -67,9 +67,9 @@ beforeEach(() => {
     http.get('/api/announcements', () => HttpResponse.json({ items: [announcement], nextCursor: null })),
     http.get('/api/announcements/:id', () => HttpResponse.json(announcement)),
     http.get('/api/announcements/:id/comments', () => HttpResponse.json([])),
-    http.get('/api/messages/threads', () => HttpResponse.json([])),
-    http.get('/api/messages/threads/:userId', () => HttpResponse.json([])),
-    http.get('/api/messages/unread/count', () => HttpResponse.json({ count: 0 })),
+    http.get(`${FUNCTIONS_BASE}/message/threads`, () => HttpResponse.json([])),
+    http.get(`${FUNCTIONS_BASE}/message/threads/:userId`, () => HttpResponse.json([])),
+    http.get(`${FUNCTIONS_BASE}/message/unread/count`, () => HttpResponse.json({ count: 0 })),
     http.get('/api/auth/verify', () => HttpResponse.json({ message: 'Email verified successfully' })),
   );
 });

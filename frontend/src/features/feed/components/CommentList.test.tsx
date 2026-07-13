@@ -3,7 +3,7 @@ import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { renderWithProviders } from '@/tests/render';
-import { server } from '@/tests/msw-server';
+import { server, FUNCTIONS_BASE } from '@/tests/msw-server';
 import { CommentList } from './CommentList';
 import type { CommentDTO } from '@/api/announcements';
 
@@ -74,7 +74,7 @@ describe('CommentList inline edit flow', () => {
     const own = { ...baseComment, isAuthor: true } as unknown as CommentDTO;
     let received: { content: string } | null = null;
     server.use(
-      http.patch('/api/comments/c1', async ({ request }) => {
+      http.patch(`${FUNCTIONS_BASE}/announcement/comments/c1`, async ({ request }) => {
         received = (await request.json()) as { content: string };
         return HttpResponse.json({
           ...own,
@@ -102,7 +102,7 @@ describe('CommentList inline edit flow', () => {
     const own = { ...baseComment, isAuthor: true } as unknown as CommentDTO;
     let calls = 0;
     server.use(
-      http.patch('/api/comments/c1', () => {
+      http.patch(`${FUNCTIONS_BASE}/announcement/comments/c1`, () => {
         calls += 1;
         return HttpResponse.json({});
       }),

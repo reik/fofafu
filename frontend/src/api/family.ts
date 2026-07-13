@@ -1,5 +1,8 @@
 import { z } from 'zod';
-import { apiRequest } from './client';
+import { edgeRequest } from './edgeClient';
+
+// Backed by supabase/functions/family/index.ts.
+const FN = 'family';
 
 export const FamilyDTO = z.object({
   id: z.string(),
@@ -22,17 +25,17 @@ export const FamilyPatchInput = z.object({
 export type FamilyPatchInput = z.infer<typeof FamilyPatchInput>;
 
 export async function getMyFamily(): Promise<FamilyDTO> {
-  const data = await apiRequest<unknown>('/family/me');
+  const data = await edgeRequest<unknown>(FN, '/me');
   return FamilyDTO.parse(data);
 }
 
 export async function getFamily(id: string): Promise<FamilyDTO> {
-  const data = await apiRequest<unknown>(`/family/${id}`);
+  const data = await edgeRequest<unknown>(FN, `/${id}`);
   return FamilyDTO.parse(data);
 }
 
 export async function patchFamily(patch: FamilyPatchInput): Promise<FamilyDTO> {
-  const data = await apiRequest<unknown>('/family/me', { method: 'PATCH', body: patch });
+  const data = await edgeRequest<unknown>(FN, '/me', { method: 'PATCH', body: patch });
   return FamilyDTO.parse(data);
 }
 

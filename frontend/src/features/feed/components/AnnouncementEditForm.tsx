@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { patchAnnouncement, feedKeys, type AnnouncementDTO, type PatchAnnouncementInput } from '@/api/announcements';
-import { ApiError } from '@/api/client';
+import { EdgeApiError } from '@/api/edgeClient';
 import { CheckIcon, XIcon } from '@/components/icons';
 import type { UploadResult } from '@/api/uploads';
 import { ImagePicker } from './ImagePicker';
@@ -40,7 +40,7 @@ export function AnnouncementEditForm({ announcement, onDone }: Props) {
       onDone();
     },
     onError: (err) => {
-      setServerError(err instanceof ApiError ? err.message : 'Could not save.');
+      setServerError(err instanceof EdgeApiError ? err.message : 'Could not save.');
     },
   });
 
@@ -76,7 +76,7 @@ export function AnnouncementEditForm({ announcement, onDone }: Props) {
         <button
           type="submit"
           disabled={isSubmitting || mutation.isPending}
-          className="inline-flex items-center gap-1.5 rounded-full bg-brand-primary px-4 py-1.5 text-sm font-semibold text-white shadow-lift disabled:opacity-60"
+          className="inline-flex items-center gap-1.5 rounded-full bg-brand-primary-pressed px-4 py-1.5 text-sm font-semibold text-white shadow-lift disabled:opacity-60"
         >
           <CheckIcon className="h-4 w-4" />
           {isSubmitting || mutation.isPending ? 'Saving…' : 'Save'}

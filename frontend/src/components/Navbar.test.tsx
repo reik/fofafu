@@ -4,7 +4,7 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { renderWithProviders } from '@/tests/render';
-import { server } from '@/tests/msw-server';
+import { server, FUNCTIONS_BASE } from '@/tests/msw-server';
 import { useAuthStore } from '@/stores/auth';
 import { Navbar } from './Navbar';
 
@@ -18,7 +18,7 @@ function setAuthed() {
 describe('Navbar', () => {
   it('renders the four primary links and a sign-out button', async () => {
     setAuthed();
-    server.use(http.get('/api/messages/unread/count', () => HttpResponse.json({ count: 0 })));
+    server.use(http.get(`${FUNCTIONS_BASE}/message/unread/count`, () => HttpResponse.json({ count: 0 })));
 
     renderWithProviders(<Navbar />, { route: '/' });
 
@@ -31,7 +31,7 @@ describe('Navbar', () => {
 
   it('shows an unread-message badge when count > 0', async () => {
     setAuthed();
-    server.use(http.get('/api/messages/unread/count', () => HttpResponse.json({ count: 3 })));
+    server.use(http.get(`${FUNCTIONS_BASE}/message/unread/count`, () => HttpResponse.json({ count: 3 })));
 
     renderWithProviders(<Navbar />, { route: '/' });
 
@@ -40,7 +40,7 @@ describe('Navbar', () => {
 
   it('clears auth and routes to /login on sign out', async () => {
     setAuthed();
-    server.use(http.get('/api/messages/unread/count', () => HttpResponse.json({ count: 0 })));
+    server.use(http.get(`${FUNCTIONS_BASE}/message/unread/count`, () => HttpResponse.json({ count: 0 })));
 
     renderWithProviders(
       <Routes>

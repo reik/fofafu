@@ -3,7 +3,7 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { renderWithProviders } from '@/tests/render';
-import { server } from '@/tests/msw-server';
+import { server, FUNCTIONS_BASE } from '@/tests/msw-server';
 import { ReactionBar } from './ReactionBar';
 import type { AnnouncementDTO } from '@/api/announcements';
 
@@ -35,7 +35,7 @@ describe('ReactionBar', () => {
   it('sends the chosen reaction type when clicked', async () => {
     let receivedType: string | null = null;
     server.use(
-      http.post('/api/announcements/a1/reactions', async ({ request }) => {
+      http.post(`${FUNCTIONS_BASE}/announcement/a1/react`, async ({ request }) => {
         const body = (await request.json()) as { type: string };
         receivedType = body.type;
         return HttpResponse.json({ toggled: 'added', reactions: { like: 0, love: 1, hug: 0, celebrate: 0, support: 0 }, myReaction: 'love' });

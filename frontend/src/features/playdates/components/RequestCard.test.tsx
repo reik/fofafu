@@ -3,7 +3,7 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { renderWithProviders } from '@/tests/render';
-import { server } from '@/tests/msw-server';
+import { server, FUNCTIONS_BASE } from '@/tests/msw-server';
 import { RequestCard } from './RequestCard';
 import type { PlaydateRequest } from '@/types/playdates';
 
@@ -73,7 +73,7 @@ describe('RequestCard', () => {
   it('calls onUpdate after accepting a request', async () => {
     const onUpdate = vi.fn();
     server.use(
-      http.put('/api/playdates/requests/req-1/respond', () =>
+      http.put(`${FUNCTIONS_BASE}/playdates/requests/req-1/respond`, () =>
         HttpResponse.json({ ...BASE_REQUEST, status: 'accepted' }, { status: 200 }),
       ),
     );
@@ -88,7 +88,7 @@ describe('RequestCard', () => {
   it('calls onUpdate after declining a request', async () => {
     const onUpdate = vi.fn();
     server.use(
-      http.put('/api/playdates/requests/req-1/respond', () =>
+      http.put(`${FUNCTIONS_BASE}/playdates/requests/req-1/respond`, () =>
         HttpResponse.json({ ...BASE_REQUEST, status: 'declined' }, { status: 200 }),
       ),
     );

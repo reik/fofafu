@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { createAnnouncement, feedKeys, type CreateAnnouncementInput } from '@/api/announcements';
-import { ApiError } from '@/api/client';
+import { EdgeApiError } from '@/api/edgeClient';
 import { SendIcon } from '@/components/icons';
 import type { UploadResult } from '@/api/uploads';
 import { ImagePicker } from './ImagePicker';
@@ -31,7 +31,7 @@ export function AnnouncementComposer() {
       setAttached(null);
     },
     onError: (err) => {
-      setServerError(err instanceof ApiError ? err.message : 'Could not post.');
+      setServerError(err instanceof EdgeApiError ? err.message : 'Could not post.');
     },
   });
 
@@ -64,7 +64,7 @@ export function AnnouncementComposer() {
         <button
           type="submit"
           disabled={isSubmitting || mutation.isPending}
-          className="inline-flex items-center gap-1.5 rounded-full bg-brand-primary px-4 py-2 text-sm font-semibold text-white shadow-lift disabled:opacity-60"
+          className="inline-flex items-center gap-1.5 rounded-full bg-brand-primary-pressed px-4 py-2 text-sm font-semibold text-white shadow-lift disabled:opacity-60"
         >
           <SendIcon className="h-4 w-4" />
           {isSubmitting || mutation.isPending ? 'Posting…' : 'Post'}

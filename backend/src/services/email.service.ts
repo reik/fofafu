@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import { logger } from '../utils/logger.js';
 
 interface VerificationParams {
   to: string;
@@ -28,7 +29,7 @@ export async function sendVerificationEmail({ to, name, token }: VerificationPar
   if (shouldUseFakeMailer()) {
     testInbox.push({ to, subject, url });
     if (process.env.NODE_ENV !== 'test') {
-      console.log(`[email:fake] verify ${to} (${name}) -> ${url}`);
+      logger.info({ msg: 'email:fake verify', to, name, url });
     }
     return;
   }
@@ -80,7 +81,7 @@ export async function sendPasswordResetEmail({ to, name, token }: ResetParams): 
   if (shouldUseFakeMailer()) {
     testInbox.push({ to, subject, url });
     if (process.env.NODE_ENV !== 'test') {
-      console.log(`[email:fake] reset ${to} (${name}) -> ${url}`);
+      logger.info({ msg: 'email:fake reset', to, name, url });
     }
     return;
   }

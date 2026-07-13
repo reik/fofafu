@@ -130,11 +130,30 @@ export function runMigrations(): void {
     CREATE INDEX IF NOT EXISTS idx_requests_requester ON playdate_requests(requester_family_id);
     CREATE INDEX IF NOT EXISTS idx_requests_owner     ON playdate_requests(owner_family_id);
     CREATE INDEX IF NOT EXISTS idx_requests_slot      ON playdate_requests(slot_id);
+
+    -- reply-coach-live: aggregate-only analytics for coach verdicts. NEVER
+    -- add a column here for draft/rewrite/reasoning text — see
+    -- fofafu_vault/features/reply-coach-live.md ## Out of scope.
+    CREATE TABLE IF NOT EXISTS coach_events (
+      id          TEXT PRIMARY KEY,
+      user_id     TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      verdict     TEXT NOT NULL CHECK(verdict IN ('ok', 'suggest')),
+      category    TEXT,
+      outcome     TEXT NOT NULL CHECK(outcome IN ('shown', 'accepted', 'edited', 'dismissed', 'none')) DEFAULT 'none',
+      created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_coach_events_user    ON coach_events(user_id, created_at);
+    CREATE INDEX IF NOT EXISTS idx_coach_events_created ON coach_events(created_at);
   `);
 
   // Defensive backfill for columns added after the initial schema. SQLite has
   // no ADD COLUMN IF NOT EXISTS, so we check pragma table_info first.
   ensureColumn('families', 'avatar_url', 'TEXT');
+  // seed-prod-sample-data: marks rows created by scripts/seed-prod-sample-data.ts
+  // so sample content stays distinguishable from real signups and prunable later.
+  ensureColumn('users', 'is_sample', 'INTEGER NOT NULL DEFAULT 0');
+  ensureColumn('families', 'is_sample', 'INTEGER NOT NULL DEFAULT 0');
   // edit-comment: comments.updated_at added in 2026-05-21. SQLite forbids
   // datetime('now') as ADD COLUMN default, so we add a TEXT column then
   // backfill from created_at for any existing rows.

@@ -3,7 +3,7 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { renderWithProviders } from '@/tests/render';
-import { server } from '@/tests/msw-server';
+import { server, FUNCTIONS_BASE } from '@/tests/msw-server';
 import { AnnouncementComposer } from './AnnouncementComposer';
 
 const samplePost = {
@@ -25,7 +25,7 @@ describe('AnnouncementComposer', () => {
   it('submits the post and clears the textarea', async () => {
     let received: { content: string } | null = null;
     server.use(
-      http.post('/api/announcements', async ({ request }) => {
+      http.post(`${FUNCTIONS_BASE}/announcement`, async ({ request }) => {
         received = (await request.json()) as { content: string };
         return HttpResponse.json({ ...samplePost, content: received.content }, { status: 201 });
       }),

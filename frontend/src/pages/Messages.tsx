@@ -38,7 +38,7 @@ export default function MessagesPage() {
             <div className="mt-1 flex items-center justify-between gap-3">
               <span className="text-sm text-ink-muted truncate">{t.lastMessage}</span>
               {t.unreadCount > 0 && (
-                <span className="rounded-full bg-brand-primary px-2 py-0.5 text-xs font-semibold text-white">
+                <span className="rounded-full bg-brand-primary-pressed px-2 py-0.5 text-xs font-semibold text-white">
                   {t.unreadCount}
                 </span>
               )}

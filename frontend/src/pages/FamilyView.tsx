@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { getFamily, getMyFamily, familyKeys } from '@/api/family';
 import { getAvailability, getRequests, createRequest, playdateKeys } from '@/api/playdates';
-import { ApiError } from '@/api/client';
+import { EdgeApiError } from '@/api/edgeClient';
 import { useAuthStore } from '@/stores/auth';
 import { Layout } from '@/components/Layout';
 import { FamilyHeader } from '@/features/family/components/FamilyHeader';
@@ -57,7 +57,7 @@ function RequestPlaydateModal({
       await createRequest(slot.id, data.message?.trim() || undefined);
       setSent(true);
     } catch (err) {
-      setApiError(err instanceof ApiError ? err.message : 'Failed to send request');
+      setApiError(err instanceof EdgeApiError ? err.message : 'Failed to send request');
     }
   };
 
@@ -86,7 +86,7 @@ function RequestPlaydateModal({
             <button
               type="button"
               onClick={onClose}
-              className="mt-4 rounded-full bg-brand-primary px-5 py-2 text-sm font-semibold text-white shadow-lift"
+              className="mt-4 rounded-full bg-brand-primary-pressed px-5 py-2 text-sm font-semibold text-white shadow-lift"
             >
               Done
             </button>
@@ -153,7 +153,7 @@ function RequestPlaydateModal({
                 type="submit"
                 disabled={isSubmitting || hasPendingRequest}
                 title={hasPendingRequest ? 'You already have a pending request for this slot' : undefined}
-                className="rounded-full bg-brand-primary px-4 py-2 text-sm font-semibold text-white shadow-lift hover:bg-brand-primary/90 transition-colors disabled:opacity-60"
+                className="rounded-full bg-brand-primary-pressed px-4 py-2 text-sm font-semibold text-white shadow-lift hover:bg-brand-primary-pressed transition-colors disabled:opacity-60"
               >
                 {isSubmitting ? 'Sending...' : 'Send Request'}
               </button>
@@ -357,7 +357,7 @@ export default function FamilyViewPage() {
         <div className="mt-6">
           <Link
             to={`/messages/${data.ownerId}`}
-            className="inline-block rounded-full bg-brand-primary px-5 py-2.5 font-semibold text-white shadow-lift"
+            className="inline-block rounded-full bg-brand-primary-pressed px-5 py-2.5 font-semibold text-white shadow-lift"
           >
             Message this family
           </Link>

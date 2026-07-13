@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { createComment, feedKeys } from '@/api/announcements';
-import { ApiError } from '@/api/client';
+import { EdgeApiError } from '@/api/edgeClient';
 import { MessageIcon } from '@/components/icons';
 
 const Schema = z.object({
@@ -31,7 +31,7 @@ export function CommentForm({ announcementId }: Props) {
       reset({ content: '' });
     },
     onError: (err) => {
-      setServerError(err instanceof ApiError ? err.message : 'Could not post.');
+      setServerError(err instanceof EdgeApiError ? err.message : 'Could not post.');
     },
   });
 
@@ -55,7 +55,7 @@ export function CommentForm({ announcementId }: Props) {
         <button
           type="submit"
           disabled={isSubmitting || mutation.isPending}
-          className="inline-flex items-center gap-1.5 rounded-full bg-brand-primary px-4 py-1.5 text-sm font-semibold text-white shadow-lift disabled:opacity-60"
+          className="inline-flex items-center gap-1.5 rounded-full bg-brand-primary-pressed px-4 py-1.5 text-sm font-semibold text-white shadow-lift disabled:opacity-60"
         >
           <MessageIcon className="h-4 w-4" />
           {isSubmitting || mutation.isPending ? 'Posting…' : 'Comment'}

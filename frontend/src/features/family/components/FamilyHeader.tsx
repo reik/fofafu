@@ -26,7 +26,7 @@ export function FamilyHeader({ family, onEdit }: Props) {
           <button
             type="button"
             onClick={onEdit}
-            className="inline-flex items-center gap-1.5 rounded-full bg-brand-primary px-4 py-2 text-sm font-semibold text-white shadow-lift"
+            className="inline-flex items-center gap-1.5 rounded-full bg-brand-primary-pressed px-4 py-2 text-sm font-semibold text-white shadow-lift"
           >
             <EditIcon className="h-4 w-4" />
             Edit page

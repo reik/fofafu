@@ -5,6 +5,7 @@ team: company
 
 > Navigation: [[kanban/engineering]] · [[kanban/design]] · [[kanban/marketing]] · [[README]] · [[protocols/dispatch]]
 ## Backlog
+- [ ] [[features/seed-prod-sample-data]] — production-safe sample family/post seeding so prod site doesn't look empty on first visit
 - [ ] [[features/reply-coach-live]] — Phase 2 follow-up to [[features/reply-coach]]: live Anthropic SDK + key plumbing + prompt caching + $5/day cost cap + 50/50 holdback experiment + `coach_events` aggregate table
 - [ ] [[features/backend-logger-util]] — chore closing MF-1 from reply-coach review: backend logger util + migrate the three known `console.*` sites
 - [ ] [[features/brand-contrast-fix]] — system-wide WCAG 1.4.3 fix: white-on-`color.brand.primary` is ~3.4:1; introduce `color.brand.primary.pressed` and migrate every CTA
@@ -12,8 +13,12 @@ team: company
 - [ ] [[features/mobile-expo-bootstrap]] — Phase 4 mobile
 
 ## In Progress
+- [ ] [[features/migrate-render-to-vercel-supabase]] — eng-infra-4 (frontend supabase-js auth swap) + eng-infra-5 (frontend Edge Function wiring for announcements/family/community/search) both closed to Review; frontend 132/132 tests green, tsc/build clean. Same-day correction: an earlier attempt to delete the old Express auth endpoints was a production regression (would have broken messages/playdates/uploads/coach auth entirely), caught before merge — reverted, and auth.middleware.ts now accepts a Supabase session token as a fallback alongside the legacy JWT. Backend 147/147 tests pass, tsc clean. Phase 5 parent (eng-infra-1) remains building — eng-infra-3/6/7/8 still outstanding
 
 ## Review
+- [ ] [[features/brand-contrast-fix]] — WCAG 1.4.3 fix: `color.brand.primary.pressed` (#3F7E54, 4.86:1 vs white, independently verified by ui-designer + a11y-auditor) introduced; 22 CTA sites (19 files) migrated to accessible pair + hover parity; frontend 119/119, tsc/build clean, 0 must-fix code review, 11/11 pages 0 axe violations; both team kanban cards in Review
+- [ ] [[features/reply-coach-live]] — LiveClaudeClient wraps @anthropic-ai/sdk behind existing ClaudeClient seam; prompt caching (cache_control), ANTHROPIC_API_KEY boot-refusal, reply_coach_live_enabled flag, $5/day cost cap, 50/50 holdback by user_id hash, coach_events aggregate table (no draft/rewrite text); backend 141/141 (13/13 coach-live.test.ts), tsc clean; 2 non-blocking code-review must-fix items carried forward (unchecked Zod validation on live response, cache-hit rate not yet logged); design Microcopy 10/10 static voice-rule audit pass (Fixture B/C dogfood tone-fidelity deferred, no real API key this pass); marketing Growth/SEO/Launch-copy specs complete, page build deferred to post-holdback; no real ANTHROPIC_API_KEY used anywhere
+- [ ] [[features/backend-logger-util]] — chore closing MF-1 from reply-coach review: backend logger util (LOG_LEVEL filtering, `{msg, ...fields}` shape, no new dependency) + migrated coach.controller.ts/email.service.ts/index.ts off console.*; 134/134 backend tests, tsc clean, 0 must-fix
 - [ ] [[features/feed-virtualization]] — perf: `@tanstack/react-virtual`'s `useWindowVirtualizer` applied to pages/Feed.tsx (windowed list, measureElement for variable-height cards); accumulate-vs-replace pagination interpretation endorsed; cache-desync must-fix resolved via useMemo-derived items from cached feedKeys.page queries; vitest 79/79, playwright 14/14, tsc/build clean
 - [ ] [[features/playdates]] — availability calendar + playdate request flow; engineering → review (128/128 backend, 109/109 frontend, tsc clean, 3 must-fix resolved); design/marketing sections pending
 

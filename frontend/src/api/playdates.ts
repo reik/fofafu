@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { apiRequest } from './client';
+import { edgeRequest } from './edgeClient';
 import {
   AvailabilitySlotSchema,
   PlaydateRequestSchema,
@@ -8,6 +8,8 @@ import {
   type AddSlotInput,
   type UpdateSlotInput,
 } from '@/types/playdates';
+
+const FN = 'playdates';
 
 // ── Query keys ────────────────────────────────────────────────────
 
@@ -19,12 +21,12 @@ export const playdateKeys = {
 // ── API wrappers ──────────────────────────────────────────────────
 
 export async function getAvailability(userId: string): Promise<AvailabilitySlot[]> {
-  const data = await apiRequest<unknown>(`/playdates/availability/${userId}`);
+  const data = await edgeRequest<unknown>(FN, `/availability/${userId}`);
   return z.array(AvailabilitySlotSchema).parse(data);
 }
 
 export async function addSlot(input: AddSlotInput): Promise<AvailabilitySlot> {
-  const data = await apiRequest<unknown>('/playdates/availability', {
+  const data = await edgeRequest<unknown>(FN, '/availability', {
     method: 'POST',
     body: input,
   });
@@ -32,7 +34,7 @@ export async function addSlot(input: AddSlotInput): Promise<AvailabilitySlot> {
 }
 
 export async function updateSlot(id: string, input: UpdateSlotInput): Promise<AvailabilitySlot> {
-  const data = await apiRequest<unknown>(`/playdates/availability/${id}`, {
+  const data = await edgeRequest<unknown>(FN, `/availability/${id}`, {
     method: 'PUT',
     body: input,
   });
@@ -40,16 +42,16 @@ export async function updateSlot(id: string, input: UpdateSlotInput): Promise<Av
 }
 
 export async function deleteSlot(id: string): Promise<void> {
-  await apiRequest<unknown>(`/playdates/availability/${id}`, { method: 'DELETE' });
+  await edgeRequest<unknown>(FN, `/availability/${id}`, { method: 'DELETE' });
 }
 
 export async function getRequests(): Promise<PlaydateRequest[]> {
-  const data = await apiRequest<unknown>('/playdates/requests');
+  const data = await edgeRequest<unknown>(FN, '/requests');
   return z.array(PlaydateRequestSchema).parse(data);
 }
 
 export async function createRequest(slotId: string, message?: string): Promise<PlaydateRequest> {
-  const data = await apiRequest<unknown>('/playdates/requests', {
+  const data = await edgeRequest<unknown>(FN, '/requests', {
     method: 'POST',
     body: { slotId, message },
   });
@@ -60,7 +62,7 @@ export async function respondToRequest(
   id: string,
   status: 'accepted' | 'declined',
 ): Promise<PlaydateRequest> {
-  const data = await apiRequest<unknown>(`/playdates/requests/${id}/respond`, {
+  const data = await edgeRequest<unknown>(FN, `/requests/${id}/respond`, {
     method: 'PUT',
     body: { status },
   });

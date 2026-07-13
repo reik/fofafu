@@ -173,7 +173,7 @@ export default function PlaydatesPage() {
         <button
           type="button"
           onClick={() => openAdd()}
-          className="rounded-full bg-brand-primary px-5 py-2.5 font-semibold text-white shadow-lift hover:bg-brand-primary/90 transition-colors text-sm"
+          className="rounded-full bg-brand-primary-pressed px-5 py-2.5 font-semibold text-white shadow-lift hover:bg-brand-primary-pressed transition-colors text-sm"
         >
           + Add Slot
         </button>
@@ -220,7 +220,7 @@ export default function PlaydatesPage() {
                   onClick={() => setCalView(v)}
                   className={
                     calView === v
-                      ? 'px-3 py-1 text-[0.82rem] font-semibold capitalize bg-brand-primary text-white border-none cursor-pointer'
+                      ? 'px-3 py-1 text-[0.82rem] font-semibold capitalize bg-brand-primary-pressed text-white border-none cursor-pointer'
                       : 'px-3 py-1 text-[0.82rem] font-semibold capitalize bg-transparent text-ink-muted border-none cursor-pointer hover:bg-brand-primary/10'
                   }
                 >

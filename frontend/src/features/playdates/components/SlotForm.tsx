@@ -3,7 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { cn } from '@/utils/cn';
 import { addSlot, updateSlot, deleteSlot } from '@/api/playdates';
-import { ApiError } from '@/api/client';
+import { EdgeApiError } from '@/api/edgeClient';
 import { AddSlotInputSchema } from '@/types/playdates';
 import type { AvailabilitySlot, AddSlotInput } from '@/types/playdates';
 import { TimePicker } from './TimePicker';
@@ -51,7 +51,7 @@ export function SlotForm({ initialDate, existing, onSaved, onCancel, onDeleted }
       }
       onSaved();
     } catch (err) {
-      setApiError(err instanceof ApiError ? err.message : 'Failed to save slot');
+      setApiError(err instanceof EdgeApiError ? err.message : 'Failed to save slot');
     }
   };
 
@@ -63,7 +63,7 @@ export function SlotForm({ initialDate, existing, onSaved, onCancel, onDeleted }
       await deleteSlot(existing.id);
       onDeleted?.();
     } catch (err) {
-      setApiError(err instanceof ApiError ? err.message : 'Failed to delete slot');
+      setApiError(err instanceof EdgeApiError ? err.message : 'Failed to delete slot');
       setDeleting(false);
     }
   };
@@ -171,7 +171,7 @@ export function SlotForm({ initialDate, existing, onSaved, onCancel, onDeleted }
           <button
             type="submit"
             disabled={isSubmitting}
-            className="rounded-full bg-brand-primary px-4 py-2 text-sm font-semibold text-white shadow-lift hover:bg-brand-primary/90 transition-colors disabled:opacity-60"
+            className="rounded-full bg-brand-primary-pressed px-4 py-2 text-sm font-semibold text-white shadow-lift hover:bg-brand-primary-pressed transition-colors disabled:opacity-60"
           >
             {isSubmitting ? 'Saving…' : existing ? 'Save' : 'Add Slot'}
           </button>
