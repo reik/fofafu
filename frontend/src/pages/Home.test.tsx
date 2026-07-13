@@ -18,6 +18,9 @@ const baseHandlers = [
   http.get('/api/announcements', () =>
     HttpResponse.json({ items: [], nextCursor: null }),
   ),
+  http.get('/api/family/me', () =>
+    HttpResponse.json({ id: 'f1', name: 'Jane', bio: '', kidCount: null, avatarUrl: null }),
+  ),
 ];
 
 describe('HomePage dashboard', () => {
