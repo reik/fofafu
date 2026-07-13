@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { getFamily, getMyFamily, familyKeys } from '@/api/family';
 import { getAvailability, getRequests, createRequest, playdateKeys } from '@/api/playdates';
-import { ApiError } from '@/api/client';
+import { EdgeApiError } from '@/api/edgeClient';
 import { useAuthStore } from '@/stores/auth';
 import { Layout } from '@/components/Layout';
 import { FamilyHeader } from '@/features/family/components/FamilyHeader';
@@ -57,7 +57,7 @@ function RequestPlaydateModal({
       await createRequest(slot.id, data.message?.trim() || undefined);
       setSent(true);
     } catch (err) {
-      setApiError(err instanceof ApiError ? err.message : 'Failed to send request');
+      setApiError(err instanceof EdgeApiError ? err.message : 'Failed to send request');
     }
   };
 

@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { patchFamily, familyKeys, type FamilyDTO, type FamilyPatchInput } from '@/api/family';
-import { ApiError } from '@/api/client';
+import { EdgeApiError } from '@/api/edgeClient';
 import { CheckIcon, XIcon } from '@/components/icons';
 import type { UploadResult } from '@/api/uploads';
 import { ImagePicker } from '@/features/feed/components/ImagePicker';
@@ -48,7 +48,7 @@ export function FamilyEditForm({ family, onCancel, onSaved }: Props) {
       onSaved();
     },
     onError: (err) => {
-      setServerError(err instanceof ApiError ? err.message : 'Something went wrong.');
+      setServerError(err instanceof EdgeApiError ? err.message : 'Something went wrong.');
     },
   });
 

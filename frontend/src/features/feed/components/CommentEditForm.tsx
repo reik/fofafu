@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { patchComment, feedKeys, type CommentDTO } from '@/api/announcements';
-import { ApiError } from '@/api/client';
+import { EdgeApiError } from '@/api/edgeClient';
 import { CheckIcon, XIcon } from '@/components/icons';
 
 const Schema = z.object({
@@ -32,7 +32,7 @@ export function CommentEditForm({ comment, onDone }: Props) {
       onDone(next);
     },
     onError: (err) => {
-      setServerError(err instanceof ApiError ? err.message : 'Could not save.');
+      setServerError(err instanceof EdgeApiError ? err.message : 'Could not save.');
     },
   });
 

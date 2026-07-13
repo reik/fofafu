@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { cn } from '@/utils/cn';
 import { respondToRequest } from '@/api/playdates';
-import { ApiError } from '@/api/client';
+import { EdgeApiError } from '@/api/edgeClient';
 import { Avatar } from '@/components/Avatar';
 import type { PlaydateRequest } from '@/types/playdates';
 
@@ -33,7 +33,7 @@ export function RequestCard({ request, myId, onUpdate }: RequestCardProps) {
       await respondToRequest(request.id, status);
       onUpdate();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to respond');
+      setError(err instanceof EdgeApiError ? err.message : 'Failed to respond');
       setResponding(false);
     }
   };

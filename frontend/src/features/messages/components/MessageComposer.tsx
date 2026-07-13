@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { sendMessage, messageKeys } from '@/api/messages';
-import { ApiError } from '@/api/client';
+import { EdgeApiError } from '@/api/edgeClient';
 import { SendIcon } from '@/components/icons';
 
 const Schema = z.object({
@@ -32,7 +32,7 @@ export function MessageComposer({ to }: Props) {
       reset({ content: '' });
     },
     onError: (err) => {
-      setServerError(err instanceof ApiError ? err.message : 'Could not send.');
+      setServerError(err instanceof EdgeApiError ? err.message : 'Could not send.');
     },
   });
 

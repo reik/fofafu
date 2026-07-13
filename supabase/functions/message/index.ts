@@ -7,6 +7,8 @@
 //   POST /message/threads/:userId/read -> markThreadRead
 import { corsHeaders, json, supabaseForRequest } from "../_shared/client.ts";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 interface MessageRow {
   id: string;
   sender_id: string;
@@ -113,6 +115,13 @@ Deno.serve(async (req) => {
 
   if (req.method === "GET" && segments.length === 2 && segments[0] === "threads") {
     const partnerId = segments[1];
+    // partnerId is attacker-controlled (a raw URL segment) and gets
+    // interpolated into PostgREST's .or() filter DSL below — validate it's
+    // a UUID first so filter-syntax characters (comma/paren/dot) in a
+    // crafted id can't inject additional OR/AND clauses and read another
+    // user's messages. (Same class of issue family/index.ts's toDTO lookup
+    // already avoids by using parameterized .eq() instead of .or().)
+    if (!UUID_RE.test(partnerId)) return json({ error: "Invalid userId" }, 400);
     const { data: rows, error } = await supabase
       .from("messages")
       .select("id, sender_id, receiver_id, content, read, created_at")
