@@ -5,6 +5,7 @@ team: engineering
 
 > Navigation: [[kanban/company]] · [[teams/engineering]] · [[standards/engineering-standards]]
 ## Backlog
+- [ ] eng-infra-9 [[features/supabase-rls-sensitive-columns]] @engineering — P0 security: Supabase Advisor flagged `sensitive_columns_exposed` — table with sensitive columns reachable via PostgREST API with no access restrictions; needs RLS + policy audit and a captured migration
 - [ ] eng-infra-1 [[features/migrate-render-to-vercel-supabase]] @engineering — Phase 5 parent ticket: migrate off Render entirely. Sub-tickets eng-infra-2..8 below track each workstream; this closes when all sub-tickets are Done and Render is decommissioned.
 - [ ] eng-infra-3 [[features/migrate-render-to-vercel-supabase]] @engineering — data migration script: dump sqlite rows, bulk-insert into Supabase Postgres, verify row counts + FK integrity — prod has no real user data yet (seed-prod-sample-data still open), so this is low-priority/may collapse to a re-seed once eng-backend-18 lands
 - [ ] eng-infra-8 [[features/migrate-render-to-vercel-supabase]] @engineering — partially done: frontend fully repointed off `client.ts`/Express for every domain except coach (unwired, see eng-infra-6). Remaining: migrate e2e/playdates.spec.ts's Express-based data seeding to Supabase, then staging cutover + full test suite green + decommission Render (kept alive as rollback fallback for now, per explicit instruction not to delete yet)
