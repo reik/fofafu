@@ -1,8 +1,4 @@
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { defineConfig, devices } from '@playwright/test';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   testDir: './e2e',
@@ -18,23 +14,17 @@ export default defineConfig({
   ],
   webServer: [
     {
-      // Dedicated e2e.db on a dedicated port, migrated + seeded with the dummy
-      // families from backend/scripts/seed-dummy.ts so specs can log in as a
-      // real user without touching a developer's port-4000 dev backend/db.
-      command: 'npm run e2e:setup && npm run dev',
-      cwd: path.resolve(__dirname, '../backend'),
-      url: 'http://localhost:4100/health',
-      reuseExistingServer: !process.env.CI,
-      timeout: 120_000,
-      env: { DB_PATH: './e2e.db', PORT: '4100' },
-    },
-    {
-      // Separate port from the dev server (5173) for the same reason.
+      // All app data (Auth, Postgres, Edge Functions) lives in Supabase now —
+      // no local Express/sqlite backend to spin up. Specs log in as the dummy
+      // families from backend/scripts/seed-dummy.ts, which must already exist
+      // in the target Supabase project; run that script once beforehand if
+      // they're missing.
+      // Separate port from the dev server (5173) so this doesn't collide with
+      // a developer's own dev server.
       command: 'npm run dev -- --port 5273',
       url: 'http://localhost:5273',
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
-      env: { E2E_BACKEND_PORT: '4100' },
     },
   ],
 });

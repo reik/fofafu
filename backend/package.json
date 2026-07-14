@@ -8,7 +8,7 @@
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/index.js",
     "migrate": "tsx src/migrate.ts",
-    "e2e:setup": "tsx src/migrate.ts && tsx scripts/seed-dummy.ts",
+    "seed:dummy": "tsx scripts/seed-dummy.ts",
     "seed:prod-sample": "tsx src/migrate.ts && tsx scripts/seed-prod-sample-data.ts",
     "test": "node --import tsx --test --test-force-exit tests/*.test.ts",
     "test:run": "DB_PATH=:memory: NODE_ENV=test JWT_SECRET=test-secret-please-rotate node --import tsx --test --test-force-exit tests/*.test.ts",

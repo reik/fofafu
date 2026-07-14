@@ -24,30 +24,44 @@ import { loginAs, SEED_PASSWORD } from './utils/login';
  */
 
 // ── Helpers ────────────────────────────────────────────────────────────────
+//
+// Data setup talks to Supabase directly (Auth REST + the deployed `playdates`
+// Edge Function) — the same backend the UI itself uses post-migration (see
+// frontend/src/api/edgeClient.ts). The old Express backend on :4100 is dead
+// for this domain; seeding through it wrote to a database the UI never reads.
 
-const BACKEND = 'http://localhost:4100/api';
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY;
+const FUNCTIONS_URL = process.env.VITE_SUPABASE_FUNCTIONS_URL ?? `${SUPABASE_URL}/functions/v1`;
 
-/** Obtain a JWT for a seeded dummy family via POST /api/auth/login. */
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  throw new Error(
+    'Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY. Copy frontend/.env.example to frontend/.env and fill them in.',
+  );
+}
+
+/** Obtain a Supabase access token for a seeded dummy family via GoTrue password grant. */
 async function getToken(request: APIRequestContext, email: string): Promise<string> {
-  const res = await request.post(`${BACKEND}/auth/login`, {
+  const res = await request.post(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+    headers: { apikey: SUPABASE_ANON_KEY, 'content-type': 'application/json' },
     data: { email, password: SEED_PASSWORD },
   });
-  const body = await res.json() as { token?: string };
-  if (!body.token) throw new Error(`Login failed for ${email}: ${JSON.stringify(body)}`);
-  return body.token;
+  const body = await res.json() as { access_token?: string; error?: string; msg?: string };
+  if (!body.access_token) throw new Error(`Login failed for ${email}: ${JSON.stringify(body)}`);
+  return body.access_token;
 }
 
 /**
- * Create a free availability slot for the authenticated family.
- * Returns the created slot's id.
+ * Create a free availability slot for the authenticated family via the
+ * `playdates` Edge Function. Returns the created slot's id.
  */
 async function createSlot(
   request: APIRequestContext,
   token: string,
   slot: { date: string; startTime: string; endTime: string; note?: string },
 ): Promise<string> {
-  const res = await request.post(`${BACKEND}/playdates/availability`, {
-    headers: { authorization: `Bearer ${token}` },
+  const res = await request.post(`${FUNCTIONS_URL}/playdates/availability`, {
+    headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
     data: { ...slot, status: 'free' },
   });
   const body = await res.json() as { id?: string };
