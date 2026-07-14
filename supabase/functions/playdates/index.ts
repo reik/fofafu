@@ -211,6 +211,9 @@ Deno.serve(async (req) => {
     if (row.status !== "pending") return json({ error: "Request already resolved" }, 400);
 
     const body = await req.json().catch(() => ({}));
+    if (body.status !== "accepted" && body.status !== "declined") {
+      return json({ error: "status must be 'accepted' or 'declined'" }, 400);
+    }
     const { data: updated, error: updateErr } = await supabase
       .from("playdate_requests")
       .update({ status: body.status, updated_at: new Date().toISOString() })
