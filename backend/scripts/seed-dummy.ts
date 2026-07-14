@@ -1,7 +1,5 @@
 import 'dotenv/config';
-import bcrypt from 'bcryptjs';
-import { randomUUID } from 'node:crypto';
-import { db, closeDb } from '../src/db.js';
+import { supabaseAdmin } from '../src/lib/supabaseAdmin.js';
 
 const DUMMY_PASSWORD = 'password123';
 
@@ -87,63 +85,75 @@ function pickPost(seedIndex: number): string {
 }
 
 function isoMinusMinutes(minutes: number): string {
-  const d = new Date(Date.now() - minutes * 60_000);
-  return d.toISOString().replace('T', ' ').replace(/\.\d+Z$/, '');
+  return new Date(Date.now() - minutes * 60_000).toISOString();
+}
+
+async function findUserIdByEmail(email: string): Promise<string | null> {
+  const admin = supabaseAdmin();
+  // Admin API has no get-by-email; page through until found (dummy dataset is tiny).
+  let page = 1;
+  for (;;) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 200 });
+    if (error) throw error;
+    const match = data.users.find((u) => u.email === email);
+    if (match) return match.id;
+    if (data.users.length < 200) return null;
+    page += 1;
+  }
 }
 
 async function main() {
-  const password = await bcrypt.hash(DUMMY_PASSWORD, 10);
+  const admin = supabaseAdmin();
+  const created: { name: string; email: string; posts: number }[] = [];
 
-  const insertUser = db().prepare(
-    'INSERT INTO users (id, email, password, name, city, state, verified) VALUES (?, ?, ?, ?, ?, ?, 1)'
-  );
-  const insertFamily = db().prepare(
-    'INSERT INTO families (id, user_id, name, bio, kid_count) VALUES (?, ?, ?, ?, ?)'
-  );
-  const insertAnnouncement = db().prepare(
-    'INSERT INTO announcements (id, user_id, content, created_at, updated_at) VALUES (?, ?, ?, ?, ?)'
-  );
+  for (const [famIdx, fam] of families.entries()) {
+    const existingId = await findUserIdByEmail(fam.email);
+    if (existingId) {
+      console.log(`skip: ${fam.email} already exists`);
+      continue;
+    }
 
-  const created: { familyId: string; name: string; email: string; posts: number }[] = [];
-
-  const tx = db().transaction(() => {
-    families.forEach((fam, famIdx) => {
-      const existing = db().prepare('SELECT id FROM users WHERE email = ?').get(fam.email) as { id: string } | undefined;
-      if (existing) {
-        console.log(`skip: ${fam.email} already exists`);
-        return;
-      }
-      const userId = randomUUID();
-      const familyId = randomUUID();
-      insertUser.run(userId, fam.email, password, fam.name, fam.city, fam.state);
-      insertFamily.run(familyId, userId, fam.name, fam.bio, fam.kidCount);
-
-      for (let i = 0; i < fam.postCount; i++) {
-        insertAnnouncement.run(
-          randomUUID(),
-          userId,
-          pickPost(famIdx * 7 + i),
-          isoMinusMinutes(i * 47 + famIdx * 11),
-          isoMinusMinutes(i * 47 + famIdx * 11),
-        );
-      }
-
-      created.push({ familyId, name: fam.name, email: fam.email, posts: fam.postCount });
+    const { data: userData, error: createErr } = await admin.auth.admin.createUser({
+      email: fam.email,
+      password: DUMMY_PASSWORD,
+      email_confirm: true,
+      user_metadata: { name: fam.name, city: fam.city, state: fam.state },
     });
-  });
+    if (createErr || !userData.user) {
+      throw createErr ?? new Error(`createUser returned no user for ${fam.email}`);
+    }
+    const userId = userData.user.id;
 
-  tx();
+    // handle_new_user trigger already created the families row (name/city/state
+    // from user_metadata, bio=''); backfill bio/kid_count which aren't part of it.
+    const { error: familyErr } = await admin
+      .from('families')
+      .update({ bio: fam.bio, kid_count: fam.kidCount })
+      .eq('user_id', userId);
+    if (familyErr) throw familyErr;
+
+    if (fam.postCount > 0) {
+      const rows = Array.from({ length: fam.postCount }, (_, i) => ({
+        user_id: userId,
+        content: pickPost(famIdx * 7 + i),
+        created_at: isoMinusMinutes(i * 47 + famIdx * 11),
+        updated_at: isoMinusMinutes(i * 47 + famIdx * 11),
+      }));
+      const { error: postErr } = await admin.from('announcements').insert(rows);
+      if (postErr) throw postErr;
+    }
+
+    created.push({ name: fam.name, email: fam.email, posts: fam.postCount });
+  }
 
   if (created.length === 0) {
     console.log('\nAll dummy families already present. Nothing to do.');
   } else {
     console.log(`\nCreated ${created.length} dummy families (password: ${DUMMY_PASSWORD}):\n`);
     for (const c of created) {
-      console.log(`  ${c.name.padEnd(22)}  ${c.email.padEnd(24)}  posts=${String(c.posts).padStart(2)}  /family/${c.familyId}`);
+      console.log(`  ${c.name.padEnd(22)}  ${c.email.padEnd(24)}  posts=${String(c.posts).padStart(2)}`);
     }
   }
-
-  closeDb();
 }
 
 main().catch((err) => {
