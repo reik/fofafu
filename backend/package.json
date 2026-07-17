@@ -10,6 +10,7 @@
     "migrate": "tsx src/migrate.ts",
     "seed:dummy": "tsx scripts/seed-dummy.ts",
     "seed:prod-sample": "tsx src/migrate.ts && tsx scripts/seed-prod-sample-data.ts",
+    "seed:supabase-sample": "tsx scripts/seed-supabase-sample-data.ts",
     "test": "node --import tsx --test --test-force-exit tests/*.test.ts",
     "test:run": "DB_PATH=:memory: NODE_ENV=test JWT_SECRET=test-secret-please-rotate node --import tsx --test --test-force-exit tests/*.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
