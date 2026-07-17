@@ -99,28 +99,48 @@ export default function HomePage() {
             <ul className="space-y-2">
               {community.data?.map((fam) => (
                 <li key={fam.id}>
-                  <Link
-                    to={`/family/${fam.id}`}
-                    className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-surface-warm"
-                  >
+                  <div className="relative flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-surface-warm">
+                    <Link
+                      to={`/family/${fam.id}`}
+                      className="absolute inset-0 z-0"
+                      aria-label={fam.name}
+                    />
                     {fam.avatarUrl ? (
                       <img
                         src={fam.avatarUrl}
                         alt=""
-                        className="h-8 w-8 rounded-full object-cover"
+                        className="relative z-0 h-8 w-8 rounded-full object-cover"
                       />
                     ) : (
                       <span
                         aria-hidden="true"
-                        className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-warm text-sm font-bold text-brand-primary"
+                        className="relative z-0 flex h-8 w-8 items-center justify-center rounded-full bg-surface-warm text-sm font-bold text-brand-primary"
                       >
                         {initialBadge(fam.name)}
                       </span>
                     )}
-                    <span className="min-w-0 flex-1 truncate text-sm font-semibold">
-                      {fam.name}
+                    <span className="relative z-0 min-w-0 flex-1">
+                      <span className="block max-w-[24ch] truncate text-sm font-semibold">
+                        {fam.name}
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        {(fam.city || fam.state) && (
+                          <span className="text-xs text-ink-muted">
+                            {[fam.city, fam.state].filter(Boolean).join(', ')}
+                          </span>
+                        )}
+                        {fam.nextFreeSlotId && (
+                          <Link
+                            to={`/family/${fam.id}?requestSlot=${fam.nextFreeSlotId}`}
+                            title="Open playdate slot — click to request"
+                            className="relative z-10 inline-flex items-center gap-1 rounded-full border border-brand-warm/50 bg-brand-warm/20 px-2 py-0.5 text-[10px] font-bold text-[#8a5a12] hover:bg-brand-warm/30"
+                          >
+                            🗓 Playdate
+                          </Link>
+                        )}
+                      </span>
                     </span>
-                  </Link>
+                  </div>
                 </li>
               ))}
               {community.data?.length === 0 && (

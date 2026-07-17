@@ -55,6 +55,9 @@ describe('HomePage dashboard', () => {
             avatarUrl: null,
             isOwner: false,
             updatedAt: '2026-05-18',
+            city: 'Denver',
+            state: 'CO',
+            nextFreeSlotId: null,
           },
         ]),
       ),
@@ -64,6 +67,66 @@ describe('HomePage dashboard', () => {
 
     const link = await screen.findByRole('link', { name: /garcia/i });
     expect(link).toHaveAttribute('href', '/family/f1');
+    expect(screen.getByText('Denver, CO')).toBeInTheDocument();
+    expect(screen.queryByTitle(/open playdate slot/i)).not.toBeInTheDocument();
+  });
+
+  it('renders a Playdate badge that links to the request flow when a family has a future free slot', async () => {
+    setAuthed();
+    server.use(
+      ...baseHandlers,
+      http.get(`${FUNCTIONS_BASE}/community/recent`, () =>
+        HttpResponse.json([
+          {
+            id: 'f2',
+            ownerId: 'u3',
+            name: 'Nguyen',
+            bio: '',
+            kidCount: null,
+            avatarUrl: null,
+            isOwner: false,
+            updatedAt: '2026-05-18',
+            city: 'Portland',
+            state: 'OR',
+            nextFreeSlotId: 'slot-123',
+          },
+        ]),
+      ),
+    );
+
+    renderWithProviders(<HomePage />, { route: '/' });
+
+    const badge = await screen.findByTitle(/open playdate slot/i);
+    expect(badge).toHaveAttribute('href', '/family/f2?requestSlot=slot-123');
+  });
+
+  it('truncates family names longer than 24 characters only', async () => {
+    setAuthed();
+    server.use(
+      ...baseHandlers,
+      http.get(`${FUNCTIONS_BASE}/community/recent`, () =>
+        HttpResponse.json([
+          {
+            id: 'f3',
+            ownerId: 'u4',
+            name: 'Nguyen Family Foster Home Society',
+            bio: '',
+            kidCount: null,
+            avatarUrl: null,
+            isOwner: false,
+            updatedAt: '2026-05-18',
+            city: 'Seattle',
+            state: 'WA',
+            nextFreeSlotId: null,
+          },
+        ]),
+      ),
+    );
+
+    renderWithProviders(<HomePage />, { route: '/' });
+
+    const name = await screen.findByText('Nguyen Family Foster Home Society');
+    expect(name).toHaveClass('max-w-[24ch]', 'truncate');
   });
 
   it('renders the announcement composer region', async () => {

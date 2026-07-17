@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { getFamily, getMyFamily, familyKeys } from '@/api/family';
@@ -170,9 +170,16 @@ function RequestPlaydateModal({
 interface FamilyAvailabilityProps {
   familyId: string;
   familyName: string;
+  initialSlotId?: string | null;
+  onInitialSlotConsumed?: () => void;
 }
 
-function FamilyAvailability({ familyId, familyName }: FamilyAvailabilityProps) {
+function FamilyAvailability({
+  familyId,
+  familyName,
+  initialSlotId,
+  onInitialSlotConsumed,
+}: FamilyAvailabilityProps) {
   const me = useAuthStore((s) => s.user);
   const [weekStart, setWeekStart] = useState(() => weekMonday(new Date()));
   const [requestSlot, setRequestSlot] = useState<AvailabilitySlot | null>(null);
@@ -199,6 +206,17 @@ function FamilyAvailability({ familyId, familyName }: FamilyAvailabilityProps) {
     queryFn: getRequests,
     enabled: !!myFamily?.id,
   });
+
+  // Opens the request modal once for a slot deep-linked from the Community
+  // sidebar badge (?requestSlot=<id>); falls back to the plain profile view
+  // if that slot is no longer free by the time slots have loaded.
+  useEffect(() => {
+    if (!initialSlotId || requestSlot) return;
+    const match = slots.find((s) => s.id === initialSlotId && s.status === 'free');
+    if (match) setRequestSlot(match);
+    if (match || slots.length > 0) onInitialSlotConsumed?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slots, initialSlotId]);
 
   // Slots where both families are free at the same time
   const matchingSlotIds = new Set<string>(
@@ -321,6 +339,8 @@ function FamilyAvailability({ familyId, familyName }: FamilyAvailabilityProps) {
 
 export default function FamilyViewPage() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestSlotParam = searchParams.get('requestSlot');
 
   const { data, isPending, isError, error } = useQuery({
     queryKey: familyKeys.byId(id ?? ''),
@@ -366,7 +386,15 @@ export default function FamilyViewPage() {
       <FamilyRecentPosts familyId={data.id} />
       {/* FamilyAvailability: shown only when !isOwner, per acceptance criteria */}
       {!data.isOwner && (
-        <FamilyAvailability familyId={data.id} familyName={data.name} />
+        <FamilyAvailability
+          familyId={data.id}
+          familyName={data.name}
+          initialSlotId={requestSlotParam}
+          onInitialSlotConsumed={() => {
+            searchParams.delete('requestSlot');
+            setSearchParams(searchParams, { replace: true });
+          }}
+        />
       )}
       <p className="mt-8 text-sm">
         <Link to="/" className="text-brand-primary underline-offset-4 hover:underline">Back home</Link>

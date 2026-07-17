@@ -23,7 +23,28 @@ Deno.serve(async (req) => {
     .limit(pageSize);
   if (error) return json({ error: error.message }, 500);
 
-  return json((data ?? []).map((row) => ({
+  const rows = data ?? [];
+  const today = new Date().toISOString().slice(0, 10);
+
+  // One slot lookup per row rather than a single grouped query: pageSize is
+  // capped at a handful of families (Home dashboard's Community sidebar), so
+  // N+1 here trades a little latency for reusing the plain PostgREST client
+  // instead of hand-writing a correlated-subquery RPC.
+  const nextFreeSlotIds = await Promise.all(rows.map(async (row) => {
+    const { data: slot } = await supabase
+      .from("availability_slots")
+      .select("id")
+      .eq("family_id", row.id)
+      .eq("status", "free")
+      .gte("date", today)
+      .order("date", { ascending: true })
+      .order("start_time", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    return slot?.id ?? null;
+  }));
+
+  return json(rows.map((row, i) => ({
     id: row.id,
     ownerId: row.user_id,
     name: row.name,
@@ -32,5 +53,8 @@ Deno.serve(async (req) => {
     avatarUrl: row.avatar_url,
     isOwner: false,
     updatedAt: row.updated_at,
+    city: row.city,
+    state: row.state,
+    nextFreeSlotId: nextFreeSlotIds[i],
   })));
 });
