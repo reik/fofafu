@@ -5,32 +5,11 @@ description: Checklist for specing a UI component before it's built — anatomy,
 
 # Design tokens & component specs
 
-## Component anatomy
+Three distinct concerns, each in its own reference file — read the one relevant to what you're specing:
 
-Sketch the components needed (ASCII or a markdown-table sketch is fine) before anyone builds them. Name each sub-part explicitly enough that a developer doesn't have to guess (e.g. "Card > Avatar + Name + Timestamp + ReactionBar").
-
-## Token naming
-
-Use semantic names, not literal ones:
-
-- `color.surface.warm` — not `color.beige.300`
-- `text.lead` — not `font-size-18`
-
-New tokens require a one-line rationale (why the existing palette/scale doesn't cover this case). Don't introduce a new font — argue for a pairing within the existing type system instead.
-
-## State checklist
-
-Every interactive or data-driven component needs one line per state:
-
-- default
-- hover
-- focus
-- disabled
-- loading
-- empty
-- error
-
-A component spec that's silent on any of these is incomplete — call it out rather than letting the builder guess.
+- `references/component-anatomy.md` — how to sketch and name a component's sub-parts before it's built.
+- `references/token-naming.md` — semantic naming convention for new design tokens.
+- `references/component-states.md` — the interaction-state checklist every component spec must cover.
 
 ## Scope discipline
 
