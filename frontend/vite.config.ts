@@ -8,10 +8,6 @@ export default defineConfig({
   resolve: { alias: { '@': path.resolve(__dirname, './src') } },
   server: {
     port: 5173,
-    proxy: {
-      '/api': `http://localhost:${process.env.E2E_BACKEND_PORT ?? '4000'}`,
-      '/uploads': `http://localhost:${process.env.E2E_BACKEND_PORT ?? '4000'}`,
-    },
   },
   test: {
     environment: 'jsdom',
