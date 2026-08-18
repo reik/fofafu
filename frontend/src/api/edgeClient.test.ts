@@ -45,6 +45,18 @@ describe('edgeRequest (Edge Function fetch wrapper)', () => {
     expect(authHeader).toBeNull();
   });
 
+  it('always sends the Supabase apikey header, with or without a session', async () => {
+    let apiKeyHeader: string | null = 'not-checked';
+    server.use(
+      http.get(`${FUNCTIONS_BASE}/family/me`, ({ request }) => {
+        apiKeyHeader = request.headers.get('apikey');
+        return HttpResponse.json({ ok: true });
+      }),
+    );
+    await edgeRequest('family', '/me');
+    expect(apiKeyHeader).toBe('test-anon-key');
+  });
+
   it('throws EdgeApiError with the status and message from a non-2xx Edge Function response', async () => {
     server.use(
       http.get(`${FUNCTIONS_BASE}/family/me`, () => HttpResponse.json({ error: 'Not found' }, { status: 404 })),
