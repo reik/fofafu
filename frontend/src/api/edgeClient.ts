@@ -1,4 +1,4 @@
-import { FUNCTIONS_URL, supabase } from '@/lib/supabaseClient';
+import { FUNCTIONS_URL, SUPABASE_ANON_KEY, supabase } from '@/lib/supabaseClient';
 
 /**
  * Fetch wrapper for Supabase Edge Functions (announcement, family, community,
@@ -31,7 +31,7 @@ export async function edgeRequest<T>(fn: string, path: string, options: RequestO
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
 
-  const headers: Record<string, string> = { 'content-type': 'application/json' };
+  const headers: Record<string, string> = { 'content-type': 'application/json', apikey: SUPABASE_ANON_KEY };
   if (token) headers['authorization'] = `Bearer ${token}`;
 
   const init: RequestInit = { method: options.method ?? 'GET', headers };
