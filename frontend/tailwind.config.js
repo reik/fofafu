@@ -7,6 +7,7 @@ export default {
         surface: {
           warm: '#FFFBF5',
           card: '#FFFFFF',
+          subtle: '#F4ECDF',
         },
         ink: {
           lead: '#1F1B18',

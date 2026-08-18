@@ -25,6 +25,7 @@ export class EdgeApiError extends Error {
 interface RequestOptions {
   method?: string;
   body?: unknown;
+  signal?: AbortSignal;
 }
 
 export async function edgeRequest<T>(fn: string, path: string, options: RequestOptions = {}): Promise<T> {
@@ -34,7 +35,11 @@ export async function edgeRequest<T>(fn: string, path: string, options: RequestO
   const headers: Record<string, string> = { 'content-type': 'application/json' };
   if (token) headers['authorization'] = `Bearer ${token}`;
 
-  const init: RequestInit = { method: options.method ?? 'GET', headers };
+  const init: RequestInit = {
+    method: options.method ?? 'GET',
+    headers,
+    ...(options.signal ? { signal: options.signal } : {}),
+  };
   if (options.body !== undefined) init.body = JSON.stringify(options.body);
 
   const res = await fetch(`${FUNCTIONS_URL}/${fn}${path}`, init);
