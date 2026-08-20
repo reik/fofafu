@@ -5,6 +5,7 @@ team: engineering
 
 > Navigation: [[kanban/company]] · [[teams/engineering]] · [[standards/engineering-standards]]
 ## Backlog
+- [ ] eng-backend-20 [[features/admin-access]] @engineering — single hardcoded admin (email-matched `is_admin()` SQL fn) with full read/edit access, incl. DMs, across all Supabase tables via RLS bypass policies + new `admin` Edge Function; every mutation audit-logged; admin UI in frontend
 - [ ] eng-infra-9 [[features/staging-environment]] @engineering — dedicated staging Supabase project + separate Vercel deployment so seeding/migration work never touches production data
 - [ ] eng-infra-1 [[features/migrate-render-to-vercel-supabase]] @engineering — Phase 5 parent ticket: migrate off Render entirely. Sub-tickets eng-infra-2..8 below track each workstream; this closes when all sub-tickets are Done and Render is decommissioned.
 - [ ] eng-infra-3 [[features/migrate-render-to-vercel-supabase]] @engineering — data migration script: dump sqlite rows, bulk-insert into Supabase Postgres, verify row counts + FK integrity — prod has no real user data yet (seed-prod-sample-data still open), so this is low-priority/may collapse to a re-seed once eng-backend-18 lands
