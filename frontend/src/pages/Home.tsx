@@ -109,17 +109,17 @@ export default function HomePage() {
                       <img
                         src={fam.avatarUrl}
                         alt=""
-                        className="relative z-0 h-8 w-8 rounded-full object-cover"
+                        className="pointer-events-none h-8 w-8 rounded-full object-cover"
                       />
                     ) : (
                       <span
                         aria-hidden="true"
-                        className="relative z-0 flex h-8 w-8 items-center justify-center rounded-full bg-surface-warm text-sm font-bold text-brand-primary"
+                        className="pointer-events-none flex h-8 w-8 items-center justify-center rounded-full bg-surface-warm text-sm font-bold text-brand-primary"
                       >
                         {initialBadge(fam.name)}
                       </span>
                     )}
-                    <span className="relative z-0 min-w-0 flex-1">
+                    <span className="pointer-events-none min-w-0 flex-1">
                       <span className="block max-w-[24ch] truncate text-sm font-semibold">
                         {fam.name}
                       </span>
@@ -133,7 +133,7 @@ export default function HomePage() {
                           <Link
                             to={`/family/${fam.id}?requestSlot=${fam.nextFreeSlotId}`}
                             title="Open playdate slot — click to request"
-                            className="relative z-10 inline-flex items-center gap-1 rounded-full border border-brand-warm/50 bg-brand-warm/20 px-2 py-0.5 text-[10px] font-bold text-[#8a5a12] hover:bg-brand-warm/30"
+                            className="pointer-events-auto relative z-10 inline-flex items-center gap-1 rounded-full border border-brand-warm/50 bg-brand-warm/20 px-2 py-0.5 text-[10px] font-bold text-[#8a5a12] hover:bg-brand-warm/30"
                           >
                             🗓 Playdate
                           </Link>
