@@ -20,7 +20,9 @@ test.describe('home community rail', () => {
 
   test('clicking directly on a family avatar navigates to their profile', async ({ page }) => {
     const row = page.locator('li', { hasText: 'The Davis Family' });
-    const avatar = row.locator('span[aria-hidden="true"]');
+    // Seeded families may render either a real avatar image or the initials
+    // fallback — match whichever is actually there.
+    const avatar = row.locator('img, span[aria-hidden="true"]').first();
     await expect(avatar).toBeVisible();
 
     const box = await avatar.boundingBox();
