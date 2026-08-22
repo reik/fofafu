@@ -11,22 +11,25 @@ import { Navbar } from './Navbar';
 function setAuthed() {
   useAuthStore.getState().setAuth({
     token: 'jwt',
-    user: { id: 'u1', email: 'a@b.com', name: 'Jane', city: 'Phoenix', state: 'AZ' },
+    user: { id: 'u1', email: 'a@b.com', name: 'Jane Doe', city: 'Phoenix', state: 'AZ' },
   });
 }
 
 describe('Navbar', () => {
-  it('renders the four primary links and a sign-out button', async () => {
+  it('renders icon-only primary links with accessible names and marks the active page', async () => {
     setAuthed();
     server.use(http.get(`${FUNCTIONS_BASE}/message/unread/count`, () => HttpResponse.json({ count: 0 })));
 
-    renderWithProviders(<Navbar />, { route: '/' });
+    renderWithProviders(<Navbar />, { route: '/family/me' });
 
     expect(screen.getAllByRole('link', { name: /^home$/i })[0]).toHaveAttribute('href', '/');
     expect(screen.getAllByRole('link', { name: /^family$/i })[0]).toHaveAttribute('href', '/family/me');
     expect(screen.getAllByRole('link', { name: /messages/i })[0]).toHaveAttribute('href', '/messages');
     expect(screen.getAllByRole('link', { name: /community/i })[0]).toHaveAttribute('href', '/search');
-    expect(screen.getByRole('button', { name: /sign out/i })).toBeInTheDocument();
+
+    // Puck: the active page's link carries aria-current="page".
+    const familyLinks = screen.getAllByRole('link', { name: /^family$/i });
+    expect(familyLinks.some((el) => el.getAttribute('aria-current') === 'page')).toBe(true);
   });
 
   it('shows an unread-message badge when count > 0', async () => {
@@ -38,7 +41,7 @@ describe('Navbar', () => {
     expect(await screen.findAllByLabelText(/messages, 3 unread/i)).not.toHaveLength(0);
   });
 
-  it('clears auth and routes to /login on sign out', async () => {
+  it('reveals sign out behind the account chip, clears auth, and routes to /login', async () => {
     setAuthed();
     server.use(http.get(`${FUNCTIONS_BASE}/message/unread/count`, () => HttpResponse.json({ count: 0 })));
 
@@ -51,7 +54,12 @@ describe('Navbar', () => {
     );
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole('button', { name: /sign out/i }));
+
+    // Sign out is not directly reachable until the account chip is opened.
+    expect(screen.queryByRole('button', { name: /sign out/i })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /account menu/i }));
+    await user.click(await screen.findByRole('button', { name: /sign out/i }));
 
     expect(useAuthStore.getState().token).toBeNull();
     expect(await screen.findByText(/login screen/i)).toBeInTheDocument();
