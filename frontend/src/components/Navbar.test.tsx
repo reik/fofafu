@@ -41,6 +41,27 @@ describe('Navbar', () => {
     expect(await screen.findAllByLabelText(/messages, 3 unread/i)).not.toHaveLength(0);
   });
 
+  it('shows the full user.name on the chip, not a first-name extraction, truncated past 24 chars', async () => {
+    // Household display name, not a personal name — this app has no
+    // separate first-name field, and "The Anderson Family".split(' ')[0]
+    // ("The") is not a usable identifier. Regression guard for that bug.
+    useAuthStore.getState().setAuth({
+      token: 'jwt',
+      user: { id: 'u2', email: 'b@c.com', name: 'The Extraordinarily Long Winslow-Fitzgerald Family', city: 'Tempe', state: 'AZ' },
+    });
+    server.use(http.get(`${FUNCTIONS_BASE}/message/unread/count`, () => HttpResponse.json({ count: 0 })));
+
+    renderWithProviders(<Navbar />, { route: '/' });
+
+    const chip = screen.getByRole('button', { name: /the extraordinarily long winslow-fitzgerald family account menu/i });
+    expect(chip).toBeInTheDocument();
+    // Truncation is CSS-driven (max-w-[24ch] truncate, matching the
+    // precedent in community-playdate-badge.md) — the full name stays in the
+    // DOM/accessible name; jsdom can't compute the visual clip, so assert
+    // the class hook is present instead.
+    expect(screen.getByText('The Extraordinarily Long Winslow-Fitzgerald Family')).toHaveClass('truncate', 'max-w-[24ch]');
+  });
+
   it('reveals sign out behind the account chip, clears auth, and routes to /login', async () => {
     setAuthed();
     server.use(http.get(`${FUNCTIONS_BASE}/message/unread/count`, () => HttpResponse.json({ count: 0 })));

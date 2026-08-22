@@ -29,11 +29,6 @@ const NAV_LINKS: NavLink[] = [
   { to: '/playdates', label: 'Playdates', Icon: CalendarIcon, match: (p) => p.startsWith('/playdates') },
 ];
 
-/** First token of a full name — "Jane Doe" -> "Jane". */
-function firstName(name: string): string {
-  return name.trim().split(/\s+/)[0] ?? '';
-}
-
 /** Single uppercase initial for the avatar chip — "Jane Doe" -> "J". */
 function initialOf(name: string): string {
   return name.trim().charAt(0).toUpperCase() || '?';
@@ -164,7 +159,7 @@ export function Navbar() {
                   onClick={() => setAccountMenuOpen((open) => !open)}
                   aria-expanded={accountMenuOpen}
                   aria-controls="account-menu"
-                  aria-label={`${firstName(user.name)} account menu`}
+                  aria-label={`${user.name} account menu`}
                   className="flex items-center gap-2 rounded-full px-2 py-1 outline-none transition-colors hover:bg-surface-warm focus-visible:ring-2 focus-visible:ring-brand-primary"
                 >
                   <span
@@ -173,8 +168,17 @@ export function Navbar() {
                   >
                     {initialOf(user.name)}
                   </span>
-                  <span aria-hidden="true" className="hidden text-sm font-semibold leading-tight text-ink-lead md:block">
-                    {firstName(user.name)}
+                  {/* Full user.name, not a "first name" extraction — this app's
+                      user.name is a household display name ("The Anderson
+                      Family"), not a personal name, so there's no first-name
+                      token to safely take. Truncated past 24 chars with an
+                      ellipsis, matching the precedent in
+                      fofafu_vault/features/community-playdate-badge.md. */}
+                  <span
+                    aria-hidden="true"
+                    className="hidden max-w-[24ch] truncate text-sm font-semibold leading-tight text-ink-lead md:block"
+                  >
+                    {user.name}
                   </span>
                 </button>
                 <div
