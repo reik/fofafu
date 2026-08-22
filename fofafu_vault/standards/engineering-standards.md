@@ -26,6 +26,7 @@ The shared engineering spec. Stack, coding conventions, and the project-wide rul
 - **No new dependency without justification.** Justification = one line in the feature file.
 - **Branch naming**: `feat/<slug>`, `fix/<slug>`, `chore/<topic>`.
 - **Commit format**: Conventional Commits (`feat(area): …`, `fix:`, `chore:`).
+- **Visual changes need before/after screenshots.** Capture `docs/screenshots/<slug>/before.png` as the FIRST step, against the still-unmodified component, before writing any code — do not reconstruct the old version from git history afterward, that's needless extra work. Capture `after.png` once the change is finished, same viewport and same demo state as `before.png`. Both committed to the feature branch and embedded in the PR body via raw GitHub URLs (`https://raw.githubusercontent.com/<org>/<repo>/<branch>/docs/screenshots/<slug>/{before,after}.png`). Captured by whoever lands the visual change (usually [[agents/frontend-dev]]). If live capture genuinely isn't possible (e.g. no real auth/backend in the sandbox), say so explicitly in the `### Frontend` subsection rather than skipping it silently — same honesty bar as any other unexecuted test. [[agents/tech-lead]] checks for their presence when auditing a visually-affecting feature at aggregation time.
 
 ## Ownership
 

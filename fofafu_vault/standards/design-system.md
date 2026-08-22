@@ -47,6 +47,30 @@ The shared design spec. Tokens, voice, and the north-star principles every team 
 - `shadow.lift`: `0 1px 2px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.06)` (light, never heavy).
 - No `shadow.heavy` — we use color blocks for depth, not drop shadows.
 
+## Tokens — Size
+
+| Semantic name | Value | Use |
+|---|---|---|
+| `size.hitTarget.min` | `44px` | Minimum interactive hit-target for icon-only controls, independent of the visible glyph size (e.g. a 20px icon inside a 44px circular button). A different axis from the `space` scale above, which governs gaps/padding between elements, not a control's own dimensions. Introduced 2026-08-21 by [[agents/design-lead]] for [[features/header-nav-redesign]]'s `NavTrackItem` / Pill Track pattern; reusable wherever an icon-only actionable control needs a documented floor. Verified against the shipped `Navbar.tsx` (`h-11 w-11` = 44×44). |
+
+*(WCAG 2.2 SC 2.5.8 Target Size Minimum only requires 24×24 CSS px at AA — this codebase already clears that regardless. `44px` is this system's own best-practice floor, matching common platform guidance (Apple HIG / Material), not a legal minimum.)*
+
+## Patterns
+
+Reusable compositions of the tokens above, ratified once a real (or clearly anticipated repeat) use case exists. Each entry: name, definition, first-use link.
+
+### Pill Track
+
+Extends principle #3 ("Pill-only CTAs," see Reference below) from single standalone buttons to a cluster of related chrome-level actions sharing one pill.
+
+> **Pill Track.** When 2+ mutually-exclusive icon-only actions live together in persistent chrome, group them in one pill container (`radius.9999`, `color.surface.warm` fill, tight internal padding) instead of giving each its own floating pill. Each item is its own circular pill sized to the accessibility hit-target minimum (`size.hitTarget.min`, 44px), and exactly one may carry the "puck" treatment — solid `color.brand.primary` fill, white icon — for whichever item is current/selected. No new color tokens required.
+
+**Implementation note** (design-lead, verified against shipped code): if the puck's white icon is composed via a shared `text-*` color utility rather than an icon-specific color prop — as this repo's Tailwind setup does, since icons inherit `currentColor` — the repo-wide `brand-contrast.test.ts` same-line regex guard will flag `bg-brand-primary` + `text-white` on sight, regardless of icon-vs-text distinction. Use `color.brand.primary.pressed` for the puck fill in that case. Compliant either way: plain `brand.primary` already clears 1.4.11's 3:1 floor for icon-only (non-text) fills, and `.pressed` clears the stricter 1.4.3 4.5:1 floor too, so it's a safe superset, not a new color decision. [[features/header-nav-redesign]]'s `Navbar` ships with `.pressed` for exactly this reason.
+
+**Exception, scoped to this pattern only:** the internal gap between items may be `2px`, below the space scale's smallest value (`4`). Deliberate — the fused-cluster read is the point of the pattern, and even `4px` starts to look like separate buttons. Do not lift `gap-[2px]` into other contexts without the same rationale; the global space scale is otherwise unchanged.
+
+First used: [[features/header-nav-redesign]] (Navbar `NavTrack`). Candidate future uses: view-mode switchers, filter-scope toggles, thread-status tabs — anywhere a small cluster of icon-only, mutually-exclusive chrome actions would otherwise each get its own floating pill.
+
 ## Voice & Tone
 
 - Plural "we" as platform; never "I".
