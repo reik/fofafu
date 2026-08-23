@@ -24,7 +24,7 @@ Scope decision from product: full edit access, including reading/editing private
 
 ## Acceptance criteria
 
-- [ ] A Postgres `is_admin()` SQL function (`SECURITY DEFINER`, matches the caller's `auth.uid()` against one hardcoded admin email) is the single source of truth for admin identity. No `role` column, no multi-admin support in v1 — this was an explicit product decision.
+- [ ] A Postgres `is_admin()` SQL function (`SECURITY DEFINER`, matches the caller's `auth.uid()` against the hardcoded admin email `kurarei+8@gmail.com`) is the single source of truth for admin identity. No `role` column, no multi-admin support in v1 — this was an explicit product decision.
 - [ ] Every RLS-enabled table (`families`, `announcements`, `comments`, `reactions`, `messages`, `availability_slots`, `playdate_requests`, `coach_events`) gets an additional `FOR ALL USING (is_admin()) WITH CHECK (is_admin())` policy, so the admin's own session token — not a service-role key — can read and write any row, including DMs in `messages` between two other users.
 - [ ] A new `supabase/functions/admin/index.ts` Edge Function (same shape as the existing `message`/`family`/`playdates` functions: `supabaseForRequest`, `requireUserId`, segment-based routing per `supabase/functions/_shared/client.ts`) exposes admin CRUD across the tables above. Every route calls `rpc('is_admin')` and 403s before touching any data.
 - [ ] Editing the identity-level fields Supabase itself owns (an arbitrary user's email, forcing a password reset, banning/deleting the account) goes through the Supabase Admin API (`supabase.auth.admin.*`), using a service-role client constructed only inside this function, only after the `is_admin()` check passes. The service-role key never reaches the frontend.
@@ -43,6 +43,7 @@ Scope decision from product: full edit access, including reading/editing private
 
 ## Open questions
 
+- ~~Which email should `is_admin()` match against?~~ **Resolved (2026-08-22):** `kurarei+8@gmail.com`. Not yet verified to exist as a registered Supabase Auth user in the live project — confirm (or sign it up) before the migration is written against a real user id, otherwise `is_admin()` matches zero rows and silently grants nobody access.
 - User deletion: hard delete (cascades via FK to a user's families/announcements/comments/messages/etc.) or soft delete/ban (`auth.admin.updateUserById(id, { ban_duration })`, or a `deleted_at` marker that keeps the data)? This changes the migration shape — needs a decision before backend-dev builds the DELETE routes.
 - Should an admin-edited email address re-trigger Supabase's email verification flow, or is admin trusted to set a pre-verified address directly?
 - Does `coach_events` need full admin edit access, or should it stay read-only in the admin UI (it's aggregate-only metrics, no draft/rewrite text, per [[features/reply-coach-live]])? Proposing read-only unless there's a concrete reason to edit it.
