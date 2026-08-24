@@ -280,3 +280,167 @@ Deno.test("a mutation that succeeds but fails to audit-log surfaces as 500, not 
   const res = await handleRequest(req("PATCH", `/content/comments/${id}`, { content: "new" }), supabase);
   assertEquals(res.status, 500);
 });
+
+Deno.test("GET /users/:id merges the family row with auth email + ban status", async () => {
+  const userId = "66666666-6666-6666-6666-666666666666";
+  const supabase = makeFakeSupabase({
+    userId: "admin-1",
+    isAdmin: true,
+    responses: {
+      families: [{
+        data: { id: "fam-6", user_id: userId, name: "Nguyen", bio: "", kid_count: 1, avatar_url: null, created_at: "t", updated_at: "t" },
+        error: null,
+      }],
+    },
+  });
+  const serviceRole = makeFakeServiceRole({ users: { [userId]: { email: "n@example.com", banned_until: null } } });
+  const res = await handleRequest(req("GET", `/users/${userId}`), supabase, () => serviceRole);
+  assertEquals(res.status, 200);
+  assertEquals(await res.json(), {
+    id: userId,
+    familyId: "fam-6",
+    name: "Nguyen",
+    bio: "",
+    kidCount: 1,
+    avatarUrl: null,
+    createdAt: "t",
+    updatedAt: "t",
+    email: "n@example.com",
+    banned: false,
+  });
+});
+
+Deno.test("PATCH /users/:id updates family fields only and audits update_user", async () => {
+  const userId = "77777777-7777-7777-7777-777777777777";
+  const before = { id: "fam-7", user_id: userId, name: "Old Name", bio: "old bio", kid_count: 1, avatar_url: null, created_at: "t", updated_at: "t" };
+  const after = { ...before, name: "New Name" };
+  const supabase = makeFakeSupabase({
+    userId: "admin-1",
+    isAdmin: true,
+    responses: {
+      families: [{ data: before, error: null }, { data: after, error: null }, { data: after, error: null }],
+      admin_audit_log: [{ data: null, error: null }],
+    },
+  });
+  const serviceRole = makeFakeServiceRole({ users: { [userId]: { email: "n@example.com", banned_until: null } } });
+  const res = await handleRequest(req("PATCH", `/users/${userId}`, { name: "New Name" }), supabase, () => serviceRole);
+  assertEquals(res.status, 200);
+  assertEquals(supabase.auditInserts.length, 1);
+  assertEquals(supabase.auditInserts[0].action, "update_user");
+  assertEquals(supabase.auditInserts[0].before, before);
+  assertEquals(supabase.auditInserts[0].after, after);
+});
+
+Deno.test("PATCH /users/:id: a family-field mutation is still audited even when the later email change fails", async () => {
+  // Regression test for the code-review finding: a single deferred
+  // writeAuditLog call would throw (from the failed email step) before ever
+  // logging the family patch that had already committed. Two independent
+  // writeAuditLog calls -- one per persisted mutation -- must mean the
+  // family patch's audit row survives regardless of what happens next.
+  const userId = "88888888-8888-8888-8888-888888888888";
+  const before = { id: "fam-8", user_id: userId, name: "Old Name", bio: "", kid_count: null, avatar_url: null, created_at: "t", updated_at: "t" };
+  const after = { ...before, name: "New Name" };
+  const supabase = makeFakeSupabase({
+    userId: "admin-1",
+    isAdmin: true,
+    responses: {
+      families: [{ data: before, error: null }, { data: after, error: null }],
+      admin_audit_log: [{ data: null, error: null }],
+    },
+  });
+  const serviceRole = makeFakeServiceRole({
+    users: { [userId]: { email: "old@example.com", banned_until: null } },
+    updateUserByIdResult: { data: null, error: { message: "email already in use" } },
+  });
+  const res = await handleRequest(
+    req("PATCH", `/users/${userId}`, { name: "New Name", email: "taken@example.com" }),
+    supabase,
+    () => serviceRole,
+  );
+  assertEquals(res.status, 500);
+  assertEquals(supabase.auditInserts.length, 1);
+  assertEquals(supabase.auditInserts[0].action, "update_user");
+  assertEquals(supabase.auditInserts[0].before, before);
+  assertEquals(supabase.auditInserts[0].after, after);
+});
+
+Deno.test("POST /users/:id/reset-password sends a recovery link and audits it", async () => {
+  const userId = "99999999-9999-9999-9999-999999999999";
+  const supabase = makeFakeSupabase({
+    userId: "admin-1",
+    isAdmin: true,
+    responses: { admin_audit_log: [{ data: null, error: null }] },
+  });
+  const serviceRole = makeFakeServiceRole({ users: { [userId]: { email: "reset-me@example.com", banned_until: null } } });
+  const res = await handleRequest(req("POST", `/users/${userId}/reset-password`), supabase, () => serviceRole);
+  assertEquals(res.status, 200);
+  assertEquals(await res.json(), { id: userId, sent: true });
+  const linkCall = serviceRole.calls.find((c: Any) => c.method === "generateLink");
+  assertExists(linkCall);
+  assertEquals((linkCall!.args[0] as Any).email, "reset-me@example.com");
+  assertEquals(supabase.auditInserts[0].action, "force_password_reset");
+});
+
+Deno.test("GET /content/announcements lists rows for the table", async () => {
+  const rows = [{ id: "a-1", user_id: "u-1", content: "hi", media_url: null, media_type: null, created_at: "t", updated_at: "t" }];
+  const supabase = makeFakeSupabase({
+    userId: "admin-1",
+    isAdmin: true,
+    responses: { announcements: [{ data: rows, error: null }] },
+  });
+  const res = await handleRequest(req("GET", "/content/announcements"), supabase);
+  assertEquals(res.status, 200);
+  assertEquals(await res.json(), rows);
+});
+
+Deno.test("DELETE /content/announcements/:id deletes and audits before/null", async () => {
+  const id = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+  const before = { id, user_id: "u-1", content: "bye", media_url: null, media_type: null, created_at: "t", updated_at: "t" };
+  const supabase = makeFakeSupabase({
+    userId: "admin-1",
+    isAdmin: true,
+    responses: {
+      announcements: [{ data: before, error: null }, { data: null, error: null }],
+      admin_audit_log: [{ data: null, error: null }],
+    },
+  });
+  const res = await handleRequest(req("DELETE", `/content/announcements/${id}`), supabase);
+  assertEquals(res.status, 200);
+  assertEquals(await res.json(), { deleted: true });
+  assertEquals(supabase.auditInserts[0].action, "delete_announcements");
+  assertEquals(supabase.auditInserts[0].before, before);
+  assertEquals(supabase.auditInserts[0].after, null);
+});
+
+Deno.test("GET /messages/:a/:b returns the raw conversation rows", async () => {
+  const rows = [{ id: "m-1", sender_id: "u-1", receiver_id: "u-2", content: "hey", read: true, created_at: "t" }];
+  const supabase = makeFakeSupabase({
+    userId: "admin-1",
+    isAdmin: true,
+    responses: { messages: [{ data: rows, error: null }] },
+  });
+  const res = await handleRequest(
+    req("GET", "/messages/11111111-1111-1111-1111-111111111111/22222222-2222-2222-2222-222222222222"),
+    supabase,
+  );
+  assertEquals(res.status, 200);
+  assertEquals(await res.json(), rows);
+});
+
+Deno.test("PATCH /messages/:id updates content and audits before/after", async () => {
+  const id = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
+  const before = { id, sender_id: "u-1", receiver_id: "u-2", content: "old", read: false, created_at: "t" };
+  const after = { ...before, content: "new" };
+  const supabase = makeFakeSupabase({
+    userId: "admin-1",
+    isAdmin: true,
+    responses: {
+      messages: [{ data: before, error: null }, { data: after, error: null }],
+      admin_audit_log: [{ data: null, error: null }],
+    },
+  });
+  const res = await handleRequest(req("PATCH", `/messages/${id}`, { content: "new" }), supabase);
+  assertEquals(res.status, 200);
+  assertEquals(await res.json(), after);
+  assertEquals(supabase.auditInserts[0].action, "update_message");
+});

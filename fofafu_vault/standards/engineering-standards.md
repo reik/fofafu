@@ -26,6 +26,10 @@ The shared engineering spec. Stack, coding conventions, and the project-wide rul
 - **No new dependency without justification.** Justification = one line in the feature file.
 - **Branch naming**: `feat/<slug>`, `fix/<slug>`, `chore/<topic>`.
 - **Commit format**: Conventional Commits (`feat(area): …`, `fix:`, `chore:`).
+- **Screenshots on every PR for major/user-facing functionality.** Deterministic, not reviewer's-discretion: if the PR adds or changes a page, UI flow, or other user-visible behavior, the PR description includes screenshots of it working. Backend-only / no-UI-change PRs are exempt.
+  - Save under `docs/screenshots/<feature-slug>/`, committed on the feature branch.
+  - Link with `github.com/<owner>/<repo>/blob/<branch>/<path>?raw=true` — **never** `raw.githubusercontent.com`: it works for `gh`/`curl` with a token but silently 404s for a plain browser viewer if the repo is ever private (no session auth on that host), which looks fine when the agent tests it and only fails for the human reading the PR.
+  - Right after merge, *before* deleting the source branch, swap `<branch>` for `master` in the image URL (`gh pr edit`) — the squash-merge commit places the same file at the same path on `master`, so the link survives the branch's post-merge deletion. Skipping this silently 404s the screenshot once the branch is gone.
 
 ## Ownership
 

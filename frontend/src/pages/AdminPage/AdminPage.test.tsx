@@ -66,6 +66,31 @@ describe('AdminPage', () => {
     expect(await screen.findByRole('button', { name: 'Unban' })).toBeInTheDocument();
   });
 
+  it('Users view: can edit a user, including their email', async () => {
+    setAuthed();
+    mockIsAdmin(true);
+    let user = { ...ONE_USER[0] };
+    server.use(
+      http.get(`${FUNCTIONS_BASE}/admin/users`, () => HttpResponse.json([user])),
+      http.patch(`${FUNCTIONS_BASE}/admin/users/u-1`, async ({ request }) => {
+        const body = (await request.json()) as { name: string; email: string };
+        user = { ...user, name: body.name, email: body.email };
+        return HttpResponse.json({ ...user, updatedAt: 't2' });
+      }),
+    );
+    renderWithProviders(<AdminPage />, { route: '/admin' });
+
+    expect(await screen.findByText('Garcia')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Edit' }));
+
+    const emailInput = screen.getByLabelText('Email');
+    await userEvent.clear(emailInput);
+    await userEvent.type(emailInput, 'new-email@example.com');
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(await screen.findByText('new-email@example.com')).toBeInTheDocument();
+  });
+
   it('Content tab: edits an announcement and deletes it', async () => {
     setAuthed();
     mockIsAdmin(true);
@@ -112,15 +137,18 @@ describe('AdminPage', () => {
     mockIsAdmin(true);
     let row: { id: string; sender_id: string; receiver_id: string; content: string; read: boolean; created_at: string } | null = {
       id: 'm-1',
-      sender_id: 'ua',
-      receiver_id: 'ub',
+      sender_id: '11111111-1111-1111-1111-111111111111',
+      receiver_id: '22222222-2222-2222-2222-222222222222',
       content: 'hey there',
       read: true,
       created_at: 't1',
     };
     server.use(
       http.get(`${FUNCTIONS_BASE}/admin/users`, () => HttpResponse.json([])),
-      http.get(`${FUNCTIONS_BASE}/admin/messages/ua/ub`, () => HttpResponse.json(row ? [row] : [])),
+      http.get(
+        `${FUNCTIONS_BASE}/admin/messages/11111111-1111-1111-1111-111111111111/22222222-2222-2222-2222-222222222222`,
+        () => HttpResponse.json(row ? [row] : []),
+      ),
       http.patch(`${FUNCTIONS_BASE}/admin/messages/m-1`, async ({ request }) => {
         const body = (await request.json()) as { content: string };
         row = { ...row!, content: body.content };
@@ -134,8 +162,8 @@ describe('AdminPage', () => {
     renderWithProviders(<AdminPage />, { route: '/admin' });
 
     await userEvent.click(await screen.findByRole('tab', { name: 'Messages' }));
-    await userEvent.type(screen.getByLabelText('User A id'), 'ua');
-    await userEvent.type(screen.getByLabelText('User B id'), 'ub');
+    await userEvent.type(screen.getByLabelText('User A id'), '11111111-1111-1111-1111-111111111111');
+    await userEvent.type(screen.getByLabelText('User B id'), '22222222-2222-2222-2222-222222222222');
     await userEvent.click(screen.getByRole('button', { name: 'Load conversation' }));
 
     const banner = await screen.findByRole('alert');

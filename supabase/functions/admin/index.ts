@@ -163,33 +163,31 @@ async function updateUser(
   if (body.kidCount !== undefined) familyPatch.kid_count = body.kidCount;
   if (body.avatarUrl !== undefined) familyPatch.avatar_url = body.avatarUrl;
 
-  let after: unknown = before;
+  // Two independent audit-log writes, one per persisted mutation, each
+  // immediately after that mutation succeeds -- NOT one deferred call at the
+  // end. If the family patch commits but the later email change then fails
+  // (a realistic case: duplicate/invalid email), a single combined call
+  // would throw before ever logging the family patch, leaving a real,
+  // already-persisted mutation with zero audit trail. Every write below is
+  // paired with its own log entry before either can be skipped by a later
+  // failure.
   if (Object.keys(familyPatch).length > 0) {
-    const { data, error } = await supabase
+    const { data: after, error } = await supabase
       .from("families").update(familyPatch).eq("user_id", userId).select("*").single();
     if (error) throw new Error(error.message);
-    after = data;
+    await writeAuditLog(supabase, adminUserId, "update_user", "user", userId, before, after);
   }
 
   // Admin trusted to set a pre-verified address directly -- no re-verification
   // email is sent (see feature file Open Questions; flagged as an assumption).
-  let emailChanged = false;
   if (body.email !== undefined && body.email !== null) {
+    if (typeof body.email !== "string") throw new HttpError(400, "email must be a string");
     const admin = getServiceRoleClient();
     const { error } = await admin.auth.admin.updateUserById(userId, { email: body.email, email_confirm: true });
     if (error) throw new Error(error.message);
-    emailChanged = true;
+    await writeAuditLog(supabase, adminUserId, "update_user_email", "user", userId, null, { email: body.email });
   }
 
-  await writeAuditLog(
-    supabase,
-    adminUserId,
-    emailChanged ? "update_user_and_email" : "update_user",
-    "user",
-    userId,
-    before,
-    { ...(after as Record<string, unknown>), emailChanged },
-  );
   return await getUser(supabase, userId, getServiceRoleClient);
 }
 
@@ -204,16 +202,19 @@ async function setUserBan(
   const { data: beforeUser, error: beforeErr } = await admin.auth.admin.getUserById(userId);
   if (beforeErr) throw new Error(beforeErr.message);
 
+  const unban = body.unban === true;
+  const hours = typeof body.hours === "number" && Number.isFinite(body.hours) ? body.hours : 24 * 365 * 100;
+
   // Soft delete/ban, not hard delete (feature decision, 2026-08-23): keeps
   // the account's data intact and reversible via unban.
-  const banDuration = body.unban ? "none" : `${body.hours ?? 24 * 365 * 100}h`;
+  const banDuration = unban ? "none" : `${hours}h`;
   const { data, error } = await admin.auth.admin.updateUserById(userId, { ban_duration: banDuration });
   if (error) throw new Error(error.message);
 
   await writeAuditLog(
     supabase,
     adminUserId,
-    body.unban ? "unban_user" : "ban_user",
+    unban ? "unban_user" : "ban_user",
     "user",
     userId,
     { bannedUntil: beforeUser.user?.banned_until ?? null },
@@ -261,6 +262,7 @@ async function updateContent(
   id: string,
   body: { content?: string },
 ) {
+  if (typeof body.content !== "string") throw new HttpError(400, "content must be a string");
   const { data: before, error: beforeErr } = await supabase.from(table).select("*").eq("id", id).maybeSingle();
   if (beforeErr) throw new Error(beforeErr.message);
   if (!before) throw new HttpError(404, `${table} row not found`);
@@ -296,6 +298,7 @@ async function getConversation(supabase: SupabaseClient, userA: string, userB: s
 }
 
 async function updateMessage(supabase: SupabaseClient, adminUserId: string, id: string, body: { content?: string }) {
+  if (typeof body.content !== "string") throw new HttpError(400, "content must be a string");
   const { data: before, error: beforeErr } = await supabase.from("messages").select("*").eq("id", id).maybeSingle();
   if (beforeErr) throw new Error(beforeErr.message);
   if (!before) throw new HttpError(404, "Message not found");

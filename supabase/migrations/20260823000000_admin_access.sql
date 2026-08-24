@@ -84,14 +84,14 @@ GRANT UPDATE ON messages TO authenticated;
 CREATE OR REPLACE FUNCTION public.enforce_messages_non_admin_readonly_columns()
 RETURNS trigger
 LANGUAGE plpgsql
-SECURITY DEFINER
 SET search_path = ''
 AS $$
 BEGIN
   IF public.is_admin() THEN
     RETURN NEW;
   END IF;
-  IF NEW.sender_id IS DISTINCT FROM OLD.sender_id
+  IF NEW.id IS DISTINCT FROM OLD.id
+     OR NEW.sender_id IS DISTINCT FROM OLD.sender_id
      OR NEW.receiver_id IS DISTINCT FROM OLD.receiver_id
      OR NEW.content IS DISTINCT FROM OLD.content
      OR NEW.created_at IS DISTINCT FROM OLD.created_at THEN
@@ -127,14 +127,14 @@ GRANT UPDATE ON playdate_requests TO authenticated;
 CREATE OR REPLACE FUNCTION public.enforce_playdate_requests_non_admin_readonly_columns()
 RETURNS trigger
 LANGUAGE plpgsql
-SECURITY DEFINER
 SET search_path = ''
 AS $$
 BEGIN
   IF public.is_admin() THEN
     RETURN NEW;
   END IF;
-  IF NEW.slot_id IS DISTINCT FROM OLD.slot_id
+  IF NEW.id IS DISTINCT FROM OLD.id
+     OR NEW.slot_id IS DISTINCT FROM OLD.slot_id
      OR NEW.requester_family_id IS DISTINCT FROM OLD.requester_family_id
      OR NEW.owner_family_id IS DISTINCT FROM OLD.owner_family_id
      OR NEW.message IS DISTINCT FROM OLD.message
@@ -185,5 +185,9 @@ ALTER TABLE admin_audit_log ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "admin audit log readable only by admin" ON admin_audit_log
   FOR SELECT USING (is_admin());
+-- Also pins admin_user_id to the caller's own auth.uid(), not just is_admin()
+-- -- harmless overlap today (single admin), but keeps the audit table's own
+-- accountability enforced by the database, not just by writeAuditLog always
+-- passing the caller's own id.
 CREATE POLICY "admin audit log insertable only by admin" ON admin_audit_log
-  FOR INSERT WITH CHECK (is_admin());
+  FOR INSERT WITH CHECK (is_admin() AND admin_user_id = auth.uid());

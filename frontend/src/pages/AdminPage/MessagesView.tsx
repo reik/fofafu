@@ -1,12 +1,27 @@
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getConversation, updateMessage, deleteMessage, adminKeys } from '@/api/admin';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const LookupSchema = z.object({
+  userIdA: z.string().regex(UUID_RE, 'Must be a UUID.'),
+  userIdB: z.string().regex(UUID_RE, 'Must be a UUID.'),
+});
+type LookupValues = z.infer<typeof LookupSchema>;
+
+const ContentSchema = z.object({ content: z.string().min(1, 'Cannot be empty.') });
+type ContentValues = z.infer<typeof ContentSchema>;
+
 export function MessagesView() {
-  const [userIdA, setUserIdA] = useState('');
-  const [userIdB, setUserIdB] = useState('');
   const [loaded, setLoaded] = useState<{ a: string; b: string } | null>(null);
   const queryClient = useQueryClient();
+  const { register, handleSubmit, formState: { errors } } = useForm<LookupValues>({
+    resolver: zodResolver(LookupSchema),
+    defaultValues: { userIdA: '', userIdB: '' },
+  });
 
   const { data, isPending, isError } = useQuery({
     queryKey: loaded ? adminKeys.conversation(loaded.a, loaded.b) : ['admin', 'messages', 'none'],
@@ -29,27 +44,19 @@ export function MessagesView() {
   return (
     <div>
       <form
-        className="flex flex-wrap items-end gap-2"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (userIdA && userIdB) setLoaded({ a: userIdA, b: userIdB });
-        }}
+        noValidate
+        className="flex flex-wrap items-start gap-2"
+        onSubmit={handleSubmit((v) => setLoaded({ a: v.userIdA, b: v.userIdB }))}
       >
         <label className="text-xs font-semibold text-ink-muted">
           User A id
-          <input
-            value={userIdA}
-            onChange={(e) => setUserIdA(e.target.value)}
-            className="mt-1 block rounded border border-ink-muted/30 p-2 text-sm"
-          />
+          <input {...register('userIdA')} className="mt-1 block rounded border border-ink-muted/30 p-2 text-sm" />
+          {errors.userIdA && <p className="mt-1 text-feedback-error text-xs">{errors.userIdA.message}</p>}
         </label>
         <label className="text-xs font-semibold text-ink-muted">
           User B id
-          <input
-            value={userIdB}
-            onChange={(e) => setUserIdB(e.target.value)}
-            className="mt-1 block rounded border border-ink-muted/30 p-2 text-sm"
-          />
+          <input {...register('userIdB')} className="mt-1 block rounded border border-ink-muted/30 p-2 text-sm" />
+          {errors.userIdB && <p className="mt-1 text-feedback-error text-xs">{errors.userIdB.message}</p>}
         </label>
         <button type="submit" className="rounded-full bg-brand-primary-pressed px-4 py-2 text-sm font-semibold text-white">
           Load conversation
@@ -93,29 +100,30 @@ function MessageRow({
   onSave: (content: string) => void;
   onDelete: () => void;
 }) {
-  const [value, setValue] = useState(content);
   const [editing, setEditing] = useState(false);
+  const { register, handleSubmit, formState: { errors } } = useForm<ContentValues>({
+    resolver: zodResolver(ContentSchema),
+    defaultValues: { content },
+  });
 
   return (
     <li className="rounded-lg bg-surface-card p-3 shadow-lift">
       {editing ? (
-        <div className="flex items-start gap-2">
-          <textarea
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            className="w-full rounded border border-ink-muted/30 p-2 text-sm"
-          />
-          <button
-            type="button"
-            onClick={() => {
-              onSave(value);
-              setEditing(false);
-            }}
-            className="rounded-full bg-brand-primary-pressed px-3 py-1 text-xs font-semibold text-white"
-          >
-            Save
-          </button>
-        </div>
+        <form
+          noValidate
+          onSubmit={handleSubmit((data) => {
+            onSave(data.content);
+            setEditing(false);
+          })}
+        >
+          <div className="flex items-start gap-2">
+            <textarea {...register('content')} className="w-full rounded border border-ink-muted/30 p-2 text-sm" />
+            <button type="submit" className="rounded-full bg-brand-primary-pressed px-3 py-1 text-xs font-semibold text-white">
+              Save
+            </button>
+          </div>
+          {errors.content && <p className="mt-1 text-feedback-error text-xs">{errors.content.message}</p>}
+        </form>
       ) : (
         <p className="text-sm">{content}</p>
       )}
