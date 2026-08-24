@@ -5,7 +5,6 @@ team: company
 
 > Navigation: [[kanban/engineering]] · [[kanban/design]] · [[kanban/marketing]] · [[README]] · [[protocols/dispatch]]
 ## Backlog
-- [ ] [[features/forgot-password-ui]]
 - [ ] [[features/navbar-component-extraction]] — fast-follow from [[features/header-nav-redesign]]'s code review: extract NavTrackItem/AccountChip out of the 238-line Navbar() per ui-designer's already-named component anatomy
 - [ ] [[features/auth-user-name-semantics]] — product decision needed: AuthUser.name is a household name, not a person's name, made newly visible by [[features/header-nav-redesign]]
 - [ ] [[features/staging-environment]] — dedicated staging Supabase project + separate Vercel deployment, isolated from production
@@ -54,6 +53,7 @@ team: company
 - [x] [[features/auth-password-reset]] — closes out the auth surface; 16/16 backend tests passing.
 - [x] [[features/auth-email]] — Phase 2 first feature; backend ported with 9/9 node:test passing.
 - [x] [[features/user-profile]] — worked example: dispatched end-to-end through eng → design → marketing in Phase 1.
+- [x] ~~[[features/forgot-password-ui]]~~ — ABANDONED 2026-08-23: duplicate of another session's `auth-password-reset-ui` (PR #66), which was already in flight (16h head start, same root-cause diagnosis) when this one was independently dispatched. User chose to let PR #66 proceed instead. No application code was produced by this effort — only vault routing (kanban moves, log entries) landed before the dispatch was interrupted by a session-limit error and then abandoned on user instruction rather than resumed.
 
 ## Blocked
 
