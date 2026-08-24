@@ -2,6 +2,7 @@ import type { SVGProps } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/auth';
+import { useIsAdmin } from '@/hooks/useIsAdmin';
 import { unreadCount, messageKeys } from '@/api/messages';
 import {
   BrandMark,
@@ -11,6 +12,7 @@ import {
   HomeIcon,
   LogOutIcon,
   MessageIcon,
+  ShieldIcon,
 } from '@/components/icons';
 
 interface NavLink {
@@ -38,6 +40,7 @@ export function Navbar() {
   const clear = useAuthStore((s) => s.clear);
   const navigate = useNavigate();
   const location = useLocation();
+  const { isAdmin } = useIsAdmin();
 
   const { data: unread } = useQuery({
     queryKey: messageKeys.unread,
@@ -46,6 +49,12 @@ export function Navbar() {
     enabled: !!token,
   });
   const unreadN = unread?.count ?? 0;
+
+  // Nav-link visibility is UX only — the real admin gate is server-side
+  // (is_admin() enforced by RLS + every /admin/* function route).
+  const links = isAdmin
+    ? [...NAV_LINKS, { to: '/admin', label: 'Admin', Icon: ShieldIcon, match: (p: string) => p.startsWith('/admin') }]
+    : NAV_LINKS;
 
   const handleSignOut = () => {
     clear();
@@ -79,7 +88,7 @@ export function Navbar() {
           </Link>
 
           <div className="hidden items-center gap-1 md:flex">
-            {NAV_LINKS.map((link) => {
+            {links.map((link) => {
               const active = link.match(location.pathname);
               const badge = link.to === '/messages' ? unreadN : 0;
               const Icon = link.Icon;
@@ -124,7 +133,7 @@ export function Navbar() {
         aria-label="Mobile navigation"
         className="fixed inset-x-0 bottom-0 z-40 flex border-t border-ink-muted/20 bg-surface-card shadow-[0_-2px_12px_rgba(0,0,0,.08)] md:hidden"
       >
-        {NAV_LINKS.map((link) => {
+        {links.map((link) => {
           const active = link.match(location.pathname);
           const badge = link.to === '/messages' ? unreadN : 0;
           const Icon = link.Icon;
