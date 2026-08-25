@@ -5,6 +5,7 @@ team: engineering
 
 > Navigation: [[kanban/company]] · [[teams/engineering]] · [[standards/engineering-standards]]
 ## Backlog
+- [ ] [[features/auth-password-reset-ui]] @engineering — no "Forgot password?" link or /forgot-password, /reset-password pages exist on the frontend, even though the Supabase-backed API functions (requestPasswordReset/updatePassword in api/auth.ts) already do; pure frontend gap, no backend work needed
 - [ ] [[features/navbar-component-extraction]] @engineering — fast-follow from header-nav-redesign's code review must-fix #2: extract NavTrackItem/AccountChip out of the 238-line Navbar()
 - [ ] [[features/auth-user-name-semantics]] @engineering — product decision needed: AuthUser.name is a household name, not a person's name
 - [ ] eng-infra-9 [[features/staging-environment]] @engineering — dedicated staging Supabase project + separate Vercel deployment so seeding/migration work never touches production data
