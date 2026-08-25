@@ -3,7 +3,7 @@ slug: admin-access
 title: Admin Access
 owner: engineering
 collaborators: []
-status: review
+status: shipped
 priority: P2
 created: 2026-08-20
 target: null
