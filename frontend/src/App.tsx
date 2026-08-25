@@ -11,6 +11,7 @@ import MessagesPage from '@/pages/Messages';
 import MessageThreadPage from '@/pages/MessageThread';
 import SearchPage from '@/pages/Search';
 import PlaydatesPage from '@/pages/PlaydatesPage/PlaydatesPage';
+import AdminPage from '@/pages/AdminPage/AdminPage';
 import { RequireAuth } from '@/components/RequireAuth';
 
 export function App() {
@@ -88,6 +89,14 @@ export function App() {
         element={
           <RequireAuth>
             <PlaydatesPage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <RequireAuth>
+            <AdminPage />
           </RequireAuth>
         }
       />
