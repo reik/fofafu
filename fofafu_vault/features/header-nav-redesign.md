@@ -3,7 +3,7 @@ slug: header-nav-redesign
 title: Header Nav Redesign
 owner: engineering
 collaborators: []
-status: review
+status: shipped
 priority: P2
 created: 2026-08-20
 target: null
