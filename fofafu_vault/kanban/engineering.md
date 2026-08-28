@@ -17,6 +17,7 @@ team: engineering
 - [ ] eng-backend-17 [[features/backend-logger-util]] @engineering — small logger util at `backend/src/utils/logger.ts` + migrate `backend/src/controllers/coach.controller.ts`, `backend/src/services/email.service.ts`, `backend/src/index.ts`; closes MF-1
 - [ ] eng-frontend-13 [[features/moderation-report-block]] @engineering — foster-family safety surface; report + block
 - [ ] eng-mobile-1 [[features/mobile-expo-bootstrap]] @engineering — Phase 4: mobile workspace + shared API client (deferred)
+- [ ] [[features/login-page-navbar-leak]] @engineering — Login page doesn't check auth state; an already-authenticated user landing on /login sees the main app Navbar/header stacked above the sign-in form (reported via user observation)
 
 ## In Progress
 
