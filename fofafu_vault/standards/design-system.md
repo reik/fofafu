@@ -71,6 +71,22 @@ Extends principle #3 ("Pill-only CTAs," see Reference below) from single standal
 
 First used: [[features/header-nav-redesign]] (Navbar `NavTrack`). Candidate future uses: view-mode switchers, filter-scope toggles, thread-status tabs — anywhere a small cluster of icon-only, mutually-exclusive chrome actions would otherwise each get its own floating pill.
 
+## Brand mark
+
+Ratified compositions of the tokens above into standalone brand assets — distinct from `## Patterns` above, which are reusable *UI* compositions (buttons, chrome), not standalone artifacts. Each entry: name, definition, scope, first-use link.
+
+### Favicon / small icon
+
+> **Brand mark — Favicon / small icon.** `frontend/public/favicon.svg`, `viewBox 0 0 100 100`. Anatomy: `SurfaceBadge` (`color.surface.subtle` circle, full-bleed, r=46) + `OuterArc` (`color.brand.primary`, stroke 7/100, round cap) + `InnerArc` (`color.brand.warm`, stroke 7/100, round cap, nested) + `BaseDot` (`color.brand.primary` circle, r=5.5). Reads as a protective arch cradling a small held shape.
+
+Originated as a deliberate abstraction of fofa's legacy `Logo.tsx` mark (two adult figures + a child figure + a concave heart, under a protective arch — 9 discrete shapes in a 60-unit viewBox) — extracting only the arch/shelter element, the one piece `Logo.tsx`'s own source comment names as doing the conceptual work, and dropping the figures/heart because they do not survive rasterization below ~32px. Verified directly, not taken on faith: design-lead read `Logo.tsx` itself (confirms the 9-shape count and the heart's compound concave path) and viewed the shipped `favicon-16x16.png` / `favicon-32x32.png` / `apple-touch-icon.png` as rendered images (16px genuinely degrades to a soft brand-colored blob with the arc-nesting no longer distinguishable; 32px and up reads as a clear nested double-arch). Same two brand hex values carried over exactly (`#4D9463` / `#F0B24F`, byte-matched against this file's own token table); no new tokens introduced.
+
+**Scope: icon / favicon / app-icon contexts only.** This is not a ratification of fofafu's primary header logo, wordmark, or marketing lockup — that decision remains fully open and gets its own future dispatch, not a default silently inherited from this entry.
+
+**Known limit:** loses arc-nesting detail at 16×16 (reads as a brand-colored blob, not a distinct nested shape, on direct visual inspection). Acceptable at that size today; candidate refinement, not a blocker.
+
+First used: [[features/site-icon]] (favicon.svg + 5 sized PNGs, wired via 6 `<link>` tags in `frontend/index.html`). Proposed by [[agents/ui-designer]] 2026-09-02, promoted into this canon 2026-09-03 by [[agents/design-lead]] after independently re-verifying token conformance and 16/32/180px legibility against the shipped assets (see [[features/site-icon]] `### Visual` for the full reasoning trail).
+
 ## Voice & Tone
 
 - Plural "we" as platform; never "I".
