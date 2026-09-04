@@ -1,11 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { Routes, Route } from 'react-router-dom';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { renderWithProviders } from '@/tests/render';
-import { server, FUNCTIONS_BASE } from '@/tests/msw-server';
+import { server, handlers, FUNCTIONS_BASE } from '@/tests/msw-server';
 import { useAuthStore } from '@/stores/auth';
+import { supabase } from '@/lib/supabaseClient';
 import { Navbar } from './Navbar';
 
 function setAuthed() {
@@ -65,6 +66,7 @@ describe('Navbar', () => {
   it('reveals sign out behind the account chip, clears auth, and routes to /login', async () => {
     setAuthed();
     server.use(http.get(`${FUNCTIONS_BASE}/message/unread/count`, () => HttpResponse.json({ count: 0 })));
+    server.use(handlers.signOutOk());
 
     renderWithProviders(
       <Routes>
@@ -84,5 +86,34 @@ describe('Navbar', () => {
 
     expect(useAuthStore.getState().token).toBeNull();
     expect(await screen.findByText(/login screen/i)).toBeInTheDocument();
+  });
+
+  it('invalidates the actual Supabase session on sign out, not just local store state', async () => {
+    // Regression test: clicking "Sign out" used to only clear the Zustand
+    // store and navigate, without ever calling supabase.auth.signOut(). The
+    // persisted GoTrue session in localStorage survived, so a reload (or the
+    // background token-refresh / onAuthStateChange sync) silently signed the
+    // user back in — "Sign out" appeared to work but didn't. Spying (not
+    // mocking) supabase.auth.signOut lets the real call still hit the msw
+    // network boundary via handlers.signOutOk(), per this repo's "mock at
+    // the network boundary, not at module level" rule.
+    setAuthed();
+    server.use(http.get(`${FUNCTIONS_BASE}/message/unread/count`, () => HttpResponse.json({ count: 0 })));
+    server.use(handlers.signOutOk());
+    const signOutSpy = vi.spyOn(supabase.auth, 'signOut');
+
+    renderWithProviders(
+      <Routes>
+        <Route path="/" element={<Navbar />} />
+        <Route path="/login" element={<div>login screen</div>} />
+      </Routes>,
+      { route: '/' },
+    );
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: /account menu/i }));
+    await user.click(await screen.findByRole('button', { name: /sign out/i }));
+
+    expect(signOutSpy).toHaveBeenCalledTimes(1);
   });
 });
