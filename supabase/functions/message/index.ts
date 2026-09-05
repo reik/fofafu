@@ -5,6 +5,39 @@
 //   GET  /message/unread/count         -> unreadCount
 //   GET  /message/threads/:userId      -> getThread
 //   POST /message/threads/:userId/read -> markThreadRead
+//
+// Block-aware filtering (fofafu_vault/features/moderation-report-block.md,
+// dispatch contract D and E): deliberately NOT implemented as code in this
+// file -- every route below needs zero changes. Enforcement is a single
+// RESTRICTIVE RLS policy in
+// supabase/migrations/20260904000000_moderation_reports_blocks.sql that
+// implements the resolved DM Open Question precisely: "conversation history
+// stays readable for the blocker; only new messages from the blocked family
+// are prevented going forward; the thread does not vanish from the
+// blocker's inbox" -- NOT the general AC bullet ("DMs vanish from the
+// threads list"), which that resolution explicitly overrides for messages.
+//
+// Concretely: a message the RLS policy hides from the receiving family
+// (because its sender is blocked by that receiver and the message postdates
+// the block) simply doesn't come back from any `.from("messages").select()`
+// call the receiver's own client makes -- so listThreads/getThread/
+// unreadCount below all naturally stop counting/showing it, while any
+// message from BEFORE the block remains fully visible (the policy's
+// `blocks.created_at <= messages.created_at` check only hides the "going
+// forward" ones). The same policy also covers markThreadRead's UPDATE, so a
+// blocker's bulk mark-as-read can't flip `read` on a message they never
+// saw.
+//
+// sendMessage's INSERT is unaffected by the same policy by construction (see
+// the migration's own comment: `auth.uid() <> receiver_id` is always true
+// for whoever is sending, since you can't message yourself), so a blocked
+// sender's send always succeeds with a normal 201 -- no loud block error,
+// and the sender is never told they're blocked (the acceptance criteria's
+// "the blocked family is not notified" -- silent no-op, not a rejected
+// send, per the dispatch prompt's own steer that "not notified" argues
+// against an explicit block error). The message row IS persisted as usual
+// (not silently dropped), so the sender's own view of their sent thread
+// stays consistent across refreshes; it's simply invisible to the receiver.
 import { corsHeaders, json, supabaseForRequest } from "../_shared/client.ts";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
