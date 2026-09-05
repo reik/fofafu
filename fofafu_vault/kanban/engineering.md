@@ -17,6 +17,7 @@ team: engineering
 - [ ] eng-backend-17 [[features/backend-logger-util]] @engineering — small logger util at `backend/src/utils/logger.ts` + migrate `backend/src/controllers/coach.controller.ts`, `backend/src/services/email.service.ts`, `backend/src/index.ts`; closes MF-1
 - [ ] eng-frontend-13 [[features/moderation-report-block]] @engineering — foster-family safety surface; report + block
 - [ ] eng-mobile-1 [[features/mobile-expo-bootstrap]] @engineering — Phase 4: mobile workspace + shared API client (deferred)
+- [ ] [[features/home-feed-virtualization]] @engineering — replace Home dashboard's "See older posts" link with the same viewport-virtualized rendering as pages/Feed.tsx ([[features/feed-virtualization]]), extended with auto-pagination on scroll instead of a manual button
 
 ## In Progress
 
