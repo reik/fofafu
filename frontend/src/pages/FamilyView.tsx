@@ -12,6 +12,7 @@ import { useAuthStore } from '@/stores/auth';
 import { Layout } from '@/components/Layout';
 import { FamilyHeader } from '@/features/family/components/FamilyHeader';
 import { FamilyRecentPosts } from '@/features/family/components/FamilyRecentPosts';
+import { FamilyProfileBlockControl } from '@/features/moderation/components/FamilyProfileBlockControl';
 import { WeekCalendar, weekMonday, isoDate } from '@/features/playdates/components';
 import type { AvailabilitySlot } from '@/types/playdates';
 
@@ -374,13 +375,18 @@ export default function FamilyViewPage() {
     <Layout>
       <FamilyHeader family={data} />
       {!data.isOwner && (
-        <div className="mt-6">
+        <div className="mt-6 flex flex-wrap items-start gap-3">
           <Link
             to={`/messages/${data.ownerId}`}
             className="inline-block rounded-full bg-brand-primary-pressed px-5 py-2.5 font-semibold text-white shadow-lift"
           >
             Message this family
           </Link>
+          {/* Stays enabled regardless of block state — Variant B (backend's
+              confirmed DM direction): blocking only stops the blocked
+              family's new inbound messages, it never closes the blocker's
+              own outbound channel. */}
+          <FamilyProfileBlockControl familyId={data.id} familyName={data.name} />
         </div>
       )}
       <FamilyRecentPosts familyId={data.id} />

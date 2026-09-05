@@ -143,3 +143,40 @@ describe('CommentList "(edited)" indicator', () => {
     expect(within(item).queryByText(/\(edited\)/i)).toBeNull();
   });
 });
+
+describe('CommentList moderation menu', () => {
+  it('offers a "More actions" trigger for a comment authored by another family', () => {
+    renderWithProviders(<CommentList comments={[baseComment]} />);
+    expect(screen.getByRole('button', { name: 'More actions' })).toBeInTheDocument();
+  });
+
+  it('does not offer a moderation trigger for your own comment', () => {
+    const own = { ...baseComment, id: 'c2', isAuthor: true } as unknown as CommentDTO;
+    renderWithProviders(<CommentList comments={[own]} />);
+    expect(screen.queryByRole('button', { name: 'More actions' })).not.toBeInTheDocument();
+  });
+
+  it('blocking one comment hides every comment by that same author in the list, not just the row clicked from', async () => {
+    server.use(
+      http.post(`${FUNCTIONS_BASE}/moderation/blocks`, () =>
+        HttpResponse.json({ blockerFamilyId: 'f-me', blockedFamilyId: 'f-patel', createdAt: '2026-09-04T00:00:00Z' }, { status: 201 }),
+      ),
+    );
+    const secondComment = {
+      ...baseComment,
+      id: 'c2',
+      content: 'second thought',
+    } as unknown as CommentDTO;
+    const user = userEvent.setup();
+    renderWithProviders(<CommentList comments={[baseComment, secondComment]} />);
+
+    const triggers = screen.getAllByRole('button', { name: 'More actions' });
+    await user.click(triggers[0] as HTMLElement);
+    await user.click(screen.getByRole('menuitem', { name: /block the patels/i }));
+
+    await screen.findAllByText(/their posts are now hidden/i);
+    expect(screen.getAllByText(/their posts are now hidden/i)).toHaveLength(2);
+    expect(screen.queryByText('thinking of you')).not.toBeInTheDocument();
+    expect(screen.queryByText('second thought')).not.toBeInTheDocument();
+  });
+});

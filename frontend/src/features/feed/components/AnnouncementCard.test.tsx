@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
 import { renderWithProviders } from '@/tests/render';
+import { server, FUNCTIONS_BASE } from '@/tests/msw-server';
 import { AnnouncementCard } from './AnnouncementCard';
 import type { AnnouncementDTO } from '@/api/announcements';
 
@@ -82,5 +85,35 @@ describe('AnnouncementCard author avatar', () => {
     // Neutral placeholder renders as an inline svg icon, not an initial letter.
     expect(container.querySelector('svg')).toBeInTheDocument();
     expect(within(article).getByText(/a former member/i)).toBeInTheDocument();
+  });
+});
+
+describe('AnnouncementCard moderation menu', () => {
+  it('offers a "More actions" trigger for a post authored by another family', () => {
+    renderWithProviders(<AnnouncementCard announcement={baseAnnouncement} />);
+    expect(within(screen.getByRole('article')).getByRole('button', { name: 'More actions' })).toBeInTheDocument();
+  });
+
+  it('does not offer a moderation trigger on the viewer\'s own post', () => {
+    const own = { ...baseAnnouncement, isAuthor: true } as unknown as AnnouncementDTO;
+    renderWithProviders(<AnnouncementCard announcement={own} />);
+    expect(screen.queryByRole('button', { name: 'More actions' })).not.toBeInTheDocument();
+  });
+
+  it('replaces the whole card with a blocked-content placeholder once its author is blocked from this menu', async () => {
+    server.use(
+      http.post(`${FUNCTIONS_BASE}/moderation/blocks`, () =>
+        HttpResponse.json({ blockerFamilyId: 'f-me', blockedFamilyId: 'f-garcia', createdAt: '2026-09-04T00:00:00Z' }, { status: 201 }),
+      ),
+    );
+    const user = userEvent.setup();
+    renderWithProviders(<AnnouncementCard announcement={baseAnnouncement} />);
+
+    await user.click(screen.getByRole('button', { name: 'More actions' }));
+    await user.click(screen.getByRole('menuitem', { name: /block the garcias/i }));
+
+    expect(await screen.findByText(/you've blocked the the garcias family — their posts are now hidden/i)).toBeInTheDocument();
+    expect(screen.queryByRole('article')).not.toBeInTheDocument();
+    expect(screen.queryByText('hello from the Garcias')).not.toBeInTheDocument();
   });
 });

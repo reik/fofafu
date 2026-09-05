@@ -5,6 +5,8 @@ import { deleteComment, feedKeys, type CommentDTO } from '@/api/announcements';
 import { EditIcon, TrashIcon } from '@/components/icons';
 import { formatAuthor } from '@/utils/formatAuthor';
 import { formatTimestamp } from '@/utils/formatTimestamp';
+import { BlockedContentPlaceholder } from '@/features/moderation/components/BlockedContentPlaceholder';
+import { ModerationMenu } from '@/features/moderation/components/ModerationMenu';
 import { CommentEditForm } from './CommentEditForm';
 
 interface Props {
@@ -15,6 +17,11 @@ export function CommentList({ comments }: Props) {
   const qc = useQueryClient();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [edits, setEdits] = useState<Record<string, CommentDTO>>({});
+  // authorId -> resolved canonical families.id, once that author's been
+  // blocked from one of their own comments in this list. Keyed by author
+  // (not comment id) so every comment by that family swaps at once, not
+  // just the row the Block action was fired from.
+  const [blockedFamilies, setBlockedFamilies] = useState<Record<string, string>>({});
   const del = useMutation({
     mutationFn: deleteComment,
     onSuccess: (_data, commentId) => {
@@ -32,6 +39,14 @@ export function CommentList({ comments }: Props) {
     <ul className="space-y-3">
       {comments.map((raw) => {
         const c = edits[raw.id] ?? raw;
+        const resolvedBlockedFamilyId = blockedFamilies[c.authorId];
+        if (resolvedBlockedFamilyId) {
+          return (
+            <li key={c.id}>
+              <BlockedContentPlaceholder familyId={resolvedBlockedFamilyId} familyName={formatAuthor(c.authorName)} />
+            </li>
+          );
+        }
         const isEdited = c.updatedAt > c.createdAt;
         const isEditing = editingId === c.id;
         return (
@@ -79,6 +94,16 @@ export function CommentList({ comments }: Props) {
                     Delete
                   </button>
                 </div>
+              )}
+              {!c.isAuthor && !isEditing && (
+                <ModerationMenu
+                  targetType="comment"
+                  targetId={c.id}
+                  authorId={c.authorId}
+                  authorName={c.authorName}
+                  onBlocked={(resolvedFamilyId) =>
+                    setBlockedFamilies((prev) => ({ ...prev, [c.authorId]: resolvedFamilyId }))}
+                />
               )}
             </header>
             {isEditing
