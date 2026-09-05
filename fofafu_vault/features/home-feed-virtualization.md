@@ -2,7 +2,7 @@
 slug: home-feed-virtualization
 title: Home Dashboard Feed Virtualization
 owner: engineering            # primary team: engineering | design | marketing
-collaborators: []             # additional teams; dispatcher infers if empty
+collaborators: [design]       # additional teams; dispatcher infers if empty
 status: drafting              # drafting | speced | building | review | shipped | blocked | abandoned
 priority: P2                  # P0 | P1 | P2
 created: 2026-09-05
@@ -39,7 +39,7 @@ links:
 
 - `useQuery` + cursor state (mirroring `pages/Feed.tsx`'s already-reviewed pattern, preserving today's implicit cache sharing between Home's and Feed's page-1 query) vs. migrating to `useInfiniteQuery` (more idiomatic for multi-page accumulation, but a different cache shape that would break that sharing unless Feed.tsx migrates too) — needs tech-lead call.
 - Extract the accumulate/virtualize/auto-advance logic into a shared hook (e.g. `features/feed/hooks/useVirtualizedFeed.ts`) used by both `Home.tsx` and `Feed.tsx`, or duplicate it in `Home.tsx` only for now — recommend extraction given how subtle the cache-desync fix is, but it touches `Feed.tsx` so flagging for tech-lead sign-off since that file is nominally out of scope above.
-- Should a11y-auditor specifically review the auto-load-on-scroll pattern (announcing newly-loaded content to screen-reader users, not stealing scroll/focus) since it's materially different from `Feed.tsx`'s manual-button model? Recommend yes — dispatcher should likely pull in design/a11y-auditor even though `collaborators` is left empty per convention.
+- Should a11y-auditor specifically review the auto-load-on-scroll pattern (announcing newly-loaded content to screen-reader users, not stealing scroll/focus) since it's materially different from `Feed.tsx`'s manual-button model? Recommend yes — `collaborators: [design]` is set above for exactly this reason, so `/dispatch` routes to a11y-auditor automatically.
 
 <!-- The sections below are written by team-leads during dispatch. -->
 
