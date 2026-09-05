@@ -126,7 +126,12 @@ export function ReportModal({ targetType, targetId, onClose }: ReportModalProps)
         </div>
 
         {sent ? (
-          <div className="py-4 text-center">
+          // Post-audit fix (a11y-auditor Blocking #3, WCAG 4.1.3): this
+          // confirmation had no live-region marking, unlike every sibling
+          // confirmation in this feature (BlockUndoStrip,
+          // BlockedContentPlaceholder, FamilyProfileBlockControl's unblock
+          // ack) — all of which use role="status" on their container.
+          <div role="status" className="py-4 text-center">
             <p className="font-semibold text-feedback-success">Report sent — our team will take a look.</p>
             <button
               type="button"
@@ -151,8 +156,13 @@ export function ReportModal({ targetType, targetId, onClose }: ReportModalProps)
                       className={cn(
                         'cursor-pointer rounded-full border px-3 py-1.5 text-sm font-medium transition-colors',
                         'focus-within:ring-2 focus-within:ring-brand-primary focus-within:ring-offset-1',
+                        // Post-audit fix (a11y-auditor Blocking #1, WCAG 1.4.3): the
+                        // active label used `text-brand-primary`, which fails 4.5:1 on
+                        // this pill's own tinted background (~3.28:1). `ink.lead` passes
+                        // (14.6:1+) and needs no new token; border/bg keep brand-primary
+                        // since only the *text* use was failing (borders pass 1.4.11).
                         active
-                          ? 'border-brand-primary bg-brand-primary/10 text-brand-primary'
+                          ? 'border-brand-primary bg-brand-primary/10 text-ink-lead'
                           : 'border-ink-muted/20 text-ink-lead hover:bg-surface-warm',
                       )}
                     >
