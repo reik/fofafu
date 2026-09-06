@@ -107,6 +107,32 @@ describe('ReportModal', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't send that. Try again?");
   });
 
+  // qa-engineer addition: the disabled-submit test above only proves the
+  // button can't be *clicked* without a category — it never actually fires
+  // the Zod `required_error` path, so nothing previously confirmed
+  // 'report.category.error.required' ever renders. Native radios can't be
+  // un-selected once one is chosen, and the note field is a <textarea> (no
+  // implicit Enter-to-submit), so this path is unreachable via userEvent —
+  // fireEvent.submit bypasses the disabled attribute the same way a stray
+  // programmatic submit or a future regression that removes the `disabled`
+  // guard would, exercising the resolver's error branch for real.
+  it('shows the "choose a category" field error if the form is ever submitted without one (defense-in-depth beyond the disabled button)', async () => {
+    let calls = 0;
+    server.use(
+      http.post(`${FUNCTIONS_BASE}/moderation/reports`, () => {
+        calls += 1;
+        return HttpResponse.json({}, { status: 201 });
+      }),
+    );
+    const { container } = renderWithProviders(<ReportModal targetType="comment" targetId="c1" onClose={() => {}} />);
+    const form = container.querySelector('form') as HTMLFormElement;
+
+    fireEvent.submit(form);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Choose a category to continue.');
+    expect(calls).toBe(0);
+  });
+
   it('closes on Escape and on backdrop click', async () => {
     let closed = 0;
     const user = userEvent.setup();

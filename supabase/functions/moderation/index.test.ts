@@ -392,3 +392,46 @@ Deno.test("a report and a block never touch each other's table in the same reque
   const blockRes = await handleRequest(req("POST", "/blocks", { blockedFamilyId: FAMILY_B }), blockSupabase);
   assertEquals(blockRes.status, 201);
 });
+
+// --- qa-engineer addition: round-trip, not just one direction -------------
+// Filling a gap named explicitly during the test-coverage audit for this
+// feature (fofafu_vault/features/moderation-report-block.md ### Test plan):
+// every existing block/unblock test above builds its own isolated
+// already-blocked-or-not fixture; nothing chains create -> list -> delete ->
+// list through a single session the way a real client actually would. This
+// test drives all four calls through one shared fake client so the response
+// bodies are asserted to actually flip from "absent" to "present" and back
+// to "absent," not just that each endpoint independently returns the right
+// status code in isolation.
+Deno.test("block/unblock round trip: create, list shows it, unblock, list is empty again", async () => {
+  const created = { blocker_family_id: FAMILY_A, blocked_family_id: FAMILY_B, created_at: "2026-09-05T00:00:00Z" };
+  const supabase = makeFakeSupabase({
+    userId: "u-1",
+    responses: {
+      families: [
+        { data: { id: FAMILY_A }, error: null }, // createBlock: myFamilyId
+        { data: { id: FAMILY_B }, error: null }, // createBlock: resolveFamily byId
+        { data: { id: FAMILY_A }, error: null }, // deleteBlock: myFamilyId
+      ],
+      blocks: [
+        { data: null, error: null }, // createBlock: existing-block pre-check (none yet)
+        { data: created, error: null }, // createBlock: insert().select().single()
+        { data: [created], error: null }, // listBlocks #1: block is present
+        { data: null, error: null }, // deleteBlock: delete()
+        { data: [], error: null }, // listBlocks #2: block is gone
+      ],
+    },
+  });
+
+  const blockRes = await handleRequest(req("POST", "/blocks", { blockedFamilyId: FAMILY_B }), supabase);
+  assertEquals(blockRes.status, 201);
+
+  const firstList = await handleRequest(req("GET", "/blocks"), supabase);
+  assertEquals(await firstList.json(), [{ blockerFamilyId: FAMILY_A, blockedFamilyId: FAMILY_B, createdAt: "2026-09-05T00:00:00Z" }]);
+
+  const unblockRes = await handleRequest(req("DELETE", `/blocks/${FAMILY_B}`), supabase);
+  assertEquals(unblockRes.status, 204);
+
+  const secondList = await handleRequest(req("GET", "/blocks"), supabase);
+  assertEquals(await secondList.json(), []);
+});
