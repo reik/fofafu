@@ -368,3 +368,150 @@ test.describe('block-from-profile-and-undo', () => {
     }
   });
 });
+
+// ── Scenarios 3-5 (qa-engineer: block-from-post-and-reload,
+// blocked-family-invisibility-sweep, unblock-restores-visibility) — AC4 +
+// AC5 + AC6: share one davis@dummy.test block/unblock lifecycle across
+// three ordered tests (test.describe.serial — see the top-of-file note on
+// why davis, and why serial + a defensive afterAll unblock). ──────────────
+
+test.describe.serial('block-from-post-and-reload / invisibility-sweep / unblock-restores-visibility', () => {
+  let andersonToken: string;
+  let davisUserId: string;
+  let davisFamilyId: string;
+  let brooksPostId: string;
+  let davisCommentContent: string;
+  let brooksCommentContent: string;
+  let davisFeedPostContent: string;
+  let davisDmContent: string;
+
+  test.beforeAll(async () => {
+    const api = await request.newContext();
+    andersonToken = await getToken(api, 'anderson@dummy.test');
+    const andersonId = await getUserId(api, andersonToken);
+
+    const davisToken = await getToken(api, 'davis@dummy.test');
+    davisUserId = await getUserId(api, davisToken);
+    davisFamilyId = await getFamilyId(api, andersonToken, davisUserId);
+
+    const brooksToken = await getToken(api, 'brooks@dummy.test');
+
+    // P1: authored by brooks, NOT davis, so blocking davis can't hide the
+    // whole post — only davis's own comment on it — isolating the
+    // comment-level filtering assertion (test 2) from the post-level one
+    // (test 1) below.
+    const brooksPostContent = `E2E invisibility-sweep thread ${Date.now()}`;
+    brooksPostId = await createPost(api, brooksToken, brooksPostContent);
+    davisCommentContent = `E2E davis comment ${Date.now()}`;
+    await createComment(api, davisToken, brooksPostId, davisCommentContent);
+    brooksCommentContent = `E2E brooks comment ${Date.now()}`;
+    await createComment(api, brooksToken, brooksPostId, brooksCommentContent);
+
+    // P2: authored by davis — the post that must vanish from the feed once
+    // davis is blocked (test 1, below).
+    davisFeedPostContent = `E2E davis feed post ${Date.now()}`;
+    await createPost(api, davisToken, davisFeedPostContent);
+
+    // A pre-existing DM from davis so the thread has real history to stay
+    // visible against, per the resolved Open Question / Variant B.
+    davisDmContent = `E2E davis dm ${Date.now()}`;
+    await sendMessage(api, davisToken, andersonId, davisDmContent);
+
+    await api.dispose();
+  });
+
+  test.afterAll(async () => {
+    // Unconditional safety net — see the top-of-file seed-family note.
+    // Idempotent, so this is a no-op if test 3 already unblocked davis.
+    const api = await request.newContext();
+    await apiUnblock(api, andersonToken, davisFamilyId);
+    await api.dispose();
+  });
+
+  test('block-from-post-and-reload: blocking from a feed post shows an inline Undo placeholder, and the post stays gone after a real reload', async ({ page }) => {
+    await loginAs(page, 'anderson@dummy.test');
+    await page.goto('/feed');
+
+    const post = page.locator('article').filter({ hasText: davisFeedPostContent });
+    await expect(post).toBeVisible();
+    await post.getByRole('button', { name: 'More actions' }).click();
+    await post.getByRole('menuitem', { name: /block/i }).click();
+
+    // The source row itself becomes the confirmation — no separate toast,
+    // no confirmation dialog either (same one-tap contract as Block from
+    // the profile page). Its container takes keyboard focus on mount
+    // (a11y-auditor's post-audit fix for the row-level block path) —
+    // asserted here as the anchor, not just its visibility.
+    const placeholder = page.getByRole('status').filter({ hasText: /blocked.*davis family/i });
+    await expect(placeholder).toBeVisible();
+    await expect(placeholder).toBeFocused();
+    await expect(placeholder.getByRole('button', { name: 'Undo' })).toBeVisible();
+    await expect(page.locator('article').filter({ hasText: davisFeedPostContent })).toHaveCount(0);
+
+    // This is the one assertion no component/RTL test can make: a real
+    // reload re-mounts the page from scratch (the optimistic local
+    // blockedFamilyId state is gone), so the post staying absent proves
+    // the server-side filtering itself, not the client-side placeholder.
+    await page.reload();
+    await expect(page.getByText(davisFeedPostContent)).toHaveCount(0);
+  });
+
+  test('blocked-family-invisibility-sweep: feed, thread comments, and search exclude the blocked family; their DM thread keeps full history with an enabled composer', async ({ page }) => {
+    await loginAs(page, 'anderson@dummy.test');
+
+    // Feed: still gone on a fresh visit (re-confirms test 1's server-side
+    // result on its own navigation, not just its immediate aftermath).
+    await page.goto('/feed');
+    await expect(page.getByText(davisFeedPostContent)).toHaveCount(0);
+
+    // Thread: davis's comment is gone; brooks's own comment on the same
+    // post is untouched — proves this is per-author filtering, not the
+    // whole thread disappearing.
+    await page.goto(`/post/${brooksPostId}`);
+    await expect(page.getByText(davisCommentContent)).toHaveCount(0);
+    await expect(page.getByText(brooksCommentContent)).toBeVisible();
+
+    // Search excludes the blocked family.
+    await page.goto('/search');
+    await page.getByLabel('Search').fill('Davis');
+    await page.getByRole('button', { name: 'Search' }).click();
+    await expect(page.getByRole('link').filter({ hasText: 'The Davis Family' })).toHaveCount(0);
+
+    // DM: thread stays in the inbox list with its last message, full
+    // history renders, and — Variant B, not the composer-replaced
+    // Variant A — the composer stays enabled. This is the AC5 bullet's
+    // literal "DMs vanish from the threads list" text as OVERRIDDEN by the
+    // resolved Open Question in the feature file; asserting the resolved
+    // behavior, not the literal AC text, per ### Backend's own note.
+    await page.goto('/messages');
+    const threadRow = page.getByRole('link').filter({ hasText: davisDmContent });
+    await expect(threadRow).toBeVisible();
+    await threadRow.click();
+
+    await expect(page.getByText('Blocked', { exact: true })).toBeVisible();
+    await expect(page.getByText(/limited this conversation with the.*davis family/i)).toBeVisible();
+    await expect(page.getByText(davisDmContent)).toBeVisible();
+    await expect(page.getByLabel('Message', { exact: true })).toBeEnabled();
+    await expect(page.getByRole('button', { name: 'Send' })).toBeEnabled();
+  });
+
+  test('unblock-restores-visibility: unblocking from the profile page brings the feed post and search result back on next load', async ({ page }) => {
+    await loginAs(page, 'anderson@dummy.test');
+    await page.goto(`/family/${davisUserId}`);
+
+    const unblockButton = page.getByRole('button', { name: 'Unblock' });
+    await expect(unblockButton).toBeVisible();
+    await unblockButton.click();
+    await expect(page.getByRole('button', { name: 'Block this family' })).toBeVisible();
+
+    // Not just optimistic UI: a fresh navigation, re-fetching from the
+    // server, is what actually proves the unblock round-tripped.
+    await page.goto('/feed');
+    await expect(page.getByText(davisFeedPostContent)).toBeVisible();
+
+    await page.goto('/search');
+    await page.getByLabel('Search').fill('Davis');
+    await page.getByRole('button', { name: 'Search' }).click();
+    await expect(page.getByRole('link').filter({ hasText: 'The Davis Family' })).toBeVisible();
+  });
+});
