@@ -25,7 +25,19 @@ const REPORT_CATEGORY_LABELS: Record<ReportCategory, string> = {
 };
 
 const FormSchema = z.object({
-  category: z.enum(REPORT_CATEGORIES, { required_error: 'Choose a category to continue.' }),
+  // React Hook Form supplies `null` (not `undefined`) as the value of an
+  // unselected native radio-group field at submit time — there's no sensible
+  // `defaultValues.category` to set, so the field starts out null rather than
+  // undefined. Zod's `required_error` only fires on `undefined`, so a bare
+  // `z.enum(..., { required_error })` silently falls through to Zod's raw
+  // enum `invalid_type` message on a real submit instead of the copy below.
+  // Preprocessing null -> undefined (rather than switching to
+  // `.nullable().refine(...)`) keeps the inferred type exactly
+  // `ReportCategory`, matching what `createReport` expects, with no cast.
+  category: z.preprocess(
+    (val) => (val === null ? undefined : val),
+    z.enum(REPORT_CATEGORIES, { required_error: 'Choose a category to continue.' }),
+  ),
   note: z.string().max(REPORT_NOTE_MAX_LENGTH, 'Keep it under 1000 characters.').optional(),
 });
 type FormValues = z.infer<typeof FormSchema>;
