@@ -18,6 +18,8 @@ The shared engineering spec. Stack, coding conventions, and the project-wide rul
 | Testing | Vitest + RTL + node:test + Playwright | replaces Cypress |
 | Tooling | ESLint + Prettier + tsc; npm workspaces | monorepo |
 
+**Phase 5 stack note (added 2026-09-07, flagged by backend-dev on [[features/moderation-report-block]]; tracks [[features/migrate-render-to-vercel-supabase]]).** The Backend/Testing rows above are the pre-Phase-5 baseline and are now partially stale. New backend work increasingly lands in `supabase/functions/` (Deno Edge Functions) + `supabase/migrations/` (Postgres + RLS), not `backend/` (Express + better-sqlite3). Follow the Supabase-native precedent set by `admin/index.ts` and now `moderation/index.ts`: new tables + RLS policies in a migration, a new Edge Function that exports a testable `handleRequest(req, supabase)` (matches `admin`, `community`, `moderation`, `search` — `message`/`announcement` still run inline in `Deno.serve` and are a known, tracked fast-follow, not yet refactored), and `deno test` in `supabase/functions/` for coverage (`deno coverage` for line/branch numbers — no new dependency, built into the Deno CLI). The legacy `backend/` workspace stays live only for routes not yet ported — see `[[features/migrate-render-to-vercel-supabase]]` for current cutover status — do not add new features there. Until the migration finishes, both stacks coexist; state explicitly in `### Backend` which one a given feature targets (as `moderation-report-block` did) rather than assuming this table.
+
 ## Conventions
 
 - **TDD by default.** Tests written before implementation. Tests live next to the code.
