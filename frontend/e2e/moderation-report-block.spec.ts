@@ -321,3 +321,50 @@ test.describe('report-flow-per-surface', () => {
     await expect(dialog.getByRole('status')).toContainText(REPORT_CONFIRMATION_TEXT);
   });
 });
+
+// ── Scenario 2 (qa-engineer: block-from-profile-and-undo) — AC4: block is
+// reachable from the family profile page, fires with no confirmation
+// dialog (a real interaction difference from Report, above, which does use
+// one), and Undo reverses it within the same visit. ────────────────────
+
+test.describe('block-from-profile-and-undo', () => {
+  test('blocking from a family profile page is one tap, no dialog, and Undo reverses it', async ({ page, request: req }) => {
+    const andersonToken = await getToken(req, 'anderson@dummy.test');
+    const chenToken = await getToken(req, 'chen@dummy.test');
+    const chenUserId = await getUserId(req, chenToken);
+    const chenFamilyId = await getFamilyId(req, andersonToken, chenUserId);
+
+    try {
+      await loginAs(page, 'anderson@dummy.test');
+      await page.goto(`/family/${chenUserId}`);
+
+      const blockButton = page.getByRole('button', { name: 'Block this family' });
+      await expect(blockButton).toBeVisible();
+      // Block ships with no confirmation dialog (### Visual decision 2) —
+      // Report, tested above, uses one; this deliberately doesn't.
+      await expect(page.getByRole('dialog')).toHaveCount(0);
+
+      await blockButton.click();
+
+      const unblockButton = page.getByRole('button', { name: 'Unblock' });
+      await expect(unblockButton).toBeVisible();
+      await expect(page.getByRole('dialog')).toHaveCount(0);
+      // BlockUndoStrip's role="status" text — see the top-of-file note on
+      // why this uses a loose regex against the real "The Chen Family"
+      // seed value rather than an exact string.
+      await expect(page.getByRole('status')).toContainText(/blocked.*chen family/i);
+      const undoButton = page.getByRole('button', { name: 'Undo' });
+      await expect(undoButton).toBeVisible();
+
+      await undoButton.click();
+
+      await expect(page.getByText(/unblocked.*chen family.*can see your posts/i)).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Block this family' })).toBeVisible();
+      await expect(page.getByText(/you've blocked the .*chen family\./i)).toHaveCount(0);
+    } finally {
+      // Safety net: guarantee chen isn't left blocked even if an assertion
+      // above throws before the in-test Undo click runs.
+      await apiUnblock(req, andersonToken, chenFamilyId);
+    }
+  });
+});
