@@ -35,12 +35,25 @@
 import { assertEquals } from "jsr:@std/assert@1";
 import {
   evaluateContent,
-  isContentModerationEnabled,
+  isContentModerationGateEnabled,
   MODERATION_CATEGORIES,
   setModerationClassifierForTests,
 } from "./moderation.ts";
 
-const FLAG_VAR = "CONTENT_MODERATION_ENABLED";
+// RECONCILED by backend-dev against ### Growth (landed after this file was
+// written): the flag is `content_moderation_gate_enabled` /
+// `CONTENT_MODERATION_GATE_ENABLED` / `isContentModerationGateEnabled()`,
+// not the `CONTENT_MODERATION_ENABLED` / `isContentModerationEnabled()`
+// this file originally proposed. Growth's naming matches the
+// full-feature-slug + `_enabled` precedent (`reply_coach_enabled`,
+// `reply_coach_live_enabled` -- this feature's slug is
+// "content-moderation-gate", not "content-moderation"), and code-review's
+// watch-list treats that exact name as the one to hold the line on for
+// grep-ability across the three sibling gates. Only the flag name changed
+// below (this line + the 3 `isContentModerationEnabled(` call sites); every
+// assertion and the decision logic they lock down is untouched. See this
+// feature's ### Backend for the full reconciliation note.
+const FLAG_VAR = "CONTENT_MODERATION_GATE_ENABLED";
 
 function resetClassifier() {
   setModerationClassifierForTests(null);
@@ -60,22 +73,22 @@ Deno.test("MODERATION_CATEGORIES — provisional taxonomy covers all 6 AC-named 
 
 // ── AC: "gated behind a feature flag, defaulting off" ───────────────────────
 
-Deno.test("isContentModerationEnabled — defaults to false when unset", () => {
+Deno.test("isContentModerationGateEnabled — defaults to false when unset", () => {
   Deno.env.delete(FLAG_VAR);
-  assertEquals(isContentModerationEnabled(), false);
+  assertEquals(isContentModerationGateEnabled(), false);
 });
 
-Deno.test("isContentModerationEnabled — false for any value other than the exact string 'true'", () => {
+Deno.test("isContentModerationGateEnabled — false for any value other than the exact string 'true'", () => {
   for (const v of ["1", "TRUE", "yes", "false", ""]) {
     Deno.env.set(FLAG_VAR, v);
-    assertEquals(isContentModerationEnabled(), false, `expected false for "${v}"`);
+    assertEquals(isContentModerationGateEnabled(), false, `expected false for "${v}"`);
   }
   Deno.env.delete(FLAG_VAR);
 });
 
-Deno.test("isContentModerationEnabled — true only for the exact string 'true'", () => {
+Deno.test("isContentModerationGateEnabled — true only for the exact string 'true'", () => {
   Deno.env.set(FLAG_VAR, "true");
-  assertEquals(isContentModerationEnabled(), true);
+  assertEquals(isContentModerationGateEnabled(), true);
   Deno.env.delete(FLAG_VAR);
 });
 
