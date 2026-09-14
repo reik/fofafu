@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { edgeRequest } from './edgeClient';
+import { edgeRequest, EdgeApiError } from './edgeClient';
 
 // Backed by supabase/functions/announcement/index.ts. Route prefix is
 // singular ("/announcement", not "/announcements") and the reaction endpoint
@@ -76,6 +76,38 @@ export async function listAnnouncements(
 export async function getAnnouncement(id: string): Promise<AnnouncementDTO> {
   const data = await edgeRequest<unknown>(FN, `/${id}`);
   return AnnouncementDTO.parse(data);
+}
+
+/**
+ * [[features/content-moderation-gate]] — publish-time gate contract.
+ *
+ * ASSUMPTION, flagged for reconciliation with backend-dev (not landed yet
+ * when this was written): the classifier runs inside the existing
+ * POST /announcement and POST /announcement/:id/comments handlers, in the
+ * same request/response cycle that would otherwise persist the row — no
+ * separate pre-flight "classify" call, so there's no window where flagged
+ * content could transiently exist. On a flagged submission, the handler
+ * skips the insert and responds with this shape instead:
+ *
+ *   { error: string, code: 'content_flagged', categories: string[] }
+ *
+ * `code` (not the HTTP status) is the discriminator below, so this degrades
+ * gracefully to the generic error path regardless of whether backend-dev
+ * ultimately ships 400 or 422 for the status. `categories` is accepted but
+ * deliberately unused in the UI — see ModerationBlockNotice, which mirrors
+ * reply-coach's "category metadata is for backend/analytics only, never
+ * shown to the author" rule.
+ */
+export const ModerationBlockedPayload = z.object({
+  code: z.literal('content_flagged'),
+  categories: z.array(z.string()).default([]),
+});
+export type ModerationBlockedPayload = z.infer<typeof ModerationBlockedPayload>;
+
+export function getModerationBlock(err: unknown): ModerationBlockedPayload | null {
+  if (!(err instanceof EdgeApiError)) return null;
+  const parsed = ModerationBlockedPayload.safeParse(err.payload);
+  return parsed.success ? parsed.data : null;
 }
 
 export interface CreateAnnouncementInput {

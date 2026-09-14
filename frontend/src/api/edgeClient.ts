@@ -12,13 +12,17 @@ import { FUNCTIONS_URL, SUPABASE_ANON_KEY, supabase } from '@/lib/supabaseClient
 export interface EdgeErrorShape {
   status: number;
   error: string;
+  /** Full parsed JSON error body, for callers that need fields beyond `error` (e.g. a `code` discriminator). */
+  payload?: unknown;
 }
 
 export class EdgeApiError extends Error {
   status: number;
+  payload: unknown;
   constructor(payload: EdgeErrorShape) {
     super(payload.error);
     this.status = payload.status;
+    this.payload = payload.payload;
   }
 }
 
@@ -48,6 +52,7 @@ export async function edgeRequest<T>(fn: string, path: string, options: RequestO
     throw new EdgeApiError({
       status: res.status,
       error: (parsed as { error?: string }).error ?? `HTTP ${res.status}`,
+      payload: parsed,
     });
   }
   return parsed as T;

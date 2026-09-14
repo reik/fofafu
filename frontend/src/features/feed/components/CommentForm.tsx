@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
-import { createComment, feedKeys } from '@/api/announcements';
+import { createComment, feedKeys, getModerationBlock } from '@/api/announcements';
 import { EdgeApiError } from '@/api/edgeClient';
 import { MessageIcon } from '@/components/icons';
+import { ModerationBlockNotice } from './ModerationBlockNotice';
 
 const Schema = z.object({
   content: z.string().min(1, 'Type a comment.').max(2000),
@@ -18,7 +19,9 @@ interface Props {
 
 export function CommentForm({ announcementId }: Props) {
   const qc = useQueryClient();
+  const blockId = useId();
   const [serverError, setServerError] = useState<string | null>(null);
+  const [blocked, setBlocked] = useState(false);
   const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<Values>({
     resolver: zodResolver(Schema),
     defaultValues: { content: '' },
@@ -31,13 +34,25 @@ export function CommentForm({ announcementId }: Props) {
       reset({ content: '' });
     },
     onError: (err) => {
+      // Publish-time moderation gate ([[features/content-moderation-gate]]):
+      // a firm, non-punitive block with no override — never surfaced through
+      // the generic serverError path, and never clears the draft so the
+      // author can revise in place.
+      if (getModerationBlock(err)) {
+        setBlocked(true);
+        return;
+      }
       setServerError(err instanceof EdgeApiError ? err.message : 'Could not post.');
     },
   });
 
   return (
     <form
-      onSubmit={handleSubmit((data) => { setServerError(null); mutation.mutate(data); })}
+      onSubmit={handleSubmit((data) => {
+        setServerError(null);
+        setBlocked(false);
+        mutation.mutate(data);
+      })}
       className="space-y-2"
       noValidate
     >
@@ -47,10 +62,12 @@ export function CommentForm({ announcementId }: Props) {
         {...register('content')}
         placeholder="Say something kind…"
         rows={2}
+        aria-describedby={blocked ? blockId : undefined}
         className="w-full rounded bg-surface-card px-3 py-2 outline-none border border-ink-muted/20 focus:border-brand-primary"
       />
       {errors.content && <p className="text-feedback-error text-xs">{errors.content.message}</p>}
       {serverError && <p role="alert" className="text-feedback-error text-xs">{serverError}</p>}
+      {blocked && <ModerationBlockNotice id={blockId} />}
       <div className="flex justify-end">
         <button
           type="submit"
