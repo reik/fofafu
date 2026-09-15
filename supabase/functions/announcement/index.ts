@@ -17,6 +17,14 @@
 //   DELETE /announcement/comments/:id              -> deleteComment
 //   POST   /announcement/:id/react                 -> toggleReaction
 import { corsHeaders, json, supabaseForRequest } from "../_shared/client.ts";
+import type { SupabaseClient } from "jsr:@supabase/supabase-js@2";
+// [[features/content-moderation-gate]] -- write-time classification gate.
+// See ../_shared/moderation.ts's header comment + this feature's
+// ### Backend for the full design (fail-open policy, DM-scope decision,
+// technical-seam decision). Deliberately NOT imported by
+// ../coach/index.ts or vice versa -- separate systems per this feature's
+// Problem statement.
+import { CONTENT_MODERATION_POLICY, evaluateContent, isContentModerationGateEnabled } from "../_shared/moderation.ts";
 
 const REACTION_TYPES = ["like", "love", "hug", "celebrate", "support"] as const;
 type ReactionType = typeof REACTION_TYPES[number];
@@ -48,7 +56,17 @@ function validReactionType(value: unknown): ReactionType | null {
 async function authorLookup(supabase: any, userIds: string[]) {
   if (userIds.length === 0) return new Map<string, { name: string; avatar_url: string | null }>();
   const { data } = await supabase.from("families").select("user_id, name, avatar_url").in("user_id", userIds);
-  return new Map((data ?? []).map((f: any) => [f.user_id, { name: f.name, avatar_url: f.avatar_url }]));
+  // Explicit type arguments (not inferred) -- pre-existing latent bug found
+  // while wiring this feature's test file: inferring Map<K, V> from an
+  // any-typed source array resolves V to `unknown`, not `any`, which was
+  // never caught before because no test file imported this module (so
+  // `deno check` never traversed it) until content-moderation-gate added
+  // one. Fixed here since it's a type-only change (zero behavior change)
+  // in a file this pass already owns, and it was blocking a clean
+  // workspace-wide type-check.
+  return new Map<string, { name: string; avatar_url: string | null }>(
+    (data ?? []).map((f: any) => [f.user_id, { name: f.name, avatar_url: f.avatar_url }]),
+  );
 }
 
 async function reactionAggregates(supabase: any, announcementIds: string[], viewerUserId: string | null) {
@@ -100,10 +118,22 @@ function toCommentDTO(row: any, author: { name: string } | undefined, viewerUser
   };
 }
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+// [[features/content-moderation-gate]] -- exact response shape frontend-dev
+// already built and tested against (frontend/src/api/announcements.ts's
+// `ModerationBlockedPayload` Zod schema, wave 1). `code` -- not the HTTP
+// status -- is the discriminator the frontend switches on, so 422 here is a
+// free choice (distinct from the existing 400s, which are shape/length
+// validation, not content-policy rejection); do not change the `code` or
+// `categories` field names without updating that schema in the same change.
+function moderationBlockedResponse(categories: string[]) {
+  return json({
+    error: "Content flagged by the moderation gate and was not published.",
+    code: "content_flagged" as const,
+    categories,
+  }, 422);
+}
 
-  const supabase = supabaseForRequest(req);
+export async function handleRequest(req: Request, supabase: SupabaseClient): Promise<Response> {
   const { data: userData } = await supabase.auth.getUser();
   const userId: string | null = userData.user?.id ?? null;
 
@@ -121,6 +151,16 @@ Deno.serve(async (req) => {
     if (mediaUrl === undefined && body.mediaUrl !== undefined) return json({ error: "mediaUrl must be a valid URL" }, 400);
     const mediaType = validMediaType(body.mediaType);
     if (mediaType === undefined && body.mediaType !== undefined) return json({ error: "mediaType must be image or video" }, 400);
+    // [[features/content-moderation-gate]] -- must resolve BEFORE the insert
+    // below, never insert-then-conditionally-delete (### Code review watch-
+    // list #1, this feature's sharpest named risk: a transient-visibility
+    // window would violate the AC that flagged content is never persisted or
+    // visible, even transiently). Skipped entirely when the flag is off, so
+    // the gate defaults off per AC #7 with zero behavior change on this path.
+    if (isContentModerationGateEnabled()) {
+      const outcome = await evaluateContent(content, CONTENT_MODERATION_POLICY);
+      if (!outcome.allowed) return moderationBlockedResponse(outcome.categories);
+    }
     const { data, error } = await supabase
       .from("announcements")
       .insert({ user_id: userId, content, media_url: mediaUrl ?? null, media_type: mediaType ?? null })
@@ -197,6 +237,13 @@ Deno.serve(async (req) => {
       const body = await req.json().catch(() => ({}));
       const content = validText(body.content, 2000);
       if (content === null) return json({ error: "content must be 1-2000 characters" }, 400);
+      // [[features/content-moderation-gate]] -- same ordering guarantee as
+      // POST /announcement above: resolves before the insert, no
+      // insert-then-delete. See that call site's comment for the full note.
+      if (isContentModerationGateEnabled()) {
+        const outcome = await evaluateContent(content, CONTENT_MODERATION_POLICY);
+        if (!outcome.allowed) return moderationBlockedResponse(outcome.categories);
+      }
       const { data, error } = await supabase
         .from("comments").insert({ announcement_id: id, user_id: userId, content })
         .select("*").single();
@@ -289,4 +336,19 @@ Deno.serve(async (req) => {
   }
 
   return json({ error: "Not found" }, 404);
-});
+}
+
+// Guarded so importing this module from a test doesn't also try to bind a
+// real network port -- mirrors ../admin/index.ts's handleRequest/Deno.serve
+// split, which is what makes handleRequest callable from
+// ./index.test.ts with a fake SupabaseClient instead of a live network +
+// Postgres. Supabase's edge-runtime executes this file as the entry point
+// (import.meta.main === true) in actual deployment, so this is a no-op
+// behavior change there.
+if (import.meta.main) {
+  Deno.serve(async (req) => {
+    if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+    const supabase = supabaseForRequest(req);
+    return handleRequest(req, supabase);
+  });
+}

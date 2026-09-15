@@ -25,21 +25,26 @@
 // dev side of the same note.
 import Anthropic from "npm:@anthropic-ai/sdk@0.32";
 
-// AC #2's working list, provisional pending ux-writer's final taxonomy
-// (open question #3 in the feature file -- not resolved by this pass).
-// Snake_case slugs only ever reach analytics/logs, never a user-facing
+// Final taxonomy, per ux-writer's ### Microcopy §1 (resolves open question
+// #3): seven categories, kebab-case -- matching the exact slugs ux-writer
+// specced and the casing precedent already shipped in
+// backend/src/services/coach/claudeClient.ts (`categories: ['savior-framing']`).
+// Kebab-case slugs only ever reach analytics/logs, never a user-facing
 // string (mirrors reply-coach's "category metadata is for backend/
 // analytics only" voice rule) -- renaming these later is a safe,
 // non-breaking change since moderation_gate_events.category has no CHECK
-// constraint (see the migration), by the same deliberate design coach_events
-// uses.
+// constraint (see ### Growth's schema), by the same deliberate design
+// coach_events uses. Categories are not mutually exclusive per ux-writer's
+// note (e.g. the worst illegal-content cases may also be explicit-content)
+// -- the classifier may return more than one.
 export const MODERATION_CATEGORIES = [
   "harassment",
-  "hate_speech",
-  "threats_violence",
+  "hate-speech",
+  "threats-violence",
   "spam",
-  "doxxing_pii",
-  "illegal_content",
+  "doxxing-pii",
+  "illegal-content",
+  "explicit-content",
 ] as const;
 export type ModerationCategory = typeof MODERATION_CATEGORIES[number];
 
@@ -153,12 +158,13 @@ export async function evaluateContent(
 const MODERATION_SYSTEM_PROMPT = `You are the content-moderation classifier for fofafu, a foster-family community platform. You read a single draft post or comment and decide whether it contains a genuine, severe guideline violation -- not merely harsh, clumsy, or emotionally raw phrasing.
 
 Flag content ONLY if it clearly falls into one or more of these categories:
-- harassment: targeted insults, bullying, or demeaning attacks on a specific person or group.
-- hate_speech: content attacking people based on a protected characteristic (race, religion, gender, sexual orientation, disability, etc.).
-- threats_violence: threats of physical harm, or content that incites or glorifies violence.
-- spam: unsolicited advertising, scams, or repetitive promotional content unrelated to foster-family community life.
-- doxxing_pii: publishing someone else's private information (home address, phone number, full legal name of a minor in care, etc.) without their consent.
-- illegal_content: content describing or facilitating illegal activity.
+- harassment: attacks, demeans, or targets a specific person or family, rather than describing the author's own experience.
+- hate-speech: demeans people based on group identity -- race, religion, ethnicity, disability, sexual orientation, national origin -- rather than an individual dispute.
+- threats-violence: threatens or describes harming a person, family, or child, including figurative/"joking" threats.
+- spam: bulk, promotional, or off-topic content not meant for genuine community participation.
+- doxxing-pii: exposes another person's identifying or contact information without consent, including a child-in-care's identifying details.
+- illegal-content: describes or promotes activity that is illegal (e.g. regulated goods, non-consensual imagery).
+- explicit-content: sexual or explicit material not appropriate for a family caregiving community, including any content sexualizing minors.
 
 Do NOT flag content merely for being critical, awkwardly worded, negative in tone, or emotionally raw -- that narrower, softer band is handled by this platform's separate Reply Coach, not you. You are a narrow safety net for the categories above only. When uncertain, do not flag: a missed genuine violation is recoverable through this community's after-the-fact reporting; a wrongly-blocked ordinary foster-family post is not recoverable for the person who wrote it.
 
@@ -171,7 +177,7 @@ Respond with a single JSON object matching exactly this shape, and nothing else 
   "categories": string[]
 }
 
-"categories" must only contain values from this exact set: ${MODERATION_CATEGORIES.join(", ")}. If "flagged" is false, "categories" must be [].`;
+"categories" must only contain values from this exact set: ${MODERATION_CATEGORIES.join(", ")}. If "flagged" is false, "categories" must be []. A single piece of content may match more than one category -- include all that apply.`;
 
 let anthropicSingleton: Anthropic | null = null;
 

@@ -61,14 +61,25 @@ function resetClassifier() {
 
 // ── AC: "classified against a defined set of ... violation categories" ─────
 
-Deno.test("MODERATION_CATEGORIES — provisional taxonomy covers all 6 AC-named violation types, no duplicates", () => {
-  // Placeholder pending ux-writer's final taxonomy/voice (AC #2 — note this
-  // feature's frontmatter currently has `collaborators: []`, so it is not
-  // confirmed ux-writer has been spawned this pass; flagged separately in
-  // ### Test plan's risk notes). This test locks the SHAPE (6 categories,
-  // matching the AC's named list) so a future taxonomy rename is visible.
-  assertEquals(MODERATION_CATEGORIES.length, 6);
-  assertEquals(new Set(MODERATION_CATEGORIES).size, 6);
+Deno.test("MODERATION_CATEGORIES — final taxonomy (ux-writer ### Microcopy §1) covers all 7 categories, kebab-case, no duplicates", () => {
+  // Updated by backend-dev once ux-writer's ### Microcopy landed and resolved
+  // open question #3: 7 categories (not 6), kebab-case (not snake_case) —
+  // AC #2's working list plus ux-writer's deliberate addition of
+  // "explicit-content" (see ### Microcopy §1 for the child-safety rationale).
+  // This test locks the exact SHAPE and VALUES so a future taxonomy change is
+  // a deliberate test update, not silent drift between backend and the copy
+  // that was written against these exact slugs.
+  assertEquals(MODERATION_CATEGORIES.length, 7);
+  assertEquals(new Set(MODERATION_CATEGORIES).size, 7);
+  assertEquals(MODERATION_CATEGORIES, [
+    "harassment",
+    "hate-speech",
+    "threats-violence",
+    "spam",
+    "doxxing-pii",
+    "illegal-content",
+    "explicit-content",
+  ]);
 });
 
 // ── AC: "gated behind a feature flag, defaulting off" ───────────────────────

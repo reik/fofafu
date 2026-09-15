@@ -52,7 +52,93 @@ Success = harmful content never reaches the feed/thread in the first place, fals
 ## Engineering — Acceptance
 
 ### Backend
-*(filled by backend-dev)*
+
+**Scope note.** Third pass on this section. First attempt hit an account-wide rate limit with zero output. Second attempt (`e4e7733`) built `supabase/functions/_shared/moderation.ts` — the classifier module itself, `evaluateContent()`, fully tested (11/11 `deno test`, independently re-verified by the dispatcher) — but ran out of turns before wiring it into a real call site or writing this section. This pass does three things: wires `evaluateContent()` into the two real call sites (it had zero callers before now), fixes a taxonomy mismatch ux-writer's landed `### Microcopy` exposed, and writes up all four original decisions plus the wiring/contract details below.
+
+#### (a) Fail-open on classifier unavailability
+
+**Decision: fail-open.** A classifier throw or timeout lets the write through rather than blocking it. Fully implemented and documented in `supabase/functions/_shared/moderation.ts:65-81` (the doc comment directly above `CONTENT_MODERATION_POLICY`) and exercised by both branches in `moderation.test.ts` (lines 144-177) — fail-closed is also fully implemented and tested even though it isn't the shipped default, so the rejected alternative's exact behavior stays visible if this is ever revisited.
+
+**Why:** matches reply-coach's silent-fallback precedent, and more importantly bounds the failure mode. An Anthropic API outage degrades this feature back to pre-launch behavior (nothing caught this narrow violation band before this feature existed either) rather than stopping every post/comment on the platform. [[features/moderation-report-block]]'s after-the-fact report/block flow remains a second line of defense during any such window. The policy is exported as a single named constant (`CONTENT_MODERATION_POLICY`, `moderation.ts:86`) rather than hardcoded per call site, so it's one grep away and trivially flippable.
+
+Load-bearing structural guarantee, worth restating because it's this feature's core "no override" AC: fail-open/fail-closed governs **only** the classifier-unavailable branch. A `flagged: true` classifier result is unconditionally `allowed: false` regardless of policy — there is no code path in `evaluateContent()` that lets a genuine positive flag resolve to `allowed: true`. `moderation.test.ts:121-135` locks this down explicitly (`"flagged content is never allowed under fail-open either (no override path)"`).
+
+#### (b) DM coverage — decision: out of scope for this pass
+
+**Decision: DMs are not wired to this gate.** `../_shared/moderation.ts`'s header comment (lines 4-6) forward-referenced this decision since wave 2a; this is that decision, made concrete:
+
+- **Different privacy context.** A DM is a private 1:1 conversation the platform doesn't otherwise read or classify; a feed post/comment is public-by-construction the moment it's written. Running every DM through a third-party classifier (even one with the "not retained beyond operational necessity" bar this feature already holds) is a materially bigger privacy commitment than gating public content, and isn't something this pass should default into without an explicit product call — this mirrors the feature file's own `## Out of scope` framing ("tentatively out of scope pending the open question below; do not build DM coverage without resolving it first") and Open Question #1, which is still unresolved.
+- **No urgent forcing function.** [[features/moderation-report-block]] already gives DM participants a block/report escape valve (the sibling feature this branch is named after), so DMs aren't going ungoverned in the meantime — they just don't get the write-time gate.
+- **Low cost to extend later if resolved "yes".** `evaluateContent()` is content-shape-agnostic (takes a `string`, returns a verdict) — wiring it into `supabase/functions/message/index.ts`'s send-message path would be the same three-line pattern used below in `announcement/index.ts`, no classifier/module changes needed. `### Growth`'s `moderation_gate_events.surface` column is already designed for this (`CHECK (surface IN ('post', 'comment'))`, explicit note: "if DM coverage resolves to yes, add 'dm' to the CHECK constraint in a follow-up migration rather than guessing now").
+- **Not touched this pass, structurally enforced.** `message/index.ts` is not imported by, and does not import, `_shared/moderation.ts` — confirmed via grep, zero references either direction.
+
+This resolves Open Question #1 for engineering's purposes (a scope decision, not a product reversal — if the product call changes, the extension path above is cheap).
+
+#### (c) Technical seam — own module, independent of reply-coach/reply-coach-live
+
+**Decision: `supabase/functions/_shared/moderation.ts`, a standalone module — not a shared seam with `../coach/index.ts`'s (reply-coach's) Anthropic client.** Already implemented in wave 2a; documented here for the record since Open Question #5 asked for this explicitly.
+
+- Own Anthropic client singleton (`anthropicSingleton`, `moderation.ts:176`), own system prompt (`MODERATION_SYSTEM_PROMPT`), own env var (`CONTENT_MODERATION_GATE_ENABLED`, distinct from `REPLY_COACH_ENABLED`/`REPLY_COACH_LIVE_ENABLED`), own test-injection hook (`setModerationClassifierForTests`, structurally identical in shape to coach's `setClaudeClientForTests` but a separate function, separate module-level variable).
+- **Why separate, not shared:** this feature's own Problem statement is explicit that "the two systems... never contradict or duplicate a prompt on the same piece of content," and the hard constraint on this work was to leave reply-coach/reply-coach-live's code and behavior untouched. A shared client/prompt seam would couple the two systems' request lifecycles (e.g. a shared rate limit, a shared prompt-injection surface, a shared timeout budget) in exactly the way the Problem statement rules out. Confirmed again this pass: zero imports either direction between `_shared/moderation.ts` and `coach/index.ts`.
+- **What IS reused, by design:** the *shape* of the seam — a swappable classifier function behind a test-injection hook, an uncached env-var flag read on every call (no in-memory caching, so a flag flip takes effect without a redeploy) — read only as reference from `coach/index.ts` and the dead-code Express-era `backend/src/services/coach/{claudeClient,featureFlags}.ts`. Nothing imported from, or written back into, either.
+- **Stack (open question (d)):** Supabase Edge Functions + Deno, matching the rest of this migration-in-progress backend (per `CLAUDE.md` Phase 5) rather than a separate runtime. `npm:@anthropic-ai/sdk@0.32` via Deno's npm compat, same major version `coach/index.ts` uses (not literally shared, independently specified) so behavior parity with the existing Anthropic integration in this codebase is predictable. No new dependency introduced — `@anthropic-ai/sdk` and `@supabase/supabase-js` are both already used elsewhere in `supabase/functions/`.
+
+#### Wiring — the two real call sites (this pass's primary deliverable)
+
+`evaluateContent()` had zero callers before this pass. Wired into `supabase/functions/announcement/index.ts` at exactly the two insert paths this feature's AC #1 names:
+
+- **POST `/announcement`** (`announcement/index.ts:160-163`, immediately before the `announcements` insert at `:164-167`)
+- **POST `/announcement/:id/comments`** (`announcement/index.ts:243-246`, immediately before the `comments` insert at `:247-249`)
+
+Both follow the identical pattern:
+
+```ts
+if (isContentModerationGateEnabled()) {
+  const outcome = await evaluateContent(content, CONTENT_MODERATION_POLICY);
+  if (!outcome.allowed) return moderationBlockedResponse(outcome.categories);
+}
+// ...existing insert unchanged...
+```
+
+**Ordering guarantee (### Code review watch-list #1, this feature's sharpest named risk, addressed directly):** the `evaluateContent()` call is `await`-ed and resolved to a verdict *before* the `.insert(...)` call is ever reached in the same synchronous control-flow block — there is no code path where the row is inserted first and conditionally deleted after. A blocked verdict `return`s immediately, so the insert statement below it is never executed for that request. This isn't a convention being followed by discipline; it's the only path through the `if` block. `announcement/index.test.ts`'s three flagged/blocked tests assert this directly by never queuing a fake response for the `announcements`/`comments` table and confirming the fake client's insert recorder stays empty (see Test coverage below) — if a future edit reordered this into insert-then-delete, those tests would fail loudly (either a "no fake response queued" throw, from an unexpected read/insert call, or a non-empty insert recorder).
+
+**Default-off (AC #7):** the gate check is nested entirely inside `if (isContentModerationGateEnabled())` — when the flag is unset or anything other than the literal string `"true"`, `evaluateContent()` is never called at all and both endpoints fall straight through to their pre-existing insert behavior, byte-for-byte unchanged from before this feature.
+
+**Response contract — confirmed against both already-built sides, not changed.** `frontend/src/api/announcements.ts`'s `ModerationBlockedPayload` Zod schema (wave 1, lines ~101-105) and this module's own `ModerationOutcome`/`ClassifierResult` (wave 2a) already independently agreed on `categories: string[]` (plural array) with `code` — not HTTP status — as the discriminator. `moderationBlockedResponse()` (`announcement/index.ts:118-124`) returns exactly:
+
+```json
+{ "error": "Content flagged by the moderation gate and was not published.", "code": "content_flagged", "categories": ["harassment", "threats-violence"] }
+```
+
+at HTTP 422 (distinct from the endpoint's existing 400s, which are shape/length validation, not content-policy rejection — `code` is what the frontend actually switches on per its own doc comment, so the exact status is a free choice). `error` is a structural, non-PII string for logs/fallback only — it never contains post/comment content and is not the string rendered in `ModerationBlockNotice` (that's ux-writer's `### Microcopy` §4 strings, owned and rendered entirely on the frontend). No changes were made to either Zod schema or to `ClassifierResult`/`ModerationOutcome` — this pass only had to confirm the two already-built sides agree, which they do.
+
+#### Taxonomy fix — two mismatches, not one
+
+`MODERATION_CATEGORIES` (`moderation.ts:40-48`) previously had 6 values in snake_case; ux-writer's landed `### Microcopy` §1 specced 7 in kebab-case. Fixed to the exact 7 kebab-case slugs: `harassment`, `hate-speech`, `threats-violence`, `spam`, `doxxing-pii`, `illegal-content`, `explicit-content`. This was a casing mismatch, not just a missing 7th value — `hate_speech` ≠ `hate-speech` as literal strings, so even the 6 overlapping categories would have silently fallen through to `ModerationBlockNotice`'s generic `default` message once frontend wires a real `category` prop, defeating ux-writer's per-category copy work without ever throwing an error. Also updated: the classifier's system prompt category list and per-category descriptions (`moderation.ts:155-161`, now kebab-case, `explicit-content` added with ux-writer's child-safety rationale folded in), the JSON-shape description's "must only contain values from this exact set" line (unchanged in structure, now resolves against the corrected constant), and `moderation.test.ts`'s stale "6, no duplicates" assertion — now asserts exactly 7 values in the exact order/casing ux-writer specced, so a future taxonomy drift is a deliberate test update, not silent breakage.
+
+`isClassifierResult()`'s runtime shape guard (`moderation.ts:178-186`) still only checks `categories` is a `string[]`, not that each value is a member of `MODERATION_CATEGORIES` — pre-existing behavior, unchanged this pass; out of this task's 3-item scope.
+
+#### Test coverage — what this pass covered, and what it didn't
+
+`deno test --allow-env --allow-read` from `supabase/functions/`: **36/36 passing** (11 `_shared/moderation.test.ts`, 20 `admin/index.test.ts` — untouched, pre-existing — and 5 new in `announcement/index.test.ts`). Type-check clean for every file `deno test` traverses.
+
+New in `announcement/index.test.ts` (first test file this Edge Function has ever had — it had zero coverage of any kind before this pass, a pre-existing gap, confirmed via repo search):
+- POST `/announcement`: flag off (classifier never called, insert proceeds), flag on + clean (classifier called once with the exact submitted content, insert proceeds, 201), flag on + flagged (insert never called, 422 with the exact `{error, code, categories}` shape).
+- POST `/announcement/:id/comments`: flag off (unaffected), flag on + flagged (insert never called, same response contract as the post path).
+
+Deliberately **not** covered — a pre-existing gap this pass didn't backfill wholesale, flagged for qa-engineer's next wave rather than silently left implicit: GET/PATCH/DELETE on announcements or comments, reactions, pagination, ownership/403 checks — none of that touches the moderation gate, so it was out of this pass's narrow scope. `announcement/index.test.ts`'s `makeFakeSupabase()` fixture is written to be reusable for that extension (mirrors every chain method `handleRequest` calls, not just the ones the 5 tests above exercise), so qa-engineer's work extends this file rather than duplicating its fixture.
+
+**Refactor required to make any of this testable, noted for transparency:** `announcement/index.ts` previously ran its entire routing table inline inside `Deno.serve(async (req) => {...})`, with no way to invoke it against a fake client. Extracted into `export async function handleRequest(req: Request, supabase: SupabaseClient): Promise<Response>`, with `Deno.serve` now guarded behind `if (import.meta.main)` (`announcement/index.ts:331-345`) — this is not a new pattern invented for this feature; it's the exact structure `../admin/index.ts` already established (`handleRequest` + `import.meta.main` guard), copied 1:1 for consistency. Zero behavior change: same routes, same branches, same responses, for every path this feature doesn't touch.
+
+**One pre-existing type bug found and fixed, in-scope:** `deno check` on the new test file surfaced a latent bug in `authorLookup()` (`announcement/index.ts`) — inferring `Map<K, V>` from an `any`-typed source resolves `V` to `unknown` rather than `any`, which nothing had caught before because no test file had ever imported this module (so `deno check` never traversed it). Fixed with an explicit type argument on the `Map` constructor — a type-only, zero-runtime-behavior change, in a file already in this pass's writer ownership. Confirmed via `git blame` this line predates this feature entirely (`55b950f`, 2026-07-13).
+
+**One pre-existing, unrelated, out-of-scope failure found and deliberately left alone:** running `deno check` across every function directory as extra diligence (beyond `deno test`'s own reachable-file checking) surfaced a type error in `coach/index.ts` (`cache_control` not present in the installed Anthropic SDK's `TextBlockParam` type). Confirmed via `git blame`/`git diff master...HEAD` this predates this feature entirely (commit `55b950f`, 2026-07-13, byte-identical to `master`, zero diff on this branch) and is invisible to `deno test` today because `coach/` has no test file. This is a reply-coach file — explicitly out of this feature's hard constraint ("do not touch reply-coach/reply-coach-live files or behavior") — left untouched and flagged here rather than fixed.
+
+#### Not done this pass (deferred, not forgotten)
+
+- **`moderation_gate_events` table/migration.** `### Growth`'s schema (§5) is fully specced but no migration file exists yet — not part of this pass's 3-item scope (wiring, taxonomy, contract confirmation). The `outcome` column's session-timeout resolution mechanism (§5's "backend-dev's call on exact mechanism") is also still open. Next backend wave.
+- **DM coverage**, per decision (b) above — resolved to "out of scope," not implemented; see the extension path noted there if the product call changes.
+- No changes to `coach/index.ts`, `backend/src/services/coach/**`, or any reply-coach/reply-coach-live behavior — confirmed via `git diff master...HEAD --stat` scoped to those paths (empty).
 
 ### Frontend
 *(filled by frontend-dev)*
