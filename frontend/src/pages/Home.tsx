@@ -5,6 +5,8 @@ import { Layout } from '@/components/Layout';
 import { Avatar } from '@/components/Avatar/Avatar';
 import { AnnouncementComposer } from '@/features/feed/components/AnnouncementComposer';
 import { AnnouncementCard } from '@/features/feed/components/AnnouncementCard';
+import { AnnouncementFeedSkeleton } from '@/features/feed/components/AnnouncementFeedSkeleton';
+import { CommunityRailSkeleton } from '@/components/CommunitySkeleton';
 import { listAnnouncements, feedKeys, type FeedPage as FeedPageDTO } from '@/api/announcements';
 import { getRecentCommunity, communityKeys } from '@/api/community';
 import { getMyFamily, familyKeys } from '@/api/family';
@@ -64,10 +66,10 @@ export default function HomePage() {
           </section>
         </aside>
 
-        <section aria-label="Announcements" className="min-w-0 space-y-4">
+        <section aria-label="Announcements" className="min-w-0 space-y-4" aria-busy={feed.isPending}>
           <AnnouncementComposer />
 
-          {feed.isPending && <p className="text-ink-muted">Loading…</p>}
+          {feed.isPending && <AnnouncementFeedSkeleton />}
           {feed.isError && (
             <p className="text-sm text-feedback-error">
               {feed.error instanceof Error ? feed.error.message : 'Could not load the feed.'}
@@ -92,7 +94,7 @@ export default function HomePage() {
             <h2 className="mb-3 text-xs font-bold uppercase tracking-wide text-ink-muted">
               Community
             </h2>
-            {community.isPending && <p className="text-sm text-ink-muted">Loading…</p>}
+            {community.isPending && <CommunityRailSkeleton aria-hidden="true" />}
             {community.isError && (
               <p className="text-sm text-feedback-error">Could not load community.</p>
             )}

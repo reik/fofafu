@@ -121,9 +121,9 @@ describe('FeedPage', () => {
     mockFeed({ delayMs: 50 });
     renderWithProviders(<FeedPage />);
 
-    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    expect(screen.getAllByTestId('announcement-card-skeleton').length).toBeGreaterThanOrEqual(1);
 
-    await waitFor(() => expect(screen.queryByText(/loading/i)).toBeNull());
+    await waitFor(() => expect(screen.queryAllByTestId('announcement-card-skeleton')).toHaveLength(0));
   });
 
   it('shows an error state when the feed request fails', async () => {
