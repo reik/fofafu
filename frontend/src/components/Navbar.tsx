@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type SVGProps } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/auth';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
+import { logout } from '@/api/auth';
 import { unreadCount, messageKeys } from '@/api/messages';
 import { cn } from '@/utils/cn';
 import {
@@ -61,10 +62,17 @@ export function Navbar() {
     ? [...NAV_LINKS, { to: '/admin', label: 'Admin', Icon: ShieldIcon, match: (p: string) => p.startsWith('/admin') }]
     : NAV_LINKS;
 
+  const signOutMutation = useMutation({ mutationFn: logout });
+
+  // Clears local state and redirects immediately for a snappy UI, but also
+  // fires the real Supabase signOut so the persisted session is actually
+  // invalidated — otherwise it survives in localStorage and silently
+  // resumes on the next reload or token-refresh via onAuthStateChange.
   const handleSignOut = () => {
     setAccountMenuOpen(false);
     clear();
     navigate('/login');
+    signOutMutation.mutate();
   };
 
   // Lightweight disclosure (not a full ARIA menu widget — see the "Frontend"

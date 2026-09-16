@@ -232,7 +232,7 @@ describe('Navbar — Option B grouped track', () => {
 
     it('reveals a Sign out control via the keyboard (Tab to chip, Enter) that preserves clear+redirect behavior', async () => {
       setAuthed();
-      server.use(handlers.messagesUnreadCount(0));
+      server.use(handlers.messagesUnreadCount(0), handlers.signOutOk());
       const user = userEvent.setup();
       renderWithProviders(
         <Routes>
