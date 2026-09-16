@@ -6,6 +6,8 @@ import { EditIcon, OpenIcon, TrashIcon } from '@/components/icons';
 import { formatAuthor } from '@/utils/formatAuthor';
 import { formatTimestamp } from '@/utils/formatTimestamp';
 import { Avatar } from '@/components/Avatar';
+import { BlockedContentPlaceholder } from '@/features/moderation/components/BlockedContentPlaceholder';
+import { ModerationMenu } from '@/features/moderation/components/ModerationMenu';
 import { ReactionBar } from './ReactionBar';
 import { AnnouncementEditForm } from './AnnouncementEditForm';
 
@@ -15,6 +17,7 @@ interface Props {
 
 export function AnnouncementCard({ announcement }: Props) {
   const [editing, setEditing] = useState(false);
+  const [blockedFamilyId, setBlockedFamilyId] = useState<string | null>(null);
   const qc = useQueryClient();
   const del = useMutation({
     mutationFn: () => deleteAnnouncement(announcement.id),
@@ -22,6 +25,14 @@ export function AnnouncementCard({ announcement }: Props) {
       qc.invalidateQueries({ queryKey: feedKeys.page });
     },
   });
+
+  // "The source row itself becomes the confirmation" once its author is
+  // blocked from this row's own ModerationMenu — see ### Visual §1.3.
+  if (blockedFamilyId) {
+    return (
+      <BlockedContentPlaceholder familyId={blockedFamilyId} familyName={formatAuthor(announcement.authorName)} />
+    );
+  }
 
   return (
     <article className="space-y-3 rounded-lg bg-surface-card p-5 shadow-lift">
@@ -71,6 +82,15 @@ export function AnnouncementCard({ announcement }: Props) {
                 {del.isPending ? 'Deleting…' : 'Delete'}
               </button>
             </>
+          )}
+          {!announcement.isAuthor && (
+            <ModerationMenu
+              targetType="announcement"
+              targetId={announcement.id}
+              authorId={announcement.authorId}
+              authorName={announcement.authorName}
+              onBlocked={setBlockedFamilyId}
+            />
           )}
           <Link
             to={`/post/${announcement.id}`}
