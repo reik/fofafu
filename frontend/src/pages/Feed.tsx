@@ -6,7 +6,6 @@ import { listAnnouncements, feedKeys, type AnnouncementDTO, type FeedPage as Fee
 import { Layout } from '@/components/Layout';
 import { AnnouncementComposer } from '@/features/feed/components/AnnouncementComposer';
 import { AnnouncementCard } from '@/features/feed/components/AnnouncementCard';
-import { AnnouncementFeedSkeleton } from '@/features/feed/components/AnnouncementFeedSkeleton';
 
 export default function FeedPage() {
   const [cursor, setCursor] = useState<string | null>(null);
@@ -76,7 +75,7 @@ export default function FeedPage() {
       </section>
 
       <section className="mt-6">
-        {isPending && cursor === null && <AnnouncementFeedSkeleton />}
+        {isPending && cursor === null && <p className="text-ink-muted">Loading…</p>}
         {isError && (
           <p className="text-feedback-error text-sm">
             {error instanceof Error ? error.message : 'Could not load the feed.'}

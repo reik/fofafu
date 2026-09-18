@@ -7,7 +7,6 @@ import { ReactionBar } from '@/features/feed/components/ReactionBar';
 import { CommentList } from '@/features/feed/components/CommentList';
 import { CommentForm } from '@/features/feed/components/CommentForm';
 import { AnnouncementEditForm } from '@/features/feed/components/AnnouncementEditForm';
-import { AnnouncementCardSkeleton } from '@/features/feed/components/AnnouncementCardSkeleton';
 import { EditIcon, TrashIcon } from '@/components/icons';
 import { formatTimestamp } from '@/utils/formatTimestamp';
 
@@ -41,11 +40,7 @@ export default function AnnouncementDetailPage() {
   }
 
   if (postQuery.isPending) {
-    return (
-      <Layout>
-        <AnnouncementCardSkeleton />
-      </Layout>
-    );
+    return <Layout><p className="text-ink-muted">Loading…</p></Layout>;
   }
   if (postQuery.isError || !postQuery.data) {
     return (
