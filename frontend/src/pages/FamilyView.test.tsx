@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Routes, Route } from 'react-router-dom';
 import { http, HttpResponse } from 'msw';
 import { renderWithProviders } from '@/tests/render';
@@ -108,5 +109,73 @@ describe('FamilyView — Recent posts integration', () => {
 
     await screen.findByText(/no posts from this family yet/i);
     expect(captured).toBe(VIEWED_FAMILY_ID);
+  });
+});
+
+describe('FamilyView — Availability empty state', () => {
+  function mockAvailability(slots: unknown[]) {
+    server.use(
+      http.get(`${FUNCTIONS_BASE}/family/${VIEWED_FAMILY_ID}`, () => HttpResponse.json(otherFamily)),
+      http.get(`${FUNCTIONS_BASE}/announcement`, () =>
+        HttpResponse.json({ items: [], nextCursor: null }),
+      ),
+      http.get(`${FUNCTIONS_BASE}/playdates/availability/${VIEWED_FAMILY_ID}`, () =>
+        HttpResponse.json(slots),
+      ),
+    );
+  }
+
+  it('shows the "hasn\'t set any availability yet" message for the current week when there are zero slots', async () => {
+    setAuthed();
+    mockAvailability([]);
+
+    renderRoute();
+
+    expect(await screen.findByRole('heading', { name: /lee.?s availability/i })).toBeInTheDocument();
+    expect(
+      await screen.findByText(/lee hasn.t set any availability yet\./i),
+    ).toBeInTheDocument();
+    // The calendar/legend must not render alongside the empty-state message.
+    expect(screen.queryByText(/click a slot to request/i)).not.toBeInTheDocument();
+  });
+
+  it('still shows the empty-state message after navigating to a future week with zero slots (no regression)', async () => {
+    setAuthed();
+    mockAvailability([]);
+
+    renderRoute();
+
+    await screen.findByText(/lee hasn.t set any availability yet\./i);
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: /next/i }));
+
+    expect(
+      await screen.findByText(/lee hasn.t set any availability yet\./i),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/click a slot to request/i)).not.toBeInTheDocument();
+  });
+
+  it('renders WeekCalendar instead of the empty-state message when at least one slot exists', async () => {
+    setAuthed();
+    mockAvailability([
+      {
+        id: 'slot-1',
+        familyId: VIEWED_FAMILY_ID,
+        date: '2026-06-15',
+        startTime: '09:00',
+        endTime: '10:00',
+        status: 'free',
+        note: null,
+        createdAt: '2026-06-01T00:00:00Z',
+        updatedAt: '2026-06-01T00:00:00Z',
+      },
+    ]);
+
+    renderRoute();
+
+    expect(await screen.findByRole('heading', { name: /lee.?s availability/i })).toBeInTheDocument();
+    expect(await screen.findByText(/click a slot to request/i)).toBeInTheDocument();
+    expect(screen.queryByText(/lee hasn.t set any availability yet\./i)).not.toBeInTheDocument();
   });
 });
