@@ -329,8 +329,9 @@ existed at the time this spec was authored). Selectors encode an assumed
 test-hook contract documented at the top of the spec file
 (`[aria-busy="true"]` on the pending container, `data-testid="announcement-card-skeleton"`
 per skeleton card + `aria-hidden="true"` + no focusable descendants,
-`data-testid="skeleton-media"` for the media-block variant,
-`data-testid="community-skeleton-row"` for the rail) — if the shipped
+`data-testid="announcement-card-skeleton-media"` for the media-block variant
+(corrected from an initial `skeleton-media` assumption during code review —
+see below), `data-testid="community-skeleton-row"` for the rail) — if the shipped
 markup uses different hooks, frontend-dev/tech-lead should update the
 selectors, not the assertions, since the assertions are the ACs themselves.
 Tests intercept the real Supabase Edge Function calls (`page.route` +
@@ -339,31 +340,43 @@ real network timing rather than mocking response bodies.
 
 | Scenario | Spec | Status |
 |---|---|---|
-| Home feed shows 2–3 skeleton cards (one with a media block) while pending, aria-busy clears and skeletons unmount once real cards render | `frontend/e2e/feed-skeleton-loading.spec.ts` | pending (see below) |
-| Tabbing while the home feed is pending never focuses inside a skeleton block (no extra tab stops) | `frontend/e2e/feed-skeleton-loading.spec.ts` | pending (see below) |
-| Home Community rail shows skeleton rows while pending, swaps to real rows | `frontend/e2e/feed-skeleton-loading.spec.ts` | pending (see below) |
-| `/feed` initial load shows the same skeleton cards, then swaps to real content | `frontend/e2e/feed-skeleton-loading.spec.ts` | pending (see below) |
-| `/feed` "Load older posts" pagination does not re-show the initial-load skeleton (isPending && cursor === null only) | `frontend/e2e/feed-skeleton-loading.spec.ts` | pending (see below) |
-| `prefers-reduced-motion` disables the skeleton's pulse/shimmer animation (static bones) | `frontend/e2e/feed-skeleton-loading.spec.ts` | pending (see below) |
+| Home feed shows 2–3 skeleton cards (one with a media block) while pending, aria-busy clears and skeletons unmount once real cards render | `frontend/e2e/feed-skeleton-loading.spec.ts` | skeleton behavior verified; real-content tail blocked on seed data (see below) |
+| Tabbing while the home feed is pending never focuses inside a skeleton block (no extra tab stops) | `frontend/e2e/feed-skeleton-loading.spec.ts` | skeleton behavior verified; real-content tail blocked on seed data (see below) |
+| Home Community rail shows skeleton rows while pending, swaps to real rows | `frontend/e2e/feed-skeleton-loading.spec.ts` | skeleton behavior verified; real-content tail blocked on seed data (see below) |
+| `/feed` initial load shows the same skeleton cards, then swaps to real content | `frontend/e2e/feed-skeleton-loading.spec.ts` | skeleton behavior verified; real-content tail blocked on seed data (see below) |
+| `/feed` "Load older posts" pagination does not re-show the initial-load skeleton (isPending && cursor === null only) | `frontend/e2e/feed-skeleton-loading.spec.ts` | blocked before it reaches the pagination step — needs seeded initial content (see below) |
+| `prefers-reduced-motion` disables the skeleton's pulse/shimmer animation (static bones) | `frontend/e2e/feed-skeleton-loading.spec.ts` | skeleton behavior verified; real-content tail blocked on seed data (see below) |
 
-**Execution status — genuinely blocked, not just unverified:** ran
-`npx playwright test e2e/feed-skeleton-loading.spec.ts` twice in this
-worktree. First run failed at `npm install` (no `node_modules` in this
-worktree — fixed by running `npm install` once, a local-environment step,
-no package.json changes). Second run: all 6 specs fail identically at
-`loginAs`'s `page.goto('/login')` / `getByLabel('Email')`, because
-`frontend/.env` doesn't exist in this sandbox (only `.env.example`) and
-`src/lib/supabaseClient.ts` throws synchronously at module init
-(`Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY`), confirmed via
-Playwright's `pageerror` event — the login form never mounts, so no spec in
-`frontend/e2e/` can run end-to-end here regardless of this feature's own
-code. This is the same "no live Supabase credentials in this sandbox" gap
-recorded for `moderation-report-block.spec.ts`, `header-nav-redesign.spec.ts`,
-and `playdates.spec.ts` — now additionally confirmed at the root cause
-(missing `frontend/.env`, not just missing seed data). Whoever has a real
-Supabase anon key for project `rlizubjugevyxsfzmpny` should populate
-`frontend/.env` from `.env.example` and re-run; until then, review these
-specs by reading, not by a green CI run.
+**Execution status — now actually run, not just read.** Originally blocked
+identically to `moderation-report-block.spec.ts`/`header-nav-redesign.spec.ts`/
+`playdates.spec.ts` by the missing-`frontend/.env` root cause traced there.
+[[features/e2e-auth-mocking]] (dispatched separately, since the fix is shared
+across all four specs) closed that gap; re-ran this spec against its
+`loginAs` locally (branch `fix/e2e-auth-mocking`'s `login.ts`, not yet
+merged — temporary local copy for verification, not committed here) and
+found a second, separate bug: `delayRoute(page, '**/announcement*')`
+(4 of the 6 scenarios) also matches Vite's dev-server request for the
+source file `src/api/announcements.ts` — imported eagerly by `App.tsx`'s
+top-level, non-lazy route table, so it's fetched on *every* page load
+including `/login`. The delayed route then hangs indefinitely, timing out
+`page.goto('/login')` itself before `loginAs` ever gets a chance to run.
+Narrowed the pattern to `**/functions/v1/announcement*` (the real Edge
+Function path, per `edgeClient.ts`'s `FUNCTIONS_URL`), which doesn't
+collide with any source file. Fixed in this branch's own spec file — not
+e2e-auth-mocking's scope, since it's specific to this spec's route pattern.
+
+After that fix: **5 of 6 scenarios reach and pass every skeleton-specific
+assertion** (skeleton visible with correct count/media block, `aria-busy`
+lifecycle, `aria-hidden` + zero focusable descendants, reduced-motion
+`animationName: none`) — they only fail on the final "then real content
+replaces it" check (`locator('article')` / `getByText('The Chen Family')`
+not found), because this sandbox's Supabase project has no seeded dummy
+families/posts. The 6th (pagination) needs seeded content just to reach its
+first assertion, so it never gets past that. This is the same
+missing-seed-data gap `e2e-auth-mocking` already logged for 3 other specs —
+not a bug in this feature, and not something a dispatched fix can close
+without a human populating real test data in a reachable project. Once
+seed data exists, expect all 6 green with no further code changes.
 
 ### Code review
 

@@ -45,7 +45,7 @@ test.describe('feed skeleton loading', () => {
   test('home feed: shows skeleton cards while pending, then swaps to real content and clears aria-busy', async ({
     page,
   }) => {
-    const releaseFeed = await delayRoute(page, '**/announcement*');
+    const releaseFeed = await delayRoute(page, '**/functions/v1/announcement*');
 
     await loginAs(page, 'brooks@dummy.test');
 
@@ -73,7 +73,7 @@ test.describe('feed skeleton loading', () => {
   });
 
   test('home feed: tabbing while pending never focuses inside a skeleton block', async ({ page }) => {
-    const releaseFeed = await delayRoute(page, '**/announcement*');
+    const releaseFeed = await delayRoute(page, '**/functions/v1/announcement*');
 
     await loginAs(page, 'anderson@dummy.test');
 
@@ -110,7 +110,7 @@ test.describe('feed skeleton loading', () => {
   });
 
   test('/feed: shows skeleton cards on initial load, then swaps to real content', async ({ page }) => {
-    const releaseFeed = await delayRoute(page, '**/announcement*');
+    const releaseFeed = await delayRoute(page, '**/functions/v1/announcement*');
 
     await loginAs(page, 'brooks@dummy.test');
     await page.goto('/feed');
@@ -137,7 +137,7 @@ test.describe('feed skeleton loading', () => {
     // by clicking "Load older posts" — the AC restricts the skeleton to
     // `isPending && cursor === null`, so this second, cursor !== null fetch
     // must NOT bring the skeleton back.
-    const releaseNextPage = await delayRoute(page, '**/announcement*cursor=*');
+    const releaseNextPage = await delayRoute(page, '**/functions/v1/announcement*cursor=*');
 
     const loadOlderButton = page.getByRole('button', { name: 'Load older posts' });
     await loadOlderButton.scrollIntoViewIfNeeded();
@@ -156,7 +156,7 @@ test.describe('feed skeleton loading', () => {
   test('reduced motion: skeleton bones render statically, no pulse/shimmer animation', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
 
-    const releaseFeed = await delayRoute(page, '**/announcement*');
+    const releaseFeed = await delayRoute(page, '**/functions/v1/announcement*');
     await loginAs(page, 'anderson@dummy.test');
 
     const firstSkeleton = page.getByTestId('announcement-card-skeleton').first();
