@@ -5,6 +5,7 @@ team: company
 
 > Navigation: [[kanban/engineering]] · [[kanban/design]] · [[kanban/marketing]] · [[README]] · [[protocols/dispatch]]
 ## Backlog
+- [ ] [[features/e2e-auth-mocking]] — P1: mock the Supabase Auth network boundary in `e2e/utils/login.ts` so the Playwright suite runs without a populated `frontend/.env` or a reachable real Supabase project; fixes a blocker independently rediscovered by [[features/moderation-report-block]], [[features/header-nav-redesign]], [[features/playdates]], and [[features/feed-skeleton-loading]]'s e2e-test-writer runs
 - [ ] [[features/feed-skeleton-loading]] — skeleton loading cards (avatar/name/text/reaction bones, shimmer on surface.subtle) for the home feed + /feed + Community rail, replacing the bare `Loading…` text; human-approved mock at docs/screenshots/feed-skeleton-proposal/
 - [ ] [[features/auth-password-reset-ui]] — frontend gap surfaced by a user report ("I don't see Forgot password anymore"): the link/pages were never built even though the Supabase-backed API functions already exist
 - [ ] [[features/navbar-component-extraction]] — fast-follow from [[features/header-nav-redesign]]'s code review: extract NavTrackItem/AccountChip out of the 238-line Navbar() per ui-designer's already-named component anatomy

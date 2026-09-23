@@ -5,6 +5,7 @@ team: engineering
 
 > Navigation: [[kanban/company]] · [[teams/engineering]] · [[standards/engineering-standards]]
 ## Backlog
+- [ ] [[features/e2e-auth-mocking]] @engineering — P1: mock Supabase Auth in `e2e/utils/login.ts` so Playwright runs with no real `frontend/.env`/reachable project; fixes the same blocker rediscovered by moderation-report-block/header-nav-redesign/playdates/feed-skeleton-loading
 - [ ] [[features/feed-skeleton-loading]] @engineering — reusable AnnouncementCardSkeleton (+ Community rail bones) replacing bare `Loading…` on Home + Feed; mock approved by human: docs/screenshots/feed-skeleton-proposal/
 - [ ] [[features/auth-password-reset-ui]] @engineering — no "Forgot password?" link or /forgot-password, /reset-password pages exist on the frontend, even though the Supabase-backed API functions (requestPasswordReset/updatePassword in api/auth.ts) already do; pure frontend gap, no backend work needed
 - [ ] [[features/navbar-component-extraction]] @engineering — fast-follow from header-nav-redesign's code review must-fix #2: extract NavTrackItem/AccountChip out of the 238-line Navbar()
