@@ -1,6 +1,7 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { usePrefersReducedMotion } from './usePrefersReducedMotion';
+import { installMatchMedia } from '@/tests/installMatchMedia';
 
 /**
  * Contract this spec locks in (frontend-dev: implement `usePrefersReducedMotion`
@@ -18,34 +19,6 @@ import { usePrefersReducedMotion } from './usePrefersReducedMotion';
  * pulse/shimmer animation for `prefers-reduced-motion` per the feature's
  * acceptance criteria.
  */
-
-interface FakeMediaQueryList {
-  matches: boolean;
-  media: string;
-  addEventListener: (type: 'change', cb: (e: { matches: boolean }) => void) => void;
-  removeEventListener: (type: 'change', cb: (e: { matches: boolean }) => void) => void;
-}
-
-function installMatchMedia(initialMatches: boolean) {
-  let changeHandler: ((e: { matches: boolean }) => void) | undefined;
-  const mql: FakeMediaQueryList = {
-    matches: initialMatches,
-    media: '(prefers-reduced-motion: reduce)',
-    addEventListener: (_type, cb) => {
-      changeHandler = cb;
-    },
-    removeEventListener: () => {
-      changeHandler = undefined;
-    },
-  };
-  window.matchMedia = vi.fn().mockReturnValue(mql) as unknown as typeof window.matchMedia;
-  return {
-    fireChange(matches: boolean) {
-      mql.matches = matches;
-      changeHandler?.({ matches });
-    },
-  };
-}
 
 describe('usePrefersReducedMotion', () => {
   afterEach(() => {

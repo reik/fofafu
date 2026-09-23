@@ -1,8 +1,13 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { AnnouncementCardSkeleton, AnnouncementFeedSkeleton } from './AnnouncementCardSkeleton';
+import { installMatchMedia } from '@/tests/installMatchMedia';
 
 describe('AnnouncementCardSkeleton', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('is hidden from the accessibility tree so it never competes with real content', () => {
     const { container } = render(<AnnouncementCardSkeleton />);
     const root = container.firstElementChild;
@@ -12,11 +17,25 @@ describe('AnnouncementCardSkeleton', () => {
     expect(container.querySelectorAll('a, button, input, [tabindex]')).toHaveLength(0);
   });
 
-  it('renders bones with the pulse animation disabled under prefers-reduced-motion', () => {
+  it('carries the CSS reduced-motion fallback class regardless of preference', () => {
+    installMatchMedia(false);
+    const { container } = render(<AnnouncementCardSkeleton />);
+    const bone = container.querySelector('.bg-surface-subtle');
+    expect(bone).toHaveClass('motion-reduce:animate-none');
+  });
+
+  it('applies the pulse animation when the OS has no reduced-motion preference', () => {
+    installMatchMedia(false);
     const { container } = render(<AnnouncementCardSkeleton />);
     const bone = container.querySelector('.bg-surface-subtle');
     expect(bone).toHaveClass('animate-pulse');
-    expect(bone).toHaveClass('motion-reduce:animate-none');
+  });
+
+  it('drops the pulse animation outright when the OS prefers reduced motion', () => {
+    installMatchMedia(true);
+    const { container } = render(<AnnouncementCardSkeleton />);
+    const bone = container.querySelector('.bg-surface-subtle');
+    expect(bone).not.toHaveClass('animate-pulse');
   });
 
   it('does not render a media placeholder by default', () => {

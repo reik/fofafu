@@ -11,8 +11,8 @@ import { loginAs } from './utils/login';
 //   - `data-testid="announcement-card-skeleton"` on each skeleton card
 //     (mirrors the suggested `AnnouncementCardSkeleton` component), each
 //     `aria-hidden="true"` and containing no focusable descendants.
-//   - `data-testid="skeleton-media"` nested in at least one skeleton card
-//     (the media-block variant).
+//   - `data-testid="announcement-card-skeleton-media"` nested in at least one
+//     skeleton card (the media-block variant).
 //   - `data-testid="community-skeleton-row"` for the Community rail's
 //     skeleton rows.
 //
@@ -55,7 +55,7 @@ test.describe('feed skeleton loading', () => {
     expect(await skeletons.count()).toBeLessThanOrEqual(3);
 
     // At least one skeleton card carries a media placeholder block.
-    await expect(page.getByTestId('skeleton-media').first()).toBeVisible();
+    await expect(page.getByTestId('announcement-card-skeleton-media').first()).toBeVisible();
 
     // The feed section is marked busy while the skeleton stands in.
     await expect(page.locator('[aria-busy="true"]').first()).toBeVisible();

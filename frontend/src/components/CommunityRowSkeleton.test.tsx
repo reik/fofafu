@@ -1,8 +1,13 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { CommunityRowSkeleton, CommunityRailSkeleton } from './CommunityRowSkeleton';
+import { installMatchMedia } from '@/tests/installMatchMedia';
 
 describe('CommunityRowSkeleton', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('is hidden from the accessibility tree and has no interactive elements', () => {
     render(<CommunityRowSkeleton />);
     const row = screen.getByTestId('community-skeleton-row');
@@ -10,12 +15,28 @@ describe('CommunityRowSkeleton', () => {
     expect(row.querySelectorAll('a, button, input, [tabindex]')).toHaveLength(0);
   });
 
-  it('disables the pulse animation under prefers-reduced-motion', () => {
+  it('carries the CSS reduced-motion fallback class regardless of preference', () => {
+    installMatchMedia(false);
+    render(<CommunityRowSkeleton />);
+    const row = screen.getByTestId('community-skeleton-row');
+    const bone = row.querySelector('div');
+    expect(bone).toHaveClass('motion-reduce:animate-none');
+  });
+
+  it('applies the pulse animation when the OS has no reduced-motion preference', () => {
+    installMatchMedia(false);
     render(<CommunityRowSkeleton />);
     const row = screen.getByTestId('community-skeleton-row');
     const bone = row.querySelector('div');
     expect(bone).toHaveClass('animate-pulse');
-    expect(bone).toHaveClass('motion-reduce:animate-none');
+  });
+
+  it('drops the pulse animation outright when the OS prefers reduced motion', () => {
+    installMatchMedia(true);
+    render(<CommunityRowSkeleton />);
+    const row = screen.getByTestId('community-skeleton-row');
+    const bone = row.querySelector('div');
+    expect(bone).not.toHaveClass('animate-pulse');
   });
 });
 

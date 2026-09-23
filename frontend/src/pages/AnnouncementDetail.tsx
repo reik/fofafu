@@ -47,7 +47,7 @@ export default function AnnouncementDetailPage() {
   if (postQuery.isPending) {
     return (
       <Layout>
-        <div aria-busy="true" aria-label="Post">
+        <div role="group" aria-busy="true" aria-label="Post">
           <AnnouncementCardSkeleton lines={3} />
         </div>
       </Layout>
