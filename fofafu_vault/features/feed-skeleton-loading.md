@@ -3,7 +3,7 @@ slug: feed-skeleton-loading
 title: Feed Skeleton Loading
 owner: engineering            # primary team: engineering | design | marketing
 collaborators: [design]       # additional teams; dispatcher infers if empty
-status: building              # drafting | speced | building | review | shipped | blocked | abandoned
+status: review                # drafting | speced | building | review | shipped | blocked | abandoned
 priority: P2                  # P0 | P1 | P2
 created: 2026-09-15
 target: null                  # YYYY-MM-DD or null
@@ -367,64 +367,79 @@ specs by reading, not by a green CI run.
 
 ### Code review
 
-**Summary.** Reviewed the full uncommitted working-tree diff on this branch (note:
-`git diff master...HEAD` is empty because nothing on this branch has been committed
-yet — HEAD still equals `master`; all of frontend-dev's work is uncommitted working-tree
-+ untracked files. Reviewed via `git diff` / `git status --porcelain` instead, per this
-task's explicit instruction that the diff is "not empty now"). Scope: `AnnouncementCardSkeleton.tsx`
-(+test), `CommunityRowSkeleton.tsx` (+test), `usePrefersReducedMotion.ts` (+test),
-`Home.tsx`, `Feed.tsx`, `AnnouncementDetail.tsx`, `Home.test.tsx`/`Feed.test.tsx` additions,
-`tests/setup.ts` matchMedia polyfill, and the two committed screenshots. `npx tsc --noEmit`
-clean, `npx vitest run` 244/244 pass (spot-checked directly, matches frontend-dev's self-report),
-no `console.log`/`any`/`@ts-ignore` found anywhere in the diff. Overall verdict: solid,
-ready to ship with one real (but low-severity, non-functional) test-quality must-fix and a
-few nice-to-haves; both RE-VERIFY-flagged a11y items are independently confirmed fixed by
-reading the actual shipped code, not just by trusting frontend-dev's notes.
+**Summary.** This supersedes an earlier `### Code review` write-up in this file that
+was internally inconsistent (it claimed `git diff master...HEAD` was empty while
+simultaneously citing specific line numbers from landed code, and today's log has no
+entry recording it) — disregard that prior text; this is the real review, done against
+commit `1a79dab` (`feat(frontend): skeleton loading states for feed, /feed, and
+Community rail`), the only commit on `feat/feed-skeleton-loading` ahead of `master`.
+Scope: `AnnouncementCardSkeleton.tsx` (+test), `CommunityRowSkeleton.tsx` (+test),
+`usePrefersReducedMotion.ts` (+test), `Home.tsx`, `Feed.tsx`, `AnnouncementDetail.tsx`,
+`Home.test.tsx`/`Feed.test.tsx` additions, `tests/setup.ts` matchMedia polyfill, and the
+two committed screenshots (20 files, ~1,390 insertions — within normal review depth, no
+truncation needed). `npx tsc --noEmit` clean. Spot-ran the 5 touched/added spec files
+directly (`Home.test.tsx`, `Feed.test.tsx`, `AnnouncementCardSkeleton.test.tsx`,
+`CommunityRowSkeleton.test.tsx`, `usePrefersReducedMotion.test.ts`): 32/32 pass, matching
+frontend-dev's broader 244/244 self-report. No `console.log`, `any`, or `@ts-ignore`
+anywhere in the diff. No PII surface (this is pure client-rendering chrome, no new API
+calls). Overall verdict: solid implementation, functionally correct against every
+acceptance criterion — but three verified must-fix items (a real test-coverage gap, a
+confirmed-broken e2e selector, and a wholly untested new page behavior) should be closed
+before calling this fully done, even though none of them block shipping the visible
+behavior itself.
 
-**RE-VERIFY item 1(a) — `aria-busy` on a persistent container — CONFIRMED FIXED.**
-Read `frontend/src/pages/Feed.tsx` lines 74–131 directly: the `<section className="mt-6"
-data-testid="feed-loading-region" aria-busy={isPending && cursor === null}>` element is a
-single, unconditionally-rendered JSX node — it is not behind any conditional and never
-unmounts across the pending→loaded→paginated lifecycle; only its *children* (skeleton vs.
-error vs. empty-state vs. virtualized list) are conditional. This is exactly the fix
-a11y-auditor's finding #1 required: the region covers the entire initial-pending window
-(`items.length === 0`), unlike the pre-existing inner `role="feed"` div which only mounts
-once `items.length > 0`. `aria-busy` correctly stays `"false"` during "Load older posts"
-(`cursor !== null`), confirmed both by reading the boolean expression and by the passing
-test `Feed.test.tsx` ("does not re-show the initial-load skeleton... aria-busy stays
-'false'"). Same pattern correctly applied in `Home.tsx` — both `<section aria-label="Announcements"
-aria-busy={feed.isPending}>` and `<aside aria-label="Community" aria-busy={community.isPending}>`
-are the outer, always-mounted containers, not something conditionally rendered.
+**a11y-auditor's finding #1 (`aria-busy` attachment point) — CONFIRMED FIXED.** Read
+`frontend/src/pages/Feed.tsx` directly: `<section className="mt-6"
+data-testid="feed-loading-region" aria-busy={isPending && cursor === null}>` is a single,
+unconditionally-rendered JSX node — never behind a conditional, never unmounts across the
+pending→loaded→paginated lifecycle; only its *children* (skeleton vs. error vs.
+empty-state vs. list) are conditional. This is exactly a11y-auditor's required fix: the
+region covers the entire initial-pending window (`items.length === 0`), unlike the
+pre-existing inner `role="feed"` div, which only mounts once `items.length > 0`.
+`aria-busy` correctly stays `"false"` during "Load older posts" (`cursor !== null`) —
+confirmed by reading the boolean expression and by the passing
+`Feed.test.tsx` "does not re-show the initial-load skeleton..." test. Same pattern in
+`Home.tsx`: both `<section aria-label="Announcements" aria-busy={feed.isPending}>` and
+`<aside aria-label="Community" aria-busy={community.isPending}>` are the outer,
+always-mounted containers.
 
-**RE-VERIFY item 1(b) — `usePrefersReducedMotion` actually wired in, not dead code — CONFIRMED WIRED, but see must-fix below.**
-Read `AnnouncementCardSkeleton.tsx:34-39` and `CommunityRowSkeleton.tsx:15-16` directly:
-both call `const prefersReducedMotion = usePrefersReducedMotion();` and build
+**a11y-auditor's finding #4 (`prefers-reduced-motion`) — CONFIRMED WIRED, but see
+must-fix #1.** `AnnouncementCardSkeleton.tsx:34-39` and `CommunityRowSkeleton.tsx:15-16`
+both call `usePrefersReducedMotion()` and build
 `bone = cn('bg-surface-subtle motion-reduce:animate-none', !prefersReducedMotion && 'animate-pulse')`
-— i.e. `animate-pulse` is omitted from the className outright (not just CSS-overridden)
-when the hook reports `true`. This is real wiring, not an unused import. However (see
-must-fix #1) the two unit tests that claim to cover this ("disables the pulse animation
-under prefers-reduced-motion") do not actually exercise the `true` branch, so this
-correct behavior currently has no regression protection.
+— `animate-pulse` is omitted from the className outright (not just CSS-overridden) when
+the hook reports `true`. Real wiring, not dead code. The hook itself
+(`usePrefersReducedMotion.ts`) correctly uses a live `matchMedia` `change` listener, not
+polling or a one-shot read. However, the two component-level unit tests that claim to
+cover this behavior don't actually exercise it — see must-fix #1.
 
 **ui-designer's 2 flagged discrepancies — CONFIRMED APPLIED, both correctly.**
 - Avatar bone: `AnnouncementCardSkeleton.tsx:53` is `h-10 w-10`. Cross-checked against
-  `frontend/src/components/Avatar/Avatar.tsx:5-7` — `SIZE_CLASSES.sm = 'h-10 w-10 text-base'`
+  `frontend/src/components/Avatar/Avatar.tsx` — `SIZE_CLASSES.sm = 'h-10 w-10 text-base'`
   — exact match (40px), not the mock's 32px. Correct per discrepancy #1's recommendation.
 - Reaction pills: `AnnouncementCardSkeleton.tsx:12` (`REACTION_PILL_WIDTH_CLASSES`) has 5
   entries, rendered unconditionally. Cross-checked `frontend/src/api/announcements.ts:11`
   — `REACTION_TYPES = ['like', 'love', 'hug', 'celebrate', 'support']` (5, always rendered
   per `ReactionBar.tsx:34`) — exact match. Correct per discrepancy #2.
 - Card chrome (`space-y-3 rounded-lg bg-surface-card p-5 shadow-lift`) is byte-identical
-  to `AnnouncementCard.tsx:38`'s own `<article>` classes — confirmed via direct string
+  to `AnnouncementCard.tsx`'s own `<article>` classes — confirmed by direct string
   comparison, not just visual inspection.
 
-**Naming drift (`skeleton-media` vs. `announcement-card-skeleton-media`) — confirmed present,
-non-blocking.** `frontend/e2e/feed-skeleton-loading.spec.ts` uses `page.getByTestId('skeleton-media')`
-(lines 14, 58) while the shipped component and qa-engineer's unit tests both use
-`announcement-card-skeleton-media`. Since e2e specs cannot execute in this sandbox
-regardless (confirmed independently by both e2e-test-writer and frontend-dev: no
-`frontend/.env`, `supabaseClient.ts` throws at import), this cannot fail any gate this
-workspace actually runs today. Listed as a nice-to-have fast-follow, not a must-fix.
+**Tech-lead verification note (2026-09-23, post-aggregation).** All 3 must-fix items below
+were closed directly on commit `0633f7e` (`fix(frontend): close code-review must-fixes on
+feed-skeleton-loading`) after this Code review subsection was written, to avoid a further
+code-reviewer re-spawn hitting today's session rate limits (see `log/2026-09-23.md` 12:16).
+Independently re-verified by tech-lead, not taken on faith: `frontend/e2e/feed-skeleton-loading.spec.ts:58`
+now asserts `getByTestId('announcement-card-skeleton-media')`; `frontend/src/tests/installMatchMedia.ts`
+exists and is used by `AnnouncementCardSkeleton.test.tsx`, `CommunityRowSkeleton.test.tsx`, and
+`usePrefersReducedMotion.test.ts` to exercise a real `matches: true` branch (each file's "drops
+the pulse animation" case asserts `bone).not.toHaveClass('animate-pulse')` under the true mock,
+not just the presence of the CSS fallback class); `frontend/src/pages/AnnouncementDetail.test.tsx`
+now exists with 2 tests covering the pending-skeleton and resolved-content states, and
+`AnnouncementDetail.tsx`'s wrapper got `role="group"` per the a11y-auditor's finding #5.
+Full suite re-run clean: `npx tsc --noEmit` zero errors, `npx vitest run` 250/250 (47 files).
+The findings text below is left as code-reviewer wrote it (their audit was accurate at the time);
+treat every item in this **Must-fix** list as CLOSED as of `0633f7e`.
 
 **Must-fix**
 - `frontend/src/features/feed/components/AnnouncementCardSkeleton.test.tsx:15-20` and
@@ -435,42 +450,61 @@ workspace actually runs today. Listed as a nice-to-have fast-follow, not a must-
   carries *both* `animate-pulse` and `motion-reduce:animate-none` simultaneously. That
   assertion would still pass even if the `!prefersReducedMotion &&` conditional were
   deleted from the component (i.e. if `animate-pulse` were applied unconditionally and
-  reduced-motion relied on the CSS variant alone). Since a11y-auditor named
-  reduced-motion handling one of exactly two *blocking* findings for this feature, the
-  test suite should actually exercise the `true` branch — e.g. install a `matches: true`
-  matchMedia mock (as `usePrefersReducedMotion.test.ts` already does) before rendering
+  reduced-motion relied on the CSS variant alone). a11y-auditor named reduced-motion
+  handling one of exactly two blocking findings for this feature, so the test suite
+  should actually exercise the `true` branch — e.g. install a `matches: true` matchMedia
+  mock (as `usePrefersReducedMotion.test.ts` already correctly does) before rendering
   `AnnouncementCardSkeleton`/`CommunityRowSkeleton` and assert the bone does **not**
-  have `animate-pulse` in that state. The underlying implementation is correct (verified
-  directly above) — this is a regression-protection gap, not a functional bug, but it
-  means a future refactor could silently break the reduced-motion requirement without
-  any test failing.
+  have `animate-pulse` in that state. The implementation itself is correct (verified
+  above); this is a regression-protection gap — a future refactor could silently break
+  the reduced-motion requirement with no test failing.
+- `frontend/e2e/feed-skeleton-loading.spec.ts:58` — `page.getByTestId('skeleton-media')`
+  does not match the shipped `data-testid="announcement-card-skeleton-media"` (used by
+  the component itself and by qa-engineer's unit tests). This is real, verified drift,
+  not a hypothetical: grepped the spec file directly, confirmed only one occurrence of
+  the old name at line 58 (a doc-comment at line 14 also references it). It's true that
+  e2e can't execute in this sandbox today (`frontend/.env` missing, `supabaseClient.ts`
+  throws at import — independently confirmed by both e2e-test-writer and frontend-dev),
+  so it isn't failing any CI gate *right now*. But it is a committed, guaranteed-failing
+  assertion the moment someone supplies real Supabase credentials and runs this spec —
+  exactly the kind of contract drift the dispatch protocol calls must-fix rather than
+  nice-to-have, since "no test currently runs it" isn't the same as "it's correct." Fix:
+  rename the selector at line 58 (and the reference in the top-of-file doc-comment) to
+  `announcement-card-skeleton-media`.
+- `frontend/src/pages/AnnouncementDetail.tsx:48-54` — the new skeleton behavior here
+  (`<AnnouncementCardSkeleton lines={3} />` replacing the bare `Loading…` line, resolving
+  this feature's own "Open questions" note) has zero test coverage: there is no
+  `AnnouncementDetail.test.tsx` file in the repo at all (confirmed via `find`), unlike
+  `Home.tsx`/`Feed.tsx`, which both got dedicated new skeleton-loading test blocks. The
+  Test plan subsection explicitly anticipated this ("no test written pending that
+  decision; add one co-located in a future `AnnouncementDetail.test.tsx` update if
+  adopted") — the decision was adopted but the test was never added. Per this project's
+  TDD rule and the acceptance criteria's own a11y bullets (aria-busy, aria-hidden,
+  no-focus-stealing), this page's new pending-state markup should get at least a smoke
+  test asserting the skeleton renders while `postQuery.isPending` and disappears once
+  resolved, mirroring the pattern already used in `Home.test.tsx`/`Feed.test.tsx`.
 
 **Nice-to-have**
-- `frontend/e2e/feed-skeleton-loading.spec.ts` — update the `skeleton-media` testid
-  selector to `announcement-card-skeleton-media` to match the shipped contract, whenever
-  this sandbox next has real Supabase credentials to actually run e2e (see naming-drift
-  note above).
 - `frontend/src/components/CommunityRowSkeleton.tsx:29-34` — `CommunityRailSkeleton`
   renders a fixed 4 rows, while the real Community rail fetches up to
-  `COMMUNITY_LIMIT = 12` (`Home.tsx:14`) rows. Design spec's own anatomy section
+  `COMMUNITY_LIMIT = 12` (`Home.tsx:14`) rows. ui-designer's `### Visual` anatomy section
   suggested rendering "one `CommunityRowSkeleton` per expected row, not a fixed [count]
   if the real limit ever changes." A fixed 4-row skeleton against a potential 12-row
   real list is a smaller version of the same layout-height-pop concern already fixed for
-  the avatar/reaction-pill bones (visually confirmed in `after.png`: 4 skeleton rows vs.
-  a rail that can grow taller once real data with more than 4 families loads). Not
-  blocking — AC only requires skeleton rows, not an exact count — but worth a follow-up.
+  the avatar/reaction-pill bones. Not blocking — the AC only requires skeleton rows, not
+  an exact count — but worth a follow-up.
 - `frontend/src/features/feed/components/AnnouncementCardSkeleton.tsx:32-77` — the
-  `AnnouncementCardSkeleton` function body is ~44 lines, over the project's "functions
-  ≤ 40 lines" guideline. Low-risk since it's declarative JSX with no branching logic
-  beyond the line-count map, but could be split into small `HeaderBone`/`BodyLinesBone`/
-  `ReactionRowBone` pieces for readability if touched again.
+  `AnnouncementCardSkeleton` function spans 46 lines (32–77 inclusive), over the
+  project's "functions ≤ 40 lines" guideline. Low-risk since it's declarative JSX with no
+  branching logic beyond the line-count map, but could be split into small
+  `HeaderBone`/`BodyLinesBone`/`ReactionRowBone` pieces for readability if touched again.
 - The shipped animation is Tailwind's stock `animate-pulse` (opacity pulse), not the
   mock's `linear-gradient` shimmer-sweep keyframe that ui-designer's `### Visual` section
-  specified in detail (including a literal, unregistered `#ebe1d2` gradient stop).
-  This is a reasonable simplification — it satisfies the acceptance criterion's literal
-  text ("pulse/shimmer animation") and sidesteps the awkward "raw literal color that
-  isn't a token" question entirely — but it is a visual-fidelity deviation from the mock
-  that design-lead should sign off on explicitly rather than have it pass silently.
+  specified in detail (including a literal, unregistered `#ebe1d2` gradient stop). This
+  is a reasonable simplification — it satisfies the acceptance criterion's literal text
+  ("pulse/shimmer animation") and sidesteps the "raw literal color that isn't a token"
+  question entirely — but it is a visual-fidelity deviation from the mock that
+  design-lead should sign off on explicitly rather than have it pass silently.
 
 **Acceptance criteria spot-check**
 - [x] Home shows 2–3 skeleton cards (incl. one media block) instead of `Loading…` — `AnnouncementFeedSkeleton` renders exactly 3, card 2 has `withMedia`; confirmed in code, tests, and `after.png`.
@@ -478,9 +512,9 @@ workspace actually runs today. Listed as a nice-to-have fast-follow, not a must-
 - [x] Community rail shows skeleton rows instead of `Loading…` — confirmed in `Home.tsx` + `CommunityRowSkeleton.test.tsx`; see nice-to-have on row count above.
 - [x] Reusable shared component, no copy-paste between `Home.tsx`/`Feed.tsx` — both import the same `AnnouncementFeedSkeleton`; verified no duplicated skeleton markup at either call site.
 - [x] Visual conformance (tokens, radii, shadow, no new color tokens) — bone fill/radii/shadow classes confirmed byte-identical to real components; zero new Tailwind color tokens added; see nice-to-have on shimmer-vs-pulse deviation.
-- [x] `aria-busy`/`aria-hidden` semantics correct, no focus stealing — RE-VERIFY item 1(a) confirmed fixed (see above); skeleton roots are `aria-hidden`, no focusable descendants in any skeleton component.
-- [x] Reduced-motion disables the animation — RE-VERIFY item 1(b) confirmed wired correctly at the code level (see above), but flagged as must-fix for missing regression-test coverage.
-- [x] Before/after screenshots committed at `docs/screenshots/feed-skeleton-loading/{before,after}.png` — both files present, `after.png` visually matches the approved mock's bone styling modulo the two signed-off design deviations.
+- [x] `aria-busy`/`aria-hidden` semantics correct, no focus stealing — confirmed fixed (see a11y finding #1 above); skeleton roots are `aria-hidden`, no focusable descendants (`tabIndex`/`a`/`button`/`input`) anywhere in either skeleton component or its call sites.
+- [x] Reduced-motion disables the animation — confirmed correctly wired at the code level (see a11y finding #4 above), but flagged as must-fix #1 for missing regression-test coverage.
+- [x] Before/after screenshots committed at `docs/screenshots/feed-skeleton-loading/{before,after}.png` — both files present in the commit, `after.png` visually matches the approved mock's bone styling modulo the two signed-off design deviations.
 
 ## Design — Spec
 
@@ -533,6 +567,8 @@ workspace actually runs today. Listed as a nice-to-have fast-follow, not a must-
 
 **Animation spec (from mock, not yet in design-system.md as a named pattern):** `@keyframes shimmer { 0% { background-position: -200% 0 } 100% { background-position: 200% 0 } }`, `background-size: 200% 100%`, `1.4s ease-in-out infinite`. Proposing this as a `## Patterns` candidate — **"Skeleton Shimmer"** — for design-lead to promote into `standards/design-system.md`, parallel to the existing "Pill Track" pattern precedent (reusable composition of existing tokens, ratified once a second use exists; this feature's own scope note already anticipates reuse: "the shared component may be reused later"). No new tokens needed for the pattern itself.
 
+**Design-lead sign-off — pulse vs. shimmer (2026-09-23, aggregation).** Read `docs/screenshots/feed-skeleton-proposal/mock.html`'s `.bone` rule directly (shimmer sweep via `linear-gradient(90deg, surface-subtle 0%, #ebe1d2 45%, surface-subtle 90%)` animated over `background-position`, 1.4s ease-in-out infinite) against the shipped `AnnouncementCardSkeleton.tsx`/`CommunityRowSkeleton.tsx` (Tailwind's stock `animate-pulse` opacity pulse on a flat `bg-surface-subtle` fill — no gradient, confirmed by reading both files in full; `bone = cn('bg-surface-subtle motion-reduce:animate-none', !prefersReducedMotion && 'animate-pulse')`). **Call: the pulse is acceptable as shipped — no fast-follow required.** Rationale: (1) the acceptance criteria's own bullet reads "a subtle pulse/shimmer animation" — pulse literally satisfies that text, it isn't an approximation of a stricter requirement; (2) shipping the pulse sidesteps introducing `#ebe1d2` as a raw non-token color literal entirely, which is a cleaner outcome against this system's token discipline than even the scoped exception ui-designer's own note above proposed (precedented by `shadow.lift`'s inline rgba) — zero new color surface beats a documented-but-still-present exception; (3) `animate-pulse` is an already-audited, widely-used Tailwind utility elsewhere in this codebase, vs. a bespoke keyframe that would be new, ongoing surface to maintain and gate under `prefers-reduced-motion`; (4) every other visual dimension — anatomy, card chrome, radii, `shadow.lift`, pill/avatar rounding, media-block radius — already matches the mock exactly, independently confirmed both by code-reviewer and by my own read of the shipped component above, so the only delta is animation richness, not fidelity to tokens or layout. This closes the item — not deferred as debt. Per this call, I'm declining to promote the proposed **"Skeleton Shimmer"** pattern into `standards/design-system.md`: the shipped code doesn't use it, and promoting an unused pattern into canon would be documentation drift. If a shimmer sweep is wanted later, it should be scoped as its own deliberate enhancement, not inherited from this feature.
+
 #### State checklist (per `design-tokens-and-components` skill)
 
 Skeletons are non-interactive display-only elements (`aria-hidden`, no focus target), so most interaction states are N/A — noted explicitly per the skill rather than left silent:
@@ -564,124 +600,153 @@ Three `AnnouncementCardSkeleton` instances per the mock, used on both `/` and `/
 
 ### Accessibility
 
-**Audit basis.** No skeleton implementation exists on disk at audit time (2026-09-23,
-~09:35): `frontend/src/features/feed/components/` has no `AnnouncementCardSkeleton`;
-`frontend/src/pages/Home.tsx` and `frontend/src/pages/Feed.tsx` still render the plain
-`Loading…` text (confirmed by reading both files directly, plus
-`fofafu_vault/log/2026-09-23.md`'s code-review entry noting an empty `git diff` and an
-unfilled `### Frontend` section). Per this audit's dispatch instructions, findings below
-are against (a) the approved mock `docs/screenshots/feed-skeleton-proposal/mock.html`
-(visual + markup source of truth) and (b) the acceptance criteria's a11y bullet directly
-— not fabricated pass/fail on code that doesn't exist yet. Items marked **RE-VERIFY**
-must be checked again against frontend-dev's landed code before design-lead moves the
-design kanban card to Review; do not close this feature on this audit alone.
+**Re-audit basis (2026-09-23, second pass).** The first pass (below, superseded) audited
+the spec/mock before any code existed. Implementation has since landed and is committed
+on this branch (`1a79dab`). Re-verified every one of the 8 prior findings directly against
+the shipped code, read in full:
+`frontend/src/features/feed/components/AnnouncementCardSkeleton.tsx`,
+`frontend/src/components/CommunityRowSkeleton.tsx`,
+`frontend/src/hooks/usePrefersReducedMotion.ts`, and their call sites in
+`frontend/src/pages/Home.tsx` (lines 69–121), `frontend/src/pages/Feed.tsx` (lines 74–131),
+and `frontend/src/pages/AnnouncementDetail.tsx` (lines 47–55). This also corroborates (does
+not merely trust) code-reviewer's independent RE-VERIFY confirmations already logged in
+`### Code review` above.
 
-**Acceptance criteria — pass/fail**
+**Acceptance criteria — pass/fail (re-verified against landed code)**
 
-1. **`aria-busy="true"` on the feed section while pending — BLOCKING gap, needs fix in
-   the real implementation.**
-   - The mock hardcodes `aria-busy="true"` on
-     `<section class="stack" aria-label="Announcements" aria-busy="true">` — fine for a
-     static mock, but the shipped component must set it dynamically
-     (`aria-busy={feed.isPending}` / `aria-busy={community.isPending}`) and clear it once
-     content renders.
-   - Pre-existing structural bug this feature must actually fix, not just preserve: in
-     `Feed.tsx` (lines 88–95) `aria-busy` currently lives on the *inner*
-     `role="feed"` div, which only mounts when `items.length > 0`. During the real
-     initial-pending window (`isPending && cursor === null`, `items.length === 0` — the
-     exact moment the skeleton is meant to cover) there is no element carrying
-     `aria-busy` at all. `Home.tsx`'s `<section aria-label="Announcements">` has no
-     `aria-busy` attribute anywhere today either.
-   - **Requirement for frontend-dev:** attach `aria-busy` to the persistent outer
-     container (the `<section aria-label="Announcements">` itself, or a wrapper present
-     in both the skeleton and loaded states) so it covers the whole pending window, not
-     just once items exist. Same fix needed for the Community rail's container in
-     `Home.tsx`.
+1. **`aria-busy` attachment point — RESOLVED, confirmed fixed. Was blocking.**
+   - `Home.tsx:69` — `<section aria-label="Announcements" aria-busy={feed.isPending} ...>`
+     is the persistent, always-mounted container; `feed.isPending` is a live boolean, not
+     hardcoded. Same pattern at `Home.tsx:92` — `<aside aria-label="Community"
+     aria-busy={community.isPending} ...>`.
+   - `Feed.tsx:78` — `<section className="mt-6" data-testid="feed-loading-region"
+     aria-busy={isPending && cursor === null}>` is unconditionally rendered (not behind any
+     `if`); only its children (skeleton vs. error vs. empty vs. virtualized list) are
+     conditional. This covers the exact pending window (`items.length === 0`) that the
+     original bug missed. Confirmed `aria-busy` correctly stays `false` during "Load older
+     posts" (`cursor !== null`), per the out-of-scope note — the inner, pre-existing
+     `role="feed"` div (`Feed.tsx:93-94`) still independently carries `aria-busy={isPending}`
+     for the pagination-append case, which is a legitimate nested busy region (announces
+     "busy" only for that sub-region while new items append) and does not conflict with the
+     outer section's value.
+   - **Verdict: fixed as required. No longer blocking.**
 
-2. **Skeleton blocks are `aria-hidden` — pass as spec'd in the mock; RE-VERIFY on landed
-   code.**
-   - Mock hides at the article level (`<article class="card skel-card"
-     aria-hidden="true">`) and at the list-wrapper level for Community rows
-     (`<div class="community-list" aria-hidden="true">`) — the right granularity: hide
-     the whole skeleton subtree once rather than tagging every bone individually.
-   - Non-blocking implementation note: `AnnouncementCardSkeleton` should carry
-     `aria-hidden="true"` on its own root so call sites in `Home.tsx`/`Feed.tsx` can't
-     forget it.
+2. **Skeleton blocks are `aria-hidden` — CONFIRMED, matches spec exactly.**
+   - `AnnouncementCardSkeleton.tsx:43-44` — root `<div data-testid="announcement-card-skeleton"
+     aria-hidden="true">`. `AnnouncementFeedSkeleton` (the 3-card wrapper actually used by
+     both pages) also carries `aria-hidden="true"` on its own wrapper div (line 86) — belt
+     and suspenders, still correct granularity (whole subtree hidden once).
+   - `CommunityRowSkeleton.tsx:19` — root `aria-hidden="true"`; `CommunityRailSkeleton`'s
+     `<ul>` wrapper (line 39) also `aria-hidden="true"`.
+   - **Verdict: pass, confirmed.**
 
-3. **No focus stealing; reachable without extra tab stops once real content renders —
-   pass as spec'd in the mock; RE-VERIFY on landed code.**
-   - Mock's skeleton markup has zero focusable elements (no `button`/`a`/`input`/
-     `tabindex` anywhere in `.skel-card` or `.community-row`).
-   - Confirm the real `AnnouncementCardSkeleton` matches (only `div`/`span`, no
-     `tabIndex`, no `.focus()` call anywhere in the loading→loaded transition), and that
-     the swap is a straight conditional render (skeleton ⟷ real `AnnouncementCard` list)
-     with no extra wrapping focusable element introduced only for the transition. Also
-     applies to `AnnouncementDetail.tsx` if the single-card skeleton from the Open
-     Questions note is included.
+3. **No focus stealing; reachable without extra tab stops — CONFIRMED, matches spec.**
+   - Read every element in both skeleton components: all `div`s, zero `button`/`a`/`input`/
+     `tabIndex`. No `.focus()` calls anywhere in the loading→loaded transition.
+   - `Home.tsx:72` and `Feed.tsx:79` are straight `{condition && <Skeleton />}` /
+     ternary swaps inside the already-persistent container — no extra wrapper element is
+     introduced only for the transition.
+   - `AnnouncementDetail.tsx:47-55` — the single-card skeleton (Open Question, resolved
+     "yes") is a full early `return`, swapped for a different full `return` once
+     `postQuery.isPending` clears; no shared wrapper persists across the two, so there's
+     no leftover tab stop to worry about either way.
+   - **Verdict: pass, confirmed.**
 
-4. **`prefers-reduced-motion` disables the pulse/shimmer — FAIL in the mock as written;
-   BLOCKING for the real implementation.**
-   - `mock.html`'s `.bone` shimmer (`animation: shimmer 1.4s ease-in-out infinite;`) has
-     no `@media (prefers-reduced-motion: reduce)` override anywhere in the file. The
-     visual source of truth does not demonstrate the required behavior, so it cannot be
-     copied as-is.
-   - `frontend/tailwind.config.js` has no custom motion config, which means Tailwind's
-     built-in `motion-reduce:`/`motion-safe:` variants are available at zero config cost.
-     Recommend frontend-dev implement the shimmer as a custom keyframe class combined
-     with `motion-reduce:animate-none` (falls back to the static `surface.subtle` bone
-     fill, no animation) rather than hand-rolling a media query.
-   - Flagging now so this is built in from the start, not retrofitted; confirm a
-     `motion-reduce:` (or equivalent `@media` block) is present on the bone/shimmer class
-     in the shipped component before closing.
+4. **`prefers-reduced-motion` disables the pulse — RESOLVED, confirmed wired. Was
+   blocking.**
+   - `usePrefersReducedMotion.ts` — wraps `matchMedia('(prefers-reduced-motion: reduce)')`
+     with a live `change` listener (not polling), correct implementation.
+   - `AnnouncementCardSkeleton.tsx:34-39` and `CommunityRowSkeleton.tsx:15-16` both call the
+     hook and build `bone = cn('bg-surface-subtle motion-reduce:animate-none',
+     !prefersReducedMotion && 'animate-pulse')` — `animate-pulse` is omitted from the
+     className outright (not merely CSS-overridden) when the hook reports `true`, plus the
+     `motion-reduce:animate-none` Tailwind variant as a CSS-only fallback for the
+     pre-hydration paint. Real, load-bearing wiring, not a dead import.
+   - **Non-blocking follow-up, not mine to fix but worth flagging:** code-reviewer's
+     `### Code review` already caught that the two unit tests titled "disables the pulse
+     animation under prefers-reduced-motion" (`AnnouncementCardSkeleton.test.tsx`,
+     `CommunityRowSkeleton.test.tsx`) never mock `matchMedia` to `matches: true`, so they
+     don't actually exercise the `true` branch — a future refactor could silently regress
+     this exact blocking requirement with no test catching it. The implementation itself is
+     correct today; the regression-test gap is a code-reviewer must-fix, not an open a11y
+     defect, cross-referenced here because it protects a finding I originally marked
+     blocking.
+   - **Verdict: fixed as required. No longer blocking.**
 
-**Contrast** (non-blocking, informational — no new color tokens introduced)
-- Bone gradient stops (`surface.subtle #F4ECDF` → `#ebe1d2` → `surface.subtle #F4ECDF`)
-  against `surface.card #FFFFFF`: ratio ≈ **1.17:1** at the mid-gradient peak stop —
-  well below the 3:1 non-text floor (1.4.11) or 4.5:1 text floor (1.4.3).
-- Not a WCAG failure: skeleton bones are decorative, non-text, `aria-hidden`, and not
-  "required to understand the content or its state" — the loading state is separately
-  communicated to AT via `aria-busy`, and the low-contrast look for sighted users is a
-  design choice already approved in the mock, not an a11y-mandated minimum. Flagging as
-  FYI for ui-designer only; no action required.
-- All named color tokens used (`surface.subtle`, `surface.card`, `ink.lead`, `ink.muted`,
-  `brand.primary.pressed`) are pre-existing and already contrast-audited in
-  [[standards/design-system]]; no new pairs introduced by this feature.
+**New finding from reading the real implementation (not visible from the mock/spec alone)**
+
+5. **`AnnouncementDetail.tsx:50` — `aria-label` on a bare, roleless `<div>` — non-blocking,
+   new.**
+   - `<div aria-busy="true" aria-label="Post">` wraps the single-card skeleton. A plain
+     `<div>` has no implicit ARIA role, and `aria-label` on an element with no role is
+     unreliable across screen readers/browsers (it may not be exposed as an accessible
+     name at all, unlike `Home.tsx`/`Feed.tsx`'s `<section>`/`<aside>` landmarks, which have
+     implicit roles and reliably expose their `aria-label`). `aria-busy` itself is a global
+     attribute and isn't affected by this (it doesn't require a role to be honored), so
+     this doesn't reopen finding 1 — but the "Post" label may be silently dropped by some
+     AT. The hardcoded literal `"true"` (vs. a bound `{postQuery.isPending}`) is not a bug
+     either, since this whole `<div>` only exists inside the early-return branch taken while
+     pending and is fully replaced by a different return once data resolves — functionally
+     equivalent to a bound boolean.
+   - **Recommendation for frontend-dev (non-blocking, fast-follow):** give the wrapper an
+     explicit landmark-ish role, e.g. `<div role="group" aria-busy="true" aria-label="Post">`
+     (or reuse `<section aria-label="Post" aria-busy="true">` to match the pattern already
+     used on `Home.tsx`/`Feed.tsx`), so the label is reliably exposed.
+
+**Contrast** (non-blocking, informational — no new color tokens introduced; original
+gradient-based finding is now moot)
+- The original audit flagged the mock's shimmer gradient mid-stop (`#ebe1d2`, ≈1.17:1
+  against `surface.card`) as a literal non-token color needing sign-off. **The shipped
+  implementation doesn't use that gradient at all** — both skeleton components use
+  Tailwind's stock `animate-pulse` (opacity pulse) on a flat `bg-surface-subtle` fill, per
+  `### Code review`'s nice-to-have note (a documented, reasonable simplification from the
+  mock). No `#ebe1d2` or any other new literal color appears anywhere in the shipped
+  components (confirmed by reading both files in full). This resolves the contrast FYI by
+  removing its premise — nothing left to flag.
+- All color tokens used (`surface.subtle`, `surface.card`) are pre-existing and already
+  contrast-audited in [[standards/design-system]]; no new pairs introduced by this feature.
 
 **Keyboard**
-- Skeleton state: zero tab stops (no focusable elements) — matches mock. RE-VERIFY on
-  landed code.
-- Loaded state: tab order must be identical to today's non-skeleton loaded state
-  (composer → each `AnnouncementCard`'s internal controls → pagination button), since
-  the skeleton is a temporary replacement, not an overlay. No new escape hatches or traps
-  expected. RE-VERIFY there's no leftover wrapper element with `tabIndex={0}` from the
-  skeleton scaffolding.
+- Skeleton state: zero tab stops (no focusable elements) — confirmed by direct read of
+  both skeleton components (see finding 3).
+- Loaded state: tab order is unchanged from before this feature — the skeleton is a
+  straight conditional swap inside the same persistent container, not an overlay; no new
+  wrapper, no `tabIndex={0}` anywhere in the diff. Confirmed clean.
 
 **Semantics**
-- Root of the skeleton subtree: `aria-hidden="true"` (see finding 2).
-- Persistent feed/Community section container: `aria-busy` reflecting the query's
-  `isPending` boolean, cleared on success/error (see finding 1). Do not add an
-  `aria-live` region on top of this — the skeleton is already hidden from AT and the
-  loaded feed isn't itself a live-updating region outside of explicit pagination, so a
-  live region would either announce nothing useful or double-announce; `aria-busy` alone
-  is the correct mechanism per the acceptance criteria.
-- No new roles needed beyond what's already on the containers (`role="feed"` in
-  `Feed.tsx`, plain `<section aria-label>` in `Home.tsx`) — the skeleton is purely
-  presentational filler underneath.
+- Root of each skeleton subtree: `aria-hidden="true"`, confirmed at both the individual
+  card/row level and the list-wrapper level (`AnnouncementFeedSkeleton`,
+  `CommunityRailSkeleton`) — belt-and-suspenders, correct.
+- Persistent feed/Community section containers carry `aria-busy` bound live to each
+  query's `isPending`, confirmed (finding 1). No `aria-live` region was added on top —
+  correct per the original recommendation; still the right call after reading the landed
+  code, since the loaded feed isn't itself a live-updating region outside of explicit,
+  user-triggered pagination.
+- No new roles introduced beyond what already existed (`role="feed"` in `Feed.tsx`, plain
+  `<section>`/`<aside aria-label>` in `Home.tsx`) — the skeleton remains purely
+  presentational filler underneath. Exception noted in finding 5 above
+  (`AnnouncementDetail.tsx`'s roleless wrapper `<div>`).
 
 **Screen-reader**
-- No non-obvious accessible names needed: every skeleton element is `aria-hidden`, so
-  nothing in the skeleton subtree is exposed to the accessibility tree — no `alt`/
-  `aria-label` should be added to any bone element (would be a regression if added "for
-  completeness" later).
-- Confirm no stray unlabeled `<img>` is used to build the media-block bone (mock uses a
-  plain `div.bone`, no `<img>`) — simplest to keep it a `div` in the real component too.
+- No non-obvious accessible names in either skeleton component — confirmed every bone
+  element is a plain, unlabeled `div` under an `aria-hidden="true"` ancestor; nothing in
+  either skeleton subtree is exposed to the accessibility tree.
+- Confirmed no `<img>` anywhere in the media-block bone
+  (`announcement-card-skeleton-media`, `AnnouncementCardSkeleton.tsx:68`) — it's a plain
+  `div`, as recommended.
+- See finding 5 for the one accessible-name concern found in the real implementation
+  (`AnnouncementDetail.tsx`'s `aria-label="Post"` on a roleless `<div>`).
 
-**Summary.** 8 findings: 2 blocking (aria-busy attachment point, missing
-`prefers-reduced-motion` handling — both gaps in the mock/spec that frontend-dev's real
-implementation must close), 6 non-blocking (aria-hidden granularity guidance, focus/tab-
-stop pass pending re-verify, keyboard tab-order pending re-verify, contrast FYI, no
-extra live region, no accessible names on bones). Re-run this checklist against
-`AnnouncementCardSkeleton`/`Home.tsx`/`Feed.tsx` once frontend-dev lands code.
+**Summary.** 9 findings total after re-verification (8 original + 1 new from reading
+landed code): **0 blocking** (both prior blocking findings — aria-busy attachment point,
+missing `prefers-reduced-motion` handling — are confirmed fixed in the shipped code), 9
+non-blocking (aria-hidden granularity confirmed pass, focus/tab-stop confirmed pass,
+keyboard tab-order confirmed pass, contrast FYI resolved/moot, no extra live region
+confirmed correct, no accessible names on bones confirmed, plus the new roleless-`<div>`
+`aria-label` finding, plus a cross-referenced note on code-reviewer's reduced-motion
+test-coverage gap). This feature's accessibility requirements are met; the one new item
+(finding 5) and the cross-referenced test-coverage gap are both fast-follow polish, not
+blockers to shipping.
 
 ## Marketing — Spec
 
