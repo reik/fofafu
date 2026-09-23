@@ -8,6 +8,7 @@ team: design
 
 ## In Progress
 - [ ] [[features/playdates]] @design — new /playdates page (calendar week/month views, requests sidebar) + availability/request surface on /family/:id; visual, microcopy, a11y
+- [ ] [[features/feed-skeleton-loading]] @design — no In Progress card existed for this feature (clean re-dispatch after 2 rate-limit-interrupted attempts + a reverted out-of-process build reset the vault); added directly here per the reply-coach-live/site-icon precedent. ui-designer returned: `AnnouncementCardSkeleton` + `CommunityRowSkeleton` anatomy, token audit (zero new color tokens, shimmer mid-stop `#ebe1d2` recommended as an unregistered literal value inside the gradient utility, precedented by `shadow.lift`'s own inline rgba stops), full state checklist, and 2 flagged discrepancies vs the mock needing design-lead reconciliation before frontend-dev builds (avatar bone 32px-in-mock vs real 40px `Avatar size="sm"`; reaction-pill bone count 2–3-in-mock vs real fixed 5 `REACTION_TYPES`). a11y-auditor running in parallel, findings already in the spec. No frontend code landed yet (confirmed via glob + today's empty code-review diff), so nothing to cross-check against an implementation.
 
 ## Review
 - [ ] [[features/brand-contrast-fix]] @design — ui-designer + a11y-auditor returned; token `color.brand.primary.pressed` (#3F7E54, 4.86:1) ratified; migration + axe sweep landed per engineering
