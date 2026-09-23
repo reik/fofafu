@@ -5,6 +5,8 @@ import { Layout } from '@/components/Layout';
 import { Avatar } from '@/components/Avatar/Avatar';
 import { AnnouncementComposer } from '@/features/feed/components/AnnouncementComposer';
 import { AnnouncementCard } from '@/features/feed/components/AnnouncementCard';
+import { AnnouncementFeedSkeleton } from '@/features/feed/components/AnnouncementCardSkeleton';
+import { CommunityRailSkeleton } from '@/components/CommunityRowSkeleton';
 import { listAnnouncements, feedKeys, type FeedPage as FeedPageDTO } from '@/api/announcements';
 import { getRecentCommunity, communityKeys } from '@/api/community';
 import { getMyFamily, familyKeys } from '@/api/family';
@@ -64,10 +66,10 @@ export default function HomePage() {
           </section>
         </aside>
 
-        <section aria-label="Announcements" className="min-w-0 space-y-4">
+        <section aria-label="Announcements" aria-busy={feed.isPending} className="min-w-0 space-y-4">
           <AnnouncementComposer />
 
-          {feed.isPending && <p className="text-ink-muted">Loading…</p>}
+          {feed.isPending && <AnnouncementFeedSkeleton />}
           {feed.isError && (
             <p className="text-sm text-feedback-error">
               {feed.error instanceof Error ? feed.error.message : 'Could not load the feed.'}
@@ -87,66 +89,69 @@ export default function HomePage() {
           )}
         </section>
 
-        <aside aria-label="Community" className="hidden md:block">
+        <aside aria-label="Community" aria-busy={community.isPending} className="hidden md:block">
           <section className="rounded-lg bg-surface-card p-4 shadow-lift">
             <h2 className="mb-3 text-xs font-bold uppercase tracking-wide text-ink-muted">
               Community
             </h2>
-            {community.isPending && <p className="text-sm text-ink-muted">Loading…</p>}
             {community.isError && (
               <p className="text-sm text-feedback-error">Could not load community.</p>
             )}
-            <ul className="space-y-2">
-              {community.data?.map((fam) => (
-                <li key={fam.id}>
-                  <div className="relative flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-surface-warm">
-                    <Link
-                      to={`/family/${fam.id}`}
-                      className="absolute inset-0 z-0"
-                      aria-label={fam.name}
-                    />
-                    {fam.avatarUrl ? (
-                      <img
-                        src={fam.avatarUrl}
-                        alt=""
-                        className="pointer-events-none h-8 w-8 rounded-full object-cover"
+            {community.isPending ? (
+              <CommunityRailSkeleton />
+            ) : (
+              <ul className="space-y-2">
+                {community.data?.map((fam) => (
+                  <li key={fam.id}>
+                    <div className="relative flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-surface-warm">
+                      <Link
+                        to={`/family/${fam.id}`}
+                        className="absolute inset-0 z-0"
+                        aria-label={fam.name}
                       />
-                    ) : (
-                      <span
-                        aria-hidden="true"
-                        className="pointer-events-none flex h-8 w-8 items-center justify-center rounded-full bg-surface-warm text-sm font-bold text-brand-primary"
-                      >
-                        {initialBadge(fam.name)}
+                      {fam.avatarUrl ? (
+                        <img
+                          src={fam.avatarUrl}
+                          alt=""
+                          className="pointer-events-none h-8 w-8 rounded-full object-cover"
+                        />
+                      ) : (
+                        <span
+                          aria-hidden="true"
+                          className="pointer-events-none flex h-8 w-8 items-center justify-center rounded-full bg-surface-warm text-sm font-bold text-brand-primary"
+                        >
+                          {initialBadge(fam.name)}
+                        </span>
+                      )}
+                      <span className="pointer-events-none min-w-0 flex-1">
+                        <span className="block max-w-[24ch] truncate text-sm font-semibold">
+                          {fam.name}
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          {(fam.city || fam.state) && (
+                            <span className="text-xs text-ink-muted">
+                              {[fam.city, fam.state].filter(Boolean).join(', ')}
+                            </span>
+                          )}
+                          {fam.nextFreeSlotId && (
+                            <Link
+                              to={`/family/${fam.id}?requestSlot=${fam.nextFreeSlotId}`}
+                              title="Open playdate slot — click to request"
+                              className="pointer-events-auto relative z-10 inline-flex items-center gap-1 rounded-full border border-brand-warm/50 bg-brand-warm/20 px-2 py-0.5 text-[10px] font-bold text-[#8a5a12] hover:bg-brand-warm/30"
+                            >
+                              🗓 Playdate
+                            </Link>
+                          )}
+                        </span>
                       </span>
-                    )}
-                    <span className="pointer-events-none min-w-0 flex-1">
-                      <span className="block max-w-[24ch] truncate text-sm font-semibold">
-                        {fam.name}
-                      </span>
-                      <span className="flex items-center gap-1.5">
-                        {(fam.city || fam.state) && (
-                          <span className="text-xs text-ink-muted">
-                            {[fam.city, fam.state].filter(Boolean).join(', ')}
-                          </span>
-                        )}
-                        {fam.nextFreeSlotId && (
-                          <Link
-                            to={`/family/${fam.id}?requestSlot=${fam.nextFreeSlotId}`}
-                            title="Open playdate slot — click to request"
-                            className="pointer-events-auto relative z-10 inline-flex items-center gap-1 rounded-full border border-brand-warm/50 bg-brand-warm/20 px-2 py-0.5 text-[10px] font-bold text-[#8a5a12] hover:bg-brand-warm/30"
-                          >
-                            🗓 Playdate
-                          </Link>
-                        )}
-                      </span>
-                    </span>
-                  </div>
-                </li>
-              ))}
-              {community.data?.length === 0 && (
-                <li className="text-sm italic text-ink-muted">No other families yet.</li>
-              )}
-            </ul>
+                    </div>
+                  </li>
+                ))}
+                {community.data?.length === 0 && (
+                  <li className="text-sm italic text-ink-muted">No other families yet.</li>
+                )}
+              </ul>
+            )}
             <Link
               to="/search"
               className="mt-3 block text-sm font-semibold text-brand-primary hover:underline"
