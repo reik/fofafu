@@ -13,7 +13,7 @@ import { Layout } from '@/components/Layout';
 import { FamilyHeader } from '@/features/family/components/FamilyHeader';
 import { FamilyRecentPosts } from '@/features/family/components/FamilyRecentPosts';
 import { FamilyProfileBlockControl } from '@/features/moderation/components/FamilyProfileBlockControl';
-import { WeekCalendar, weekMonday, isoDate } from '@/features/playdates/components';
+import { WeekCalendar, weekMonday } from '@/features/playdates/components';
 import type { AvailabilitySlot } from '@/types/playdates';
 
 const RequestMessageSchema = z.object({
@@ -288,7 +288,7 @@ function FamilyAvailability({
         <div className="flex justify-center py-10">
           <div className="h-7 w-7 animate-spin rounded-full border-4 border-brand-primary/20 border-t-brand-primary" />
         </div>
-      ) : slots.length === 0 && isoDate(weekStart) > isoDate(new Date()) ? (
+      ) : slots.length === 0 ? (
         <div className="text-center py-10 text-ink-muted text-[0.88rem]">
           {firstName} hasn&apos;t set any availability yet.
         </div>
