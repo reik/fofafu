@@ -78,5 +78,15 @@ export const handlers = {
   messagesUnreadCount: (count = 0) =>
     http.get(`${FUNCTIONS_BASE}/message/unread/count`, () => HttpResponse.json({ count })),
 
+  // ---- Edge Functions (moderation — supabase/functions/moderation/index.ts) ----
+  moderationBlocksList: (body: JsonBodyType = []) =>
+    http.get(`${FUNCTIONS_BASE}/moderation/blocks`, () => HttpResponse.json(body)),
+  moderationCreateBlock: (body: JsonBodyType) =>
+    http.post(`${FUNCTIONS_BASE}/moderation/blocks`, () => HttpResponse.json(body, { status: 201 })),
+  moderationDeleteBlock: () =>
+    http.delete(`${FUNCTIONS_BASE}/moderation/blocks/:blockedFamilyId`, () => new HttpResponse(null, { status: 204 })),
+  moderationCreateReport: (body: JsonBodyType) =>
+    http.post(`${FUNCTIONS_BASE}/moderation/reports`, () => HttpResponse.json(body, { status: 201 })),
+
   // ---- Legacy Express (playdates/uploads/coach, unchanged in this migration slice) ----
 };
