@@ -116,4 +116,25 @@ describe('Navbar', () => {
 
     expect(signOutSpy).toHaveBeenCalledTimes(1);
   });
+
+  it('should_show_the_family_profile_name_on_the_account_chip_after_a_rename', async () => {
+    setAuthed();
+    server.use(
+      http.get(`${FUNCTIONS_BASE}/message/unread/count`, () => HttpResponse.json({ count: 0 })),
+      handlers.familyMe({
+      id: 'fam1',
+      ownerId: 'u1',
+      name: 'The Hernandez Family',
+      bio: '',
+      kidCount: null,
+      avatarUrl: null,
+      isOwner: true,
+      updatedAt: '2026-09-23',
+    }),
+    );
+
+    renderWithProviders(<Navbar />, { route: '/' });
+
+    expect(await screen.findByRole('button', { name: /the hernandez family account menu/i })).toBeInTheDocument();
+  });
 });
