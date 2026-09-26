@@ -117,13 +117,14 @@ function mockFeed({ delayMs = 0 }: { delayMs?: number } = {}) {
 }
 
 describe('FeedPage', () => {
-  it('shows a loading state while the first page is fetching', async () => {
+  it('shows skeleton cards while the first page is fetching', async () => {
     mockFeed({ delayMs: 50 });
     renderWithProviders(<FeedPage />);
 
-    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    expect(screen.getAllByTestId('announcement-card-skeleton').length).toBeGreaterThan(0);
+    expect(screen.queryByText(/loading/i)).toBeNull();
 
-    await waitFor(() => expect(screen.queryByText(/loading/i)).toBeNull());
+    await waitFor(() => expect(screen.queryAllByTestId('announcement-card-skeleton')).toHaveLength(0));
   });
 
   it('shows an error state when the feed request fails', async () => {
@@ -222,5 +223,103 @@ describe('FeedPage', () => {
     await waitFor(() =>
       expect(screen.queryByRole('button', { name: /load older posts/i })).toBeNull(),
     );
+  });
+});
+
+/**
+ * Contract these specs lock in (frontend-dev: implement to match, or coordinate
+ * a change via ### Frontend / ### Test plan — written ahead of the
+ * implementation per this repo's TDD rule; see
+ * [[features/feed-skeleton-loading]]).
+ *
+ * Revised after cross-checking [[agents/a11y-auditor]]'s concurrently-written
+ * ### Accessibility finding #1 on this same feature file: `aria-busy` must live
+ * on a container that is present in BOTH the pending and loaded states (not one
+ * that mounts only for the skeleton), because the pre-existing `role="feed"` div
+ * in `Feed.tsx` only mounts once `items.length > 0` and so cannot carry
+ * `aria-busy` during the exact window the skeleton covers. Concretely:
+ *
+ * - `data-testid="feed-loading-region"` is the persistent wrapper already in
+ *   `Feed.tsx` around the pending/error/empty/list branches (today's
+ *   `<section className="mt-6">`) — it never unmounts across the pending ->
+ *   loaded transition. It carries `aria-busy={isPending && cursor === null}` as
+ *   a live-updating attribute: `"true"` during the first page's fetch,
+ *   `"false"` once that first page resolves, and `"false"` again during a
+ *   "Load older posts" fetch (that append flow is explicitly out of scope and
+ *   keeps its existing non-skeleton pattern — it must not flip this flag back
+ *   to `"true"`).
+ * - While `isPending && cursor === null`, it renders 2-3
+ *   `AnnouncementCardSkeleton` instances (`data-testid="announcement-card-skeleton"`,
+ *   `aria-hidden="true"`) instead of the bare "Loading…" line.
+ */
+describe('FeedPage skeleton loading (initial load only)', () => {
+  it('shows aria-hidden skeleton cards instead of a bare Loading line on the first page load', async () => {
+    mockFeed({ delayMs: 50 });
+    renderWithProviders(<FeedPage />);
+
+    expect(screen.queryByText(/^loading/i)).not.toBeInTheDocument();
+    const skeletons = screen.getAllByTestId('announcement-card-skeleton');
+    expect(skeletons.length).toBeGreaterThanOrEqual(2);
+    skeletons.forEach((s) => expect(s).toHaveAttribute('aria-hidden', 'true'));
+
+    await waitFor(() =>
+      expect(screen.queryAllByTestId('announcement-card-skeleton')).toHaveLength(0),
+    );
+    await screen.findByText('Newest post');
+  });
+
+  it('marks the persistent loading region aria-busy while pending, and clears it once loaded', async () => {
+    mockFeed({ delayMs: 50 });
+    renderWithProviders(<FeedPage />);
+
+    const loadingRegion = screen.getByTestId('feed-loading-region');
+    expect(loadingRegion).toHaveAttribute('aria-busy', 'true');
+
+    await screen.findByText('Newest post');
+    // The region itself persists (same container as the loaded state) — only
+    // the aria-busy value toggles, per a11y-auditor's finding #1.
+    expect(screen.getByTestId('feed-loading-region')).toHaveAttribute('aria-busy', 'false');
+  });
+
+  it('does not surface any accessible article roles or focusable content while the initial page is pending', async () => {
+    mockFeed({ delayMs: 50 });
+    const { container } = renderWithProviders(<FeedPage />);
+
+    expect(screen.queryAllByRole('article')).toHaveLength(0);
+    expect(
+      container.querySelectorAll(
+        '[data-testid="announcement-card-skeleton"] a, [data-testid="announcement-card-skeleton"] button, [data-testid="announcement-card-skeleton"] input, [data-testid="announcement-card-skeleton"] [tabindex]',
+      ),
+    ).toHaveLength(0);
+
+    await screen.findByText('Newest post');
+  });
+
+  it('does not re-show the initial-load skeleton when fetching an older page via "Load older posts"', async () => {
+    mockFeed();
+    renderWithProviders(<FeedPage />);
+    await screen.findByText('Newest post');
+
+    server.use(
+      http.get(`${FUNCTIONS_BASE}/announcement`, async ({ request }) => {
+        const url = new URL(request.url);
+        const isPage2 = url.searchParams.get('cursor') === 'cursor-page-2';
+        if (isPage2) await new Promise((r) => setTimeout(r, 50));
+        return HttpResponse.json(isPage2 ? PAGE_2 : PAGE_1);
+      }),
+    );
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: /load older posts/i }));
+
+    // Existing content stays visible and no full-page skeleton reappears, and
+    // the persistent region's aria-busy stays "false" — "Load older posts"
+    // keeps its existing (non-skeleton) pattern, per the feature's explicit
+    // out-of-scope note. It must not re-trip the initial-load busy signal.
+    expect(screen.queryAllByTestId('announcement-card-skeleton')).toHaveLength(0);
+    expect(screen.getByTestId('feed-loading-region')).toHaveAttribute('aria-busy', 'false');
+    expect(screen.getByText('Newest post')).toBeInTheDocument();
+
+    await screen.findByText(/older post from page 2/i);
   });
 });
