@@ -5,6 +5,7 @@ team: company
 
 > Navigation: [[kanban/engineering]] · [[kanban/design]] · [[kanban/marketing]] · [[README]] · [[protocols/dispatch]]
 ## Backlog
+- [ ] [[features/claude-content-moderation]] — Claude API content moderation at write time; flags land in the existing reports table
 - [ ] [[features/feed-skeleton-loading]] — skeleton loading cards (avatar/name/text/reaction bones, shimmer on surface.subtle) for the home feed + /feed + Community rail, replacing the bare `Loading…` text; human-approved mock at docs/screenshots/feed-skeleton-proposal/
 - [ ] [[features/auth-password-reset-ui]] — frontend gap surfaced by a user report ("I don't see Forgot password anymore"): the link/pages were never built even though the Supabase-backed API functions already exist
 - [ ] [[features/navbar-component-extraction]] — fast-follow from [[features/header-nav-redesign]]'s code review: extract NavTrackItem/AccountChip out of the 238-line Navbar() per ui-designer's already-named component anatomy
