@@ -181,6 +181,48 @@ function buildUserMessage(input: CoachInput): string {
   return `Draft comment:\n${input.draft}${context}`;
 }
 
+// coach-verdict-tool: verdict arrives as a forced `submit_coach_verdict`
+// tool call. Mirrors COACH_VERDICT_TOOL in backend claudeClient.ts.
+const COACH_VERDICT_TOOL = {
+  name: "submit_coach_verdict",
+  description:
+    "Submit the Reply Coach verdict for the draft comment. Always call this exactly once. " +
+    'Use verdict "ok" with empty categories, empty reasoning, and null rewrite when the draft is fine ' +
+    'or you are uncertain; use "suggest" only with one-sentence reasoning and a one-sentence rewrite.',
+  input_schema: {
+    type: "object" as const,
+    properties: {
+      verdict: { type: "string", enum: ["ok", "suggest"] },
+      categories: {
+        type: "array",
+        items: { type: "string" },
+        description: 'Harm patterns, e.g. "minimization", "savior-framing". Empty when verdict is "ok".',
+      },
+      reasoning: {
+        type: "string",
+        description: 'One sentence on why the phrasing can land hard, never naming the category. Empty when "ok".',
+      },
+      rewrite: {
+        type: ["string", "null"],
+        description: "One sentence in the author's own voice. Null when verdict is \"ok\".",
+      },
+    },
+    required: ["verdict", "categories", "reasoning", "rewrite"],
+    additionalProperties: false,
+  },
+};
+
+function isCoachResponse(value: unknown): value is CoachResponse {
+  if (typeof value !== "object" || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    (v.verdict === "ok" || v.verdict === "suggest") &&
+    Array.isArray(v.categories) && v.categories.every((c) => typeof c === "string") &&
+    typeof v.reasoning === "string" &&
+    (v.rewrite === null || typeof v.rewrite === "string")
+  );
+}
+
 let anthropicSingleton: Anthropic | null = null;
 
 async function liveCoach(input: CoachInput): Promise<CoachResponse> {
@@ -192,6 +234,8 @@ async function liveCoach(input: CoachInput): Promise<CoachResponse> {
     max_tokens: 512,
     system: [{ type: "text", text: COACH_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
     messages: [{ role: "user", content: buildUserMessage(input) }],
+    tools: [COACH_VERDICT_TOOL],
+    tool_choice: { type: "tool", name: COACH_VERDICT_TOOL.name },
   });
 
   if (response.usage) {
@@ -199,11 +243,11 @@ async function liveCoach(input: CoachInput): Promise<CoachResponse> {
       response.usage.input_tokens * INPUT_USD_PER_TOKEN + response.usage.output_tokens * OUTPUT_USD_PER_TOKEN,
     );
   }
-  const block = response.content[0];
-  if (!block || block.type !== "text" || !("text" in block) || !block.text) {
-    throw new Error("[coach] liveCoach: unexpected response shape from Anthropic client");
+  const block = response.content.find((b) => b.type === "tool_use" && b.name === COACH_VERDICT_TOOL.name);
+  if (!block || block.type !== "tool_use" || !isCoachResponse(block.input)) {
+    throw new Error("[coach] liveCoach: response did not call submit_coach_verdict with a valid verdict");
   }
-  return JSON.parse(block.text) as CoachResponse;
+  return block.input;
 }
 
 async function coach(input: CoachInput, userId: string): Promise<CoachResponse> {

@@ -3,7 +3,7 @@ slug: coach-verdict-tool
 title: Coach Verdict Tool
 owner: engineering
 collaborators: []
-status: drafting
+status: review
 priority: P2
 created: 2026-10-02
 target: null
@@ -42,16 +42,19 @@ links:
 ## Engineering — Acceptance
 
 ### Backend
-*(filled by backend-dev)*
+- `backend/src/services/coach/claudeClient.ts`: new exported `COACH_VERDICT_TOOL` (`submit_coach_verdict`, `input_schema` mirrors `CoachResponse`, `additionalProperties: false`, typed with `satisfies Anthropic.Tool`). `LiveClaudeClient.coach()` sends `tools: [COACH_VERDICT_TOOL]` + `tool_choice: { type: 'tool', name: 'submit_coach_verdict' }`. New `readVerdict()` finds the matching `tool_use` block and validates `input` with the `CoachResponse` Zod schema. Throws on a missing call or a schema mismatch, and the controller's silent fallback catches it.
+- `supabase/functions/coach/index.ts`: same tool + `tool_choice`. `isCoachResponse()` is a hand-written type guard, because the edge function has no Zod.
+- System-prompt cache_control is unchanged. The prompt's "Output contract" paragraph is left verbatim (see Open questions).
+- Known, pre-existing (on master too): `deno check` fails on `cache_control` in `system` because SDK 0.32 types it only under beta. No new Deno errors are introduced.
 
 ### Frontend
-*(filled by frontend-dev)*
+No frontend change: the `/coach` response shape is unchanged.
 
 ### Test plan
-*(filled by qa-engineer)*
+`backend/tests/coach-live.test.ts` → new `coach-verdict-tool` describe block (6 tests, written first and confirmed red): tool schema requires all four fields; tool is sent; tool_choice forces it; tool_use input is returned; a text-only response throws; a schema-invalid input throws. The fake Anthropic client now returns a `tool_use` block by default. Backend suite: 153/153 pass, `tsc --noEmit` clean.
 
 ### E2E coverage
-*(filled by e2e-test-writer; "No E2E coverage" if the feature is backend-only)*
+No E2E coverage: backend-only, response contract unchanged.
 
 ### Code review
 *(filled by code-reviewer; populated during building → review, not at speccing time)*

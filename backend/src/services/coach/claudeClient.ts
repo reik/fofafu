@@ -1,3 +1,4 @@
+import { CoachResponse as CoachResponseSchema } from '../../schemas/coach.schemas.js';
 import type { CoachInput, CoachResponse } from '../../schemas/coach.schemas.js';
 import { COACH_SYSTEM_PROMPT } from './systemPrompt.js';
 import { isReplyCoachLiveEnabled } from './featureFlags.js';
@@ -83,7 +84,7 @@ export class MockClaudeClient implements ClaudeClient {
 export interface AnthropicLikeClient {
   messages: {
     create(params: Record<string, unknown>): Promise<{
-      content: Array<{ type: string; text?: string }>;
+      content: Array<{ type: string; text?: string; name?: string; input?: unknown }>;
       usage?: { input_tokens: number; output_tokens: number };
     }>;
   };
@@ -104,6 +105,41 @@ export interface AnthropicLikeClient {
  */
 const INPUT_USD_PER_TOKEN = 0.8 / 1_000_000;
 const OUTPUT_USD_PER_TOKEN = 4 / 1_000_000;
+
+/**
+ * coach-verdict-tool: the verdict comes back as a forced call to this tool
+ * rather than as free text, so the API fills a schema instead of us running
+ * `JSON.parse` over prose. `input_schema` mirrors `CoachResponse` in
+ * `schemas/coach.schemas.ts`; the Zod schema still validates the input.
+ */
+export const COACH_VERDICT_TOOL = {
+  name: 'submit_coach_verdict',
+  description:
+    'Submit the Reply Coach verdict for the draft comment. Always call this exactly once. ' +
+    'Use verdict "ok" with empty categories, empty reasoning, and null rewrite when the draft is fine ' +
+    'or you are uncertain; use "suggest" only with one-sentence reasoning and a one-sentence rewrite.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      verdict: { type: 'string', enum: ['ok', 'suggest'] },
+      categories: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Harm patterns, e.g. "minimization", "savior-framing". Empty when verdict is "ok".',
+      },
+      reasoning: {
+        type: 'string',
+        description: 'One sentence on why the phrasing can land hard, never naming the category. Empty when "ok".',
+      },
+      rewrite: {
+        type: ['string', 'null'],
+        description: "One sentence in the author's own voice. Null when verdict is \"ok\".",
+      },
+    },
+    required: ['verdict', 'categories', 'reasoning', 'rewrite'],
+    additionalProperties: false,
+  },
+} satisfies Anthropic.Tool;
 
 function buildUserMessage(input: CoachInput): string {
   const context = input.threadContext
@@ -130,6 +166,8 @@ export class LiveClaudeClient implements ClaudeClient {
         },
       ],
       messages: [{ role: 'user', content: buildUserMessage(input) }],
+      tools: [COACH_VERDICT_TOOL],
+      tool_choice: { type: 'tool', name: COACH_VERDICT_TOOL.name },
     });
 
     if (response.usage) {
@@ -139,15 +177,22 @@ export class LiveClaudeClient implements ClaudeClient {
       recordCoachSpend(usd);
     }
 
-    const block = response.content[0];
-    if (!block || block.type !== 'text' || !block.text) {
-      throw new Error('[coach] LiveClaudeClient: unexpected response shape from Anthropic client');
-    }
-    // Parsing errors (malformed JSON) intentionally propagate — the
-    // controller's existing silent-fallback catch handles it, matching the
-    // "live SDK throws -> verdict=ok" behavior in the acceptance criteria.
-    return JSON.parse(block.text) as CoachResponse;
+    return readVerdict(response.content);
   }
+}
+
+/**
+ * Pulls the `submit_coach_verdict` tool input out of the response and
+ * validates it. Throws (missing tool call, schema mismatch) intentionally
+ * propagate — the controller's silent-fallback catch turns them into
+ * `verdict=ok`, matching the "live SDK throws -> verdict=ok" behavior.
+ */
+function readVerdict(content: Array<{ type: string; name?: string; input?: unknown }>): CoachResponse {
+  const block = content.find((b) => b.type === 'tool_use' && b.name === COACH_VERDICT_TOOL.name);
+  if (!block) {
+    throw new Error('[coach] LiveClaudeClient: response did not call submit_coach_verdict');
+  }
+  return CoachResponseSchema.parse(block.input);
 }
 
 let testOverride: ClaudeClient | null = null;
