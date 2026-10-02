@@ -223,6 +223,41 @@ function isCoachResponse(value: unknown): value is CoachResponse {
   );
 }
 
+// ── coachErrors.ts (categories + classifier, mirrored verbatim) ─────────────
+
+type CoachErrorCategory =
+  | "rate_limited" | "overloaded" | "upstream_error" | "timeout" | "network" | "auth" | "bad_request"
+  | "refusal" | "truncated" | "no_tool_call" | "invalid_verdict" | "unknown";
+
+interface CoachErrorInfo {
+  category: CoachErrorCategory;
+  retryable: boolean;
+  status?: number;
+}
+
+class CoachClientError extends Error {
+  constructor(readonly category: CoachErrorCategory, message: string) {
+    super(`[coach] ${category}: ${message}`);
+    this.name = "CoachClientError";
+  }
+}
+
+function classifyStatus(status: number): CoachErrorInfo {
+  if (status === 429) return { category: "rate_limited", retryable: true, status };
+  if (status === 529) return { category: "overloaded", retryable: true, status };
+  if (status >= 500) return { category: "upstream_error", retryable: true, status };
+  if (status === 401 || status === 403) return { category: "auth", retryable: false, status };
+  return { category: "bad_request", retryable: false, status };
+}
+
+function classifyCoachError(err: unknown): CoachErrorInfo {
+  if (err instanceof CoachClientError) return { category: err.category, retryable: false };
+  if (err instanceof Anthropic.APIConnectionTimeoutError) return { category: "timeout", retryable: true };
+  if (err instanceof Anthropic.APIConnectionError) return { category: "network", retryable: true };
+  if (err instanceof Anthropic.APIError && typeof err.status === "number") return classifyStatus(err.status);
+  return { category: "unknown", retryable: false };
+}
+
 let anthropicSingleton: Anthropic | null = null;
 
 async function liveCoach(input: CoachInput): Promise<CoachResponse> {
@@ -243,9 +278,18 @@ async function liveCoach(input: CoachInput): Promise<CoachResponse> {
       response.usage.input_tokens * INPUT_USD_PER_TOKEN + response.usage.output_tokens * OUTPUT_USD_PER_TOKEN,
     );
   }
+  // stop_reason is a plain string here: SDK 0.32's union predates "refusal".
+  const stopReason: string | null = response.stop_reason;
+  if (stopReason === "refusal") throw new CoachClientError("refusal", "model declined to coach this draft");
+  if (stopReason === "max_tokens") {
+    throw new CoachClientError("truncated", "response hit max_tokens before the verdict completed");
+  }
   const block = response.content.find((b) => b.type === "tool_use" && b.name === COACH_VERDICT_TOOL.name);
-  if (!block || block.type !== "tool_use" || !isCoachResponse(block.input)) {
-    throw new Error("[coach] liveCoach: response did not call submit_coach_verdict with a valid verdict");
+  if (!block || block.type !== "tool_use") {
+    throw new CoachClientError("no_tool_call", "response did not call submit_coach_verdict");
+  }
+  if (!isCoachResponse(block.input)) {
+    throw new CoachClientError("invalid_verdict", "tool input failed the CoachResponse shape");
   }
   return block.input;
 }
@@ -292,9 +336,10 @@ Deno.serve(async (req) => {
     return json(result, 200);
   } catch (err) {
     // Never log the draft, threadContext, or any user-supplied field — only
-    // the error class/message.
+    // the error category/class/message.
+    const { category, retryable, status } = classifyCoachError(err);
     const message = err instanceof Error ? err.message : "unknown error";
-    console.warn(JSON.stringify({ msg: "coach client failure", message }));
+    console.warn(JSON.stringify({ msg: "coach client failure", category, retryable, status, message }));
     return json(SILENT_FALLBACK, 200);
   }
 });

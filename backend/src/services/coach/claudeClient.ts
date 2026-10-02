@@ -4,6 +4,7 @@ import { COACH_SYSTEM_PROMPT } from './systemPrompt.js';
 import { isReplyCoachLiveEnabled } from './featureFlags.js';
 import { isCoachCostCapExceeded, recordCoachSpend } from './costCap.js';
 import { isInHoldback } from './holdback.js';
+import { CoachClientError } from './coachErrors.js';
 import Anthropic from '@anthropic-ai/sdk';
 
 /**
@@ -86,6 +87,7 @@ export interface AnthropicLikeClient {
     create(params: Record<string, unknown>): Promise<{
       content: Array<{ type: string; text?: string; name?: string; input?: unknown }>;
       usage?: { input_tokens: number; output_tokens: number };
+      stop_reason?: string | null;
     }>;
   };
 }
@@ -177,22 +179,37 @@ export class LiveClaudeClient implements ClaudeClient {
       recordCoachSpend(usd);
     }
 
-    return readVerdict(response.content);
+    return readVerdict(response);
   }
 }
 
 /**
  * Pulls the `submit_coach_verdict` tool input out of the response and
- * validates it. Throws (missing tool call, schema mismatch) intentionally
- * propagate — the controller's silent-fallback catch turns them into
- * `verdict=ok`, matching the "live SDK throws -> verdict=ok" behavior.
+ * validates it. Every failure throws a categorized `CoachClientError` (see
+ * `coachErrors.ts`); the controller's silent-fallback catch logs the
+ * category and turns it into `verdict=ok`.
  */
-function readVerdict(content: Array<{ type: string; name?: string; input?: unknown }>): CoachResponse {
-  const block = content.find((b) => b.type === 'tool_use' && b.name === COACH_VERDICT_TOOL.name);
-  if (!block) {
-    throw new Error('[coach] LiveClaudeClient: response did not call submit_coach_verdict');
+function readVerdict(response: {
+  content: Array<{ type: string; name?: string; input?: unknown }>;
+  stop_reason?: string | null;
+}): CoachResponse {
+  if (response.stop_reason === 'refusal') {
+    throw new CoachClientError('refusal', 'model declined to coach this draft');
   }
-  return CoachResponseSchema.parse(block.input);
+  if (response.stop_reason === 'max_tokens') {
+    throw new CoachClientError('truncated', 'response hit max_tokens before the verdict completed');
+  }
+  const block = response.content.find((b) => b.type === 'tool_use' && b.name === COACH_VERDICT_TOOL.name);
+  if (!block) {
+    throw new CoachClientError('no_tool_call', 'response did not call submit_coach_verdict');
+  }
+  const parsed = CoachResponseSchema.safeParse(block.input);
+  if (!parsed.success) {
+    // Only the failing paths — never the input values, which may echo the draft.
+    const paths = parsed.error.issues.map((i) => i.path.join('.') || '(root)').join(', ');
+    throw new CoachClientError('invalid_verdict', `tool input failed schema at: ${paths}`);
+  }
+  return parsed.data;
 }
 
 let testOverride: ClaudeClient | null = null;
