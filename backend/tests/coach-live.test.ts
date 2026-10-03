@@ -33,13 +33,17 @@ async function tryImport<T>(path: string): Promise<T | null> {
 
 // A fake Anthropic client following the shape LiveClaudeClient is expected to
 // wrap (`messages.create`). Never touches the network.
+const OK_VERDICT = { verdict: 'ok', categories: [], reasoning: '', rewrite: null };
+
 function makeFakeAnthropicClient(opts: {
-  text?: string;
+  content?: Array<Record<string, unknown>>;
   usage?: { input_tokens: number; output_tokens: number };
   cacheHit?: boolean;
   throwOn?: boolean;
 } = {}) {
-  const text = opts.text ?? '{"verdict":"ok","categories":[],"reasoning":"","rewrite":null}';
+  const content = opts.content ?? [
+    { type: 'tool_use', id: 'toolu_fake', name: 'submit_coach_verdict', input: OK_VERDICT },
+  ];
   const calls: Array<Record<string, unknown>> = [];
   return {
     calls,
@@ -48,7 +52,7 @@ function makeFakeAnthropicClient(opts: {
         calls.push(params);
         if (opts.throwOn) throw new Error('simulated SDK failure');
         return {
-          content: [{ type: 'text', text }],
+          content,
           usage: opts.usage ?? { input_tokens: 100, output_tokens: 50 },
           _fakeCacheHit: opts.cacheHit ?? false,
         };
@@ -97,6 +101,69 @@ describe('reply-coach-live: LiveClaudeClient wiring', async () => {
     const call = fake.calls[0] as { system?: unknown };
     const serialized = JSON.stringify(call.system);
     assert.ok(serialized.includes('cache_control'), 'system block should carry cache_control for prompt caching');
+  });
+});
+
+// coach-verdict-tool (see fofafu_vault/features/coach-verdict-tool.md): the
+// verdict comes back as a forced `submit_coach_verdict` tool call, not text.
+describe('coach-verdict-tool: submit_coach_verdict tool use', async () => {
+  const mod = (await import('../src/services/coach/claudeClient.js')) as unknown as {
+    LiveClaudeClient: new (client: unknown) => { coach(input: unknown): Promise<unknown> };
+    COACH_VERDICT_TOOL: { name: string; input_schema: { required?: string[] } };
+  };
+
+  it('should_export_a_submit_coach_verdict_tool_with_the_coach_response_fields_required', () => {
+    assert.deepEqual(
+      [...(mod.COACH_VERDICT_TOOL.input_schema.required ?? [])].sort(),
+      ['categories', 'reasoning', 'rewrite', 'verdict'],
+    );
+  });
+
+  it('should_send_the_verdict_tool_on_every_live_call', async () => {
+    const fake = makeFakeAnthropicClient();
+    await new mod.LiveClaudeClient(fake).coach({ draft: 'Praying for your family this week.' });
+
+    const tools = fake.calls[0]!.tools as Array<{ name: string }>;
+    assert.deepEqual(tools.map((t) => t.name), ['submit_coach_verdict']);
+  });
+
+  it('should_force_the_verdict_tool_via_tool_choice', async () => {
+    const fake = makeFakeAnthropicClient();
+    await new mod.LiveClaudeClient(fake).coach({ draft: 'Praying for your family this week.' });
+
+    assert.deepEqual(fake.calls[0]!.tool_choice, { type: 'tool', name: 'submit_coach_verdict' });
+  });
+
+  it('should_return_the_tool_use_input_as_the_coach_response', async () => {
+    const suggestion = {
+      verdict: 'suggest',
+      categories: ['minimization'],
+      reasoning: 'One sentence of reasoning.',
+      rewrite: 'One warmer sentence.',
+    };
+    const fake = makeFakeAnthropicClient({
+      content: [{ type: 'tool_use', id: 'toolu_1', name: 'submit_coach_verdict', input: suggestion }],
+    });
+
+    const result = await new mod.LiveClaudeClient(fake).coach({ draft: 'At least you got to keep her for a while.' });
+
+    assert.deepEqual(result, suggestion);
+  });
+
+  it('should_throw_when_the_response_has_no_verdict_tool_call', async () => {
+    const fake = makeFakeAnthropicClient({
+      content: [{ type: 'text', text: JSON.stringify(OK_VERDICT) }],
+    });
+
+    await assert.rejects(() => new mod.LiveClaudeClient(fake).coach({ draft: 'anything' }));
+  });
+
+  it('should_throw_when_the_tool_input_does_not_match_the_coach_response_schema', async () => {
+    const fake = makeFakeAnthropicClient({
+      content: [{ type: 'tool_use', id: 'toolu_2', name: 'submit_coach_verdict', input: { verdict: 'maybe' } }],
+    });
+
+    await assert.rejects(() => new mod.LiveClaudeClient(fake).coach({ draft: 'anything' }));
   });
 });
 
