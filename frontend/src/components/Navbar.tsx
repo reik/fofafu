@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/auth';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
+import { useFamilyDisplayName } from '@/hooks/useFamilyDisplayName';
 import { logout } from '@/api/auth';
 import { unreadCount, messageKeys } from '@/api/messages';
 import { cn } from '@/utils/cn';
@@ -39,6 +40,7 @@ function initialOf(name: string): string {
 
 export function Navbar() {
   const user = useAuthStore((s) => s.user);
+  const familyName = useFamilyDisplayName() ?? '';
   const token = useAuthStore((s) => s.token);
   const clear = useAuthStore((s) => s.clear);
   const navigate = useNavigate();
@@ -176,17 +178,17 @@ export function Navbar() {
                   onClick={() => setAccountMenuOpen((open) => !open)}
                   aria-expanded={accountMenuOpen}
                   aria-controls="account-menu"
-                  aria-label={`${user.name} account menu`}
+                  aria-label={`${familyName} account menu`}
                   className="flex items-center gap-2 rounded-full px-2 py-1 outline-none transition-colors hover:bg-surface-warm focus-visible:ring-2 focus-visible:ring-brand-primary"
                 >
                   <span
                     aria-hidden="true"
                     className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-primary-pressed text-sm font-semibold leading-none text-white"
                   >
-                    {initialOf(user.name)}
+                    {initialOf(familyName)}
                   </span>
-                  {/* Full user.name, not a "first name" extraction — this app's
-                      user.name is a household display name ("The Anderson
+                  {/* Full family name, not a "first name" extraction — this app's
+                      family name is a household display name ("The Anderson
                       Family"), not a personal name, so there's no first-name
                       token to safely take. Truncated past 24 chars with an
                       ellipsis, matching the precedent in
@@ -195,7 +197,7 @@ export function Navbar() {
                     aria-hidden="true"
                     className="hidden max-w-[24ch] truncate text-sm font-semibold leading-tight text-ink-lead md:block"
                   >
-                    {user.name}
+                    {familyName}
                   </span>
                 </button>
                 <div

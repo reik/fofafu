@@ -4,6 +4,7 @@ import type { CoachInput, CoachResponse } from '../schemas/coach.schemas.js';
 import { isReplyCoachEnabled } from '../services/coach/featureFlags.js';
 import { getClaudeClient } from '../services/coach/claudeClient.js';
 import { consumeCoachCall } from '../services/coach/rateLimit.js';
+import { classifyCoachError } from '../services/coach/coachErrors.js';
 import { logger } from '../utils/logger.js';
 
 /**
@@ -47,10 +48,11 @@ export async function coachComment(req: AuthRequest, res: Response): Promise<voi
     res.status(200).json(result);
   } catch (err) {
     // Never log the draft, threadContext, or any user-supplied field — only
-    // the error class/message. The real `LiveClaudeClient` (reply-coach-live)
-    // will throw on timeouts and 5xx; the composer must still publish.
+    // the error category/class/message. Users always get the silent
+    // fallback; the category (see coachErrors.ts) says why in the logs.
+    const { category, retryable, status } = classifyCoachError(err);
     const message = err instanceof Error ? err.message : 'unknown error';
-    logger.warn({ msg: 'coach client failure', message });
+    logger.warn({ msg: 'coach client failure', category, retryable, status, message });
     res.status(200).json(SILENT_FALLBACK);
   }
 }
