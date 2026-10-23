@@ -83,7 +83,7 @@ export function FamilyProfileBlockControl({ familyId, familyName }: FamilyProfil
       {blocked && (
         <div className="mt-3 rounded-lg bg-surface-card p-4 shadow-lift">
           <p className="text-ink-lead">You&apos;ve blocked the {familyName} family.</p>
-          <p className="mt-1 text-sm text-ink-muted">They can&apos;t see your posts or message you. You won&apos;t see theirs.</p>
+          <p className="mt-1 text-sm text-ink-muted">You won&apos;t see their posts, comments, or new messages. They can still see yours.</p>
         </div>
       )}
     </div>

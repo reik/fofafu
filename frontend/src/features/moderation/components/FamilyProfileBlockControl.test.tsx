@@ -83,7 +83,7 @@ describe('FamilyProfileBlockControl — already blocked', () => {
 
     expect(await screen.findByRole('button', { name: 'Unblock' })).toBeInTheDocument();
     expect(screen.getByText(/you've blocked the anderson family\./i)).toBeInTheDocument();
-    expect(screen.getByText(/they can't see your posts or message you\. you won't see theirs\./i)).toBeInTheDocument();
+    expect(screen.getByText(/you won't see their posts, comments, or new messages\. they can still see yours\./i)).toBeInTheDocument();
   });
 
   it('tapping Unblock reverses the block with no confirmation dialog', async () => {
