@@ -31,10 +31,11 @@ Success = the coach reduces reported/edited-after-publish comments without makin
 - [ ] On Claude API failure (timeout, 5xx, key missing), endpoint returns `200` with `{ verdict: "ok" }` so the composer never blocks publish.
 - [ ] Coach inputs are NOT persisted; request bodies are scrubbed from any structured log line.
 - [ ] `ANTHROPIC_API_KEY` is env-only; backend logs a warning (not an error) if absent and the flag is off, and refuses to boot if absent and the flag is on.
+- [x] Frontend `CoachChip` composer integration — implemented 2026-08-18 against the `coach` Supabase Edge Function (see `### Frontend` implementation note below). Added here after the fact; not part of the original v1 AC list per `## Out of scope` below.
 
 ## Out of scope
 
-- Frontend composer-chip UI (Phase 3 owns this; this feature ships the backend endpoint only).
+- ~~Frontend composer-chip UI (Phase 3 owns this; this feature ships the backend endpoint only).~~ Implemented 2026-08-18 — see `### Frontend`.
 - DMs — v1 coaches public announcement comments only.
 - Coaching of announcement bodies (post composer) — separate future feature.
 - Storing or analyzing rejection/acceptance signals beyond aggregate counts (Growth section will define).
@@ -45,6 +46,8 @@ Success = the coach reduces reported/edited-after-publish comments without makin
 - **Mock first** *(2026-06-03)*. v1 ships a swappable `ClaudeClient` interface returning canned responses (one neutral, one minimization, one savior-framing fixture at minimum). The real `@anthropic-ai/sdk` integration + `ANTHROPIC_API_KEY` plumbing + prompt caching lands as a follow-up feature ([[features/reply-coach-live]]) once this PR is in. Rationale: keeps the first PR free of API-key plumbing and live-call cost while still landing the endpoint, flag, rate limit, response shape, and tests.
   - All acceptance criteria still apply EXCEPT the prompt-caching AC and the `ANTHROPIC_API_KEY` boot-refusal AC — both move to the live-SDK follow-up.
   - Tests run fully offline against the mock; no network calls.
+
+- **Frontend built against the `coach` Supabase Edge Function, not the Express route above** *(2026-08-18)*. Between this feature's original dispatch and the Phase 3 frontend port landing, the backend migrated off Render/Express onto Vercel/Supabase ([[features/migrate-render-to-vercel-supabase]], sub-ticket `eng-infra-6`) — `backend/src/routes/coach.routes.ts` still exists on disk but is dead code; the live contract is `supabase/functions/coach/index.ts`, same request/response shape, called via `frontend/src/api/edgeClient.ts`'s `edgeRequest('coach', '', {...})` instead of the old `apiRequest('/comments/coach', {...})`. Neither this file's `### Backend` section (above) nor `migrate-render-to-vercel-supabase.md` said this explicitly anywhere, so recording it here. `threadContext` was skipped in the frontend v1 (the deployed function accepts it but does no shape/length validation, and today's mock ignores it entirely — zero behavioral difference for the cost of prop-drilling comment data through `AnnouncementDetail.tsx` for no visible effect); the request type still declares it so wiring it later is additive, not a signature change.
 
 ## Open questions
 
@@ -182,7 +185,13 @@ Narrow patch in response to tech-lead's APPROVED-WITH-COMMENTS disposition on `#
 
 ### Frontend
 
-**Implementation deferred to Phase 3 frontend port.** This dispatch ships backend-only per `## Out of scope`. The notes below are a forward-looking spec so the Phase 3 port can wire the composer chip without re-deriving the contract.
+**Implemented 2026-08-18.** The notes below this line are the original forward-looking spec (unchanged, kept for the design rationale); this paragraph records what was actually built and where it diverges.
+
+Files: `frontend/src/api/coach.ts` (typed wrapper, mirrors `frontend/src/api/messages.ts`'s pattern), `frontend/src/features/feed/components/CoachChip/{CoachChip.tsx,useCoach.ts,CoachChip.test.tsx,useCoach.test.ts,index.ts}`, plus small modifications to `frontend/src/api/edgeClient.ts` (added `signal?: AbortSignal` passthrough — nothing else in the codebase needed cancellation before this), `frontend/src/features/feed/components/CommentForm.tsx` (mounts the chip), `frontend/src/features/feed/components/CommentForm.test.tsx` (+4 cases incl. an axe-core check), and `frontend/tailwind.config.js` (added the long-approved-but-never-added `color.surface.subtle` token).
+
+Corrections against the spec below: the backend target is the `coach` Edge Function, not `POST /api/comments/coach` (see `## Decisions`); the RHF field is `content`, not `body` (`watch('body')`/`setValue('body', ...)` in the spec text should read `content` — the real `CommentForm.tsx` was never wired with a `body` field); `threadContext` was skipped for v1 (see `## Decisions`); the Accept pill uses `bg-brand-primary-pressed` (a static-scan test, `frontend/src/tests/brand-contrast.test.ts`, added by a later unrelated feature, fails the build on plain `bg-brand-primary` + `text-white`); no chevron icon was added to the reasoning toggle (the design-lead disposition already treats the label as sufficient — "the toggle always carries its label").
+
+Tests: 156/156 passing across the full frontend suite (18 new: 11 `useCoach.test.ts` + 7 `CoachChip.test.tsx`, plus `CommentForm.test.tsx` grew from 1 to 5 cases), `tsc --noEmit` clean. No frontend lint script exists in this workspace. One `frontend/e2e/composer.spec.ts` case was written but not run — this worktree has no `.env` (only `.env.example`), so `supabaseClient.ts` throws at import time and the dev server can't boot; the spec also depends on `REPLY_COACH_ENABLED=true` being set as a secret on whatever Supabase project it targets, which isn't checkable from this repo.
 
 **Where it lives.** The coach surfaces inside the announcement comment composer at `frontend/src/features/feed/components/CommentForm.tsx`. A new sibling component `CoachChip/` (PascalCase folder, co-located: `CoachChip.tsx`, `CoachChip.test.tsx`, `useCoach.ts`, `index.ts`) renders directly below the textarea inside `CommentForm`'s root layout, not as a portal/modal. The chip is part of the form's flow but never inside the `<form>`'s submit path. No new page or route is introduced; this is composer-local only.
 

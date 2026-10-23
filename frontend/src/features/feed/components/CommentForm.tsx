@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { createComment, feedKeys } from '@/api/announcements';
 import { EdgeApiError } from '@/api/edgeClient';
 import { MessageIcon } from '@/components/icons';
+import { CoachChip, useCoach } from './CoachChip';
 
 const Schema = z.object({
   content: z.string().min(1, 'Type a comment.').max(2000),
@@ -19,10 +20,41 @@ interface Props {
 export function CommentForm({ announcementId }: Props) {
   const qc = useQueryClient();
   const [serverError, setServerError] = useState<string | null>(null);
-  const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<Values>({
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting }, reset } = useForm<Values>({
     resolver: zodResolver(Schema),
     defaultValues: { content: '' },
   });
+  const { ref: contentRef, onBlur: contentOnBlur, ...contentField } = register('content');
+  const coach = useCoach(watch('content'));
+
+  function focusTextareaAtEnd() {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.focus();
+    el.setSelectionRange(el.value.length, el.value.length);
+  }
+
+  function applyRewrite() {
+    if (!coach.suggestion) return;
+    setValue('content', coach.suggestion.rewrite, { shouldDirty: true, shouldValidate: true });
+    coach.clear();
+  }
+
+  function handleAccept() {
+    applyRewrite();
+    focusTextareaAtEnd();
+  }
+
+  function handleEdit() {
+    applyRewrite();
+    textareaRef.current?.focus();
+  }
+
+  function handleDismiss() {
+    coach.dismiss();
+    focusTextareaAtEnd();
+  }
 
   const mutation = useMutation({
     mutationFn: (input: { content: string }) => createComment(announcementId, input),
@@ -44,13 +76,24 @@ export function CommentForm({ announcementId }: Props) {
       <label htmlFor="comment-content" className="sr-only">Add a comment</label>
       <textarea
         id="comment-content"
-        {...register('content')}
+        {...contentField}
+        ref={(el) => {
+          contentRef(el);
+          textareaRef.current = el;
+        }}
+        onBlur={(e) => {
+          contentOnBlur(e);
+          coach.triggerNow();
+        }}
         placeholder="Say something kind…"
         rows={2}
         className="w-full rounded bg-surface-card px-3 py-2 outline-none border border-ink-muted/20 focus:border-brand-primary"
       />
       {errors.content && <p className="text-feedback-error text-xs">{errors.content.message}</p>}
       {serverError && <p role="alert" className="text-feedback-error text-xs">{serverError}</p>}
+      {coach.suggestion && (
+        <CoachChip suggestion={coach.suggestion} onAccept={handleAccept} onEdit={handleEdit} onDismiss={handleDismiss} />
+      )}
       <div className="flex justify-end">
         <button
           type="submit"
