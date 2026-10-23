@@ -640,7 +640,7 @@ Where the family's profile page renders differently once you've blocked them —
 | key | string | notes |
 |---|---|---|
 | `profile.blocked.banner` | You've blocked the {name} family. | Replaces the normal profile chrome for the blocker's own view of this family. |
-| `profile.blocked.helper` | They can't see your posts or message you. You won't see theirs. | Two short sentences — a reminder for someone revisiting this profile a while after blocking. |
+| `profile.blocked.helper` | You won't see their posts, comments, or new messages. They can still see yours. | Two short sentences — a reminder for someone revisiting this profile a while after blocking. |
 | `profile.blocked.unblock.cta` | Unblock | Single tap, no confirmation dialog. Mirrors the low-friction spirit the acceptance criteria set for block itself ("one tap"), and the risk is symmetric either direction — re-blocking is just as cheap as unblocking, so a confirmation step here would be friction without a matching safety benefit. |
 | `profile.unblock.success` | Unblocked — the {name} family can see your posts and message you again. | |
 | `profile.unblock.error` | We couldn't unblock that family. Try again? | Same error-voice pattern. |
