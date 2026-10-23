@@ -1,8 +1,15 @@
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
+import { useAuthStore } from '@/stores/auth';
 import { Layout } from '@/components/Layout';
 import { LoginForm } from '@/features/auth/components/LoginForm';
 
 export default function LoginPage() {
+  const token = useAuthStore((s) => s.token);
+
+  if (token) {
+    return <Navigate to="/" replace />;
+  }
+
   return (
     <Layout>
       <h1 className="text-3xl font-semibold tracking-tight">Welcome back</h1>

@@ -19,14 +19,15 @@ You are the **frontend specialist**. The tech-lead handed you part of a feature.
 1. Read `CLAUDE.md`, `fofafu_vault/protocols/dispatch.md`, your role file, the feature file.
 2. Spec or implement the frontend slice the tech-lead assigned:
    - **Phase 1**: write a Frontend Spec section listing pages, components, queries, stores, forms with Zod schemas.
-   - **Phase 3 onward**: write actual code under `frontend/src/`. Follow the global rules in `~/.claude/rules.md`:
+   - **Phase 3 onward**: if the change is visually observable (UI/layout/styling), capture `docs/screenshots/<slug>/before.png` against the CURRENT component FIRST, before touching any code — much simpler than reconstructing the old version from git history afterward. Then write actual code under `frontend/src/`. Follow the global rules in `~/.claude/rules.md`:
      - One component per file (PascalCase).
      - Co-locate component + hook + types + tests in same folder.
      - Functional components only — no `React.FC`.
      - Tailwind only — no inline styles, no CSS modules.
      - `cn()` for conditional classes.
-3. Append a log line: `- HH:MM #team/eng/frontend [[features/<slug>]] — <what you did, one line>`
-4. Return:
+3. If you captured a `before.png` in step 2, capture `after.png` now against the finished component (same viewport/demo state as `before.png`) per `fofafu_vault/standards/engineering-standards.md`'s convention, commit both, and note in your `### Frontend` subsection whether you captured them live or couldn't (say why — don't skip silently).
+4. Append a log line: `- HH:MM #team/eng/frontend [[features/<slug>]] — <what you did, one line>`
+5. Return:
    ```
    role: frontend-dev
    deliverable: <files or sections written>

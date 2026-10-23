@@ -306,6 +306,28 @@ test.describe('AC5 — another family\'s free slots on their profile page', () =
       page.getByRole('heading', { name: /availability/i }),
     ).toHaveCount(0);
   });
+
+  // Regression test for fofafu_vault/features/family-availability-empty-state-week-fix.md:
+  // the empty-state message used to only render when the viewed week was
+  // strictly in the future, so a zero-slot family showed a bare calendar
+  // grid on the default (current) week instead of an explanation.
+  test('shows the empty-state message, not a bare grid, for the current week when no slots exist', async ({
+    page,
+  }) => {
+    // davis@dummy.test: no availability slots seeded for this family
+    await loginAs(page, 'anderson@dummy.test');
+    await goToFamilyProfile(page, 'The Davis Family');
+
+    await expect(
+      page.getByRole('heading', { name: /Davis.*availability/i }),
+    ).toBeVisible();
+
+    await expect(page.getByText(/hasn.t set any availability yet/i)).toBeVisible();
+
+    // Regression guard: the WeekCalendar legend only renders when slots
+    // exist — it must not appear alongside the empty-state message.
+    await expect(page.getByText('Click a slot to request')).toHaveCount(0);
+  });
 });
 
 // ── AC6: Send a playdate request from a free slot ──────────────────────────

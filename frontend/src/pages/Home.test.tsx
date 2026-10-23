@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { renderWithProviders } from '@/tests/render';
-import { server, FUNCTIONS_BASE } from '@/tests/msw-server';
+import { server, handlers, FUNCTIONS_BASE } from '@/tests/msw-server';
 import { useAuthStore } from '@/stores/auth';
 import HomePage from './Home';
 
@@ -12,6 +12,17 @@ function setAuthed() {
     user: { id: 'u1', email: 'a@b.com', name: 'Jane', city: 'Phoenix', state: 'AZ' },
   });
 }
+
+const RENAMED_FAMILY = {
+    id: 'fam1',
+    ownerId: 'u1',
+    name: 'The Hernandez Family',
+    bio: '',
+    kidCount: null,
+    avatarUrl: null,
+    isOwner: true,
+    updatedAt: '2026-09-23',
+  };
 
 const baseHandlers = [
   http.get(`${FUNCTIONS_BASE}/message/unread/count`, () => HttpResponse.json({ count: 0 })),
@@ -139,5 +150,19 @@ describe('HomePage dashboard', () => {
     renderWithProviders(<HomePage />, { route: '/' });
 
     expect(await screen.findByLabelText(/announcements/i)).toBeInTheDocument();
+  });
+
+  it('should_show_the_family_profile_name_when_it_differs_from_the_signup_name', async () => {
+    setAuthed();
+    server.use(
+      ...baseHandlers,
+      http.get(`${FUNCTIONS_BASE}/community/recent`, () => HttpResponse.json([])),
+      handlers.familyMe(RENAMED_FAMILY),
+    );
+
+    renderWithProviders(<HomePage />, { route: '/' });
+
+    const familyCard = screen.getByLabelText(/your family/i);
+    expect(await within(familyCard).findByText('The Hernandez Family')).toBeInTheDocument();
   });
 });

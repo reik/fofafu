@@ -16,6 +16,23 @@
 //   PATCH  /announcement/comments/:id              -> patchComment
 //   DELETE /announcement/comments/:id              -> deleteComment
 //   POST   /announcement/:id/react                 -> toggleReaction
+//
+// Block-aware filtering (fofafu_vault/features/moderation-report-block.md,
+// dispatch contract D): deliberately NOT implemented as code in this file.
+// A blocked family's announcements/comments are hidden entirely via RLS
+// (RESTRICTIVE policies in
+// supabase/migrations/20260904000000_moderation_reports_blocks.sql), which
+// applies uniformly to every query below -- the feed, a single GET by id,
+// and the comments list -- with no risk of a query in here forgetting the
+// filter. Unlike community/index.ts and search/index.ts, there's no
+// competing requirement to keep a blocked family's own content directly
+// reachable (that carve-out only applies to a family's *profile* row, so
+// the unblock button has somewhere to live), so RLS alone is the right tool
+// here per contract D's "RLS or query-level exclusion." Reactions are
+// intentionally NOT filtered by block state -- out of the acceptance
+// criteria's named scope (feed/threads/DM-list/search), and reaction
+// aggregates aren't attributable to a single family in the UI the way a
+// post or comment is.
 import { corsHeaders, json, supabaseForRequest } from "../_shared/client.ts";
 
 const REACTION_TYPES = ["like", "love", "hug", "celebrate", "support"] as const;

@@ -28,6 +28,8 @@ The shared design spec. Tokens, voice, and the north-star principles every team 
 
 *(These are starting values inherited from the old fofa palette. Adjust as the system stabilizes.)*
 
+**Recurrence note (2026-09-07, design-lead, from [[features/moderation-report-block]]'s audit).** The "non-text-bearing contexts" restriction on `color.brand.primary` above has now been violated twice in shipped code: [[features/brand-contrast-fix]] (white text set on an unmigrated `brand.primary` fill) and [[features/moderation-report-block]] (three sites — `ReportModal.tsx`'s selected-category label, `BlockUndoStrip.tsx`'s "Undo" link, `BlockedContentPlaceholder.tsx`'s "Undo"/"View their profile" links — used `brand.primary` as literal link/label text color on light backgrounds, ~3.1–3.6:1 against a 4.5:1 floor). Both are the same underlying mistake, just in opposite directions — contrast is symmetric, so colored-text-on-light-bg and white-text-on-colored-bg compute to the same ratio for a given pair. Caught by a11y-auditor's build audit and independently reverified fixed by design-lead (swapped to `ink.lead`, which passes on every background checked, at zero new-token cost). `frontend/src/tests/brand-contrast.test.ts` only regex-guards the `bg-brand-primary` + `text-white` direction (see that file's own comment) — it does not catch standalone `text-brand-primary` usage as text. A repo-wide grep during this audit found `text-brand-primary` still live in several files this feature didn't touch (`ReactionBar.tsx`'s active "like" label — flagged directly by name in a11y-auditor's own write-up as a plausible pre-existing instance of this identical bug — plus `Navbar.tsx`, `Avatar.tsx`, `Home.tsx`, `AnnouncementCard.tsx`, `FamilyView.tsx`, `PlaydatesPage.tsx`, others); none of these were individually contrast-verified as part of this audit, only flagged as matching the same pattern. Recommending a `/sanity-check design` pass to audit each site by hand and consider extending `brand-contrast.test.ts` to also flag standalone `text-brand-primary`/`text-brand-primary\/\d+` usage, not just the white-on-fill direction.
+
 ## Tokens — Type
 
 - **Body**: Nunito 400 / 500 / 700 (carried from fofa).
@@ -46,6 +48,46 @@ The shared design spec. Tokens, voice, and the north-star principles every team 
 
 - `shadow.lift`: `0 1px 2px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.06)` (light, never heavy).
 - No `shadow.heavy` — we use color blocks for depth, not drop shadows.
+
+## Tokens — Size
+
+| Semantic name | Value | Use |
+|---|---|---|
+| `size.hitTarget.min` | `44px` | Minimum interactive hit-target for icon-only controls, independent of the visible glyph size (e.g. a 20px icon inside a 44px circular button). A different axis from the `space` scale above, which governs gaps/padding between elements, not a control's own dimensions. Introduced 2026-08-21 by [[agents/design-lead]] for [[features/header-nav-redesign]]'s `NavTrackItem` / Pill Track pattern; reusable wherever an icon-only actionable control needs a documented floor. Verified against the shipped `Navbar.tsx` (`h-11 w-11` = 44×44). |
+
+*(WCAG 2.2 SC 2.5.8 Target Size Minimum only requires 24×24 CSS px at AA — this codebase already clears that regardless. `44px` is this system's own best-practice floor, matching common platform guidance (Apple HIG / Material), not a legal minimum.)*
+
+## Patterns
+
+Reusable compositions of the tokens above, ratified once a real (or clearly anticipated repeat) use case exists. Each entry: name, definition, first-use link.
+
+### Pill Track
+
+Extends principle #3 ("Pill-only CTAs," see Reference below) from single standalone buttons to a cluster of related chrome-level actions sharing one pill.
+
+> **Pill Track.** When 2+ mutually-exclusive icon-only actions live together in persistent chrome, group them in one pill container (`radius.9999`, `color.surface.warm` fill, tight internal padding) instead of giving each its own floating pill. Each item is its own circular pill sized to the accessibility hit-target minimum (`size.hitTarget.min`, 44px), and exactly one may carry the "puck" treatment — solid `color.brand.primary` fill, white icon — for whichever item is current/selected. No new color tokens required.
+
+**Implementation note** (design-lead, verified against shipped code): if the puck's white icon is composed via a shared `text-*` color utility rather than an icon-specific color prop — as this repo's Tailwind setup does, since icons inherit `currentColor` — the repo-wide `brand-contrast.test.ts` same-line regex guard will flag `bg-brand-primary` + `text-white` on sight, regardless of icon-vs-text distinction. Use `color.brand.primary.pressed` for the puck fill in that case. Compliant either way: plain `brand.primary` already clears 1.4.11's 3:1 floor for icon-only (non-text) fills, and `.pressed` clears the stricter 1.4.3 4.5:1 floor too, so it's a safe superset, not a new color decision. [[features/header-nav-redesign]]'s `Navbar` ships with `.pressed` for exactly this reason.
+
+**Exception, scoped to this pattern only:** the internal gap between items may be `2px`, below the space scale's smallest value (`4`). Deliberate — the fused-cluster read is the point of the pattern, and even `4px` starts to look like separate buttons. Do not lift `gap-[2px]` into other contexts without the same rationale; the global space scale is otherwise unchanged.
+
+First used: [[features/header-nav-redesign]] (Navbar `NavTrack`). Candidate future uses: view-mode switchers, filter-scope toggles, thread-status tabs — anywhere a small cluster of icon-only, mutually-exclusive chrome actions would otherwise each get its own floating pill.
+
+## Brand mark
+
+Ratified compositions of the tokens above into standalone brand assets — distinct from `## Patterns` above, which are reusable *UI* compositions (buttons, chrome), not standalone artifacts. Each entry: name, definition, scope, first-use link.
+
+### Favicon / small icon
+
+> **Brand mark — Favicon / small icon.** `frontend/public/favicon.svg`, `viewBox 0 0 100 100`. Anatomy: `SurfaceBadge` (`color.surface.subtle` circle, full-bleed, r=46) + `OuterArc` (`color.brand.primary`, stroke 7/100, round cap) + `InnerArc` (`color.brand.warm`, stroke 7/100, round cap, nested) + `BaseDot` (`color.brand.primary` circle, r=5.5). Reads as a protective arch cradling a small held shape.
+
+Originated as a deliberate abstraction of fofa's legacy `Logo.tsx` mark (two adult figures + a child figure + a concave heart, under a protective arch — 9 discrete shapes in a 60-unit viewBox) — extracting only the arch/shelter element, the one piece `Logo.tsx`'s own source comment names as doing the conceptual work, and dropping the figures/heart because they do not survive rasterization below ~32px. Verified directly, not taken on faith: design-lead read `Logo.tsx` itself (confirms the 9-shape count and the heart's compound concave path) and viewed the shipped `favicon-16x16.png` / `favicon-32x32.png` / `apple-touch-icon.png` as rendered images (16px genuinely degrades to a soft brand-colored blob with the arc-nesting no longer distinguishable; 32px and up reads as a clear nested double-arch). Same two brand hex values carried over exactly (`#4D9463` / `#F0B24F`, byte-matched against this file's own token table); no new tokens introduced.
+
+**Scope: icon / favicon / app-icon contexts only.** This is not a ratification of fofafu's primary header logo, wordmark, or marketing lockup — that decision remains fully open and gets its own future dispatch, not a default silently inherited from this entry.
+
+**Known limit:** loses arc-nesting detail at 16×16 (reads as a brand-colored blob, not a distinct nested shape, on direct visual inspection). Acceptable at that size today; candidate refinement, not a blocker.
+
+First used: [[features/site-icon]] (favicon.svg + 5 sized PNGs, wired via 6 `<link>` tags in `frontend/index.html`). Proposed by [[agents/ui-designer]] 2026-09-02, promoted into this canon 2026-09-03 by [[agents/design-lead]] after independently re-verifying token conformance and 16/32/180px legibility against the shipped assets (see [[features/site-icon]] `### Visual` for the full reasoning trail).
 
 ## Voice & Tone
 

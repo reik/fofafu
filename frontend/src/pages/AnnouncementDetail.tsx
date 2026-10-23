@@ -7,7 +7,10 @@ import { ReactionBar } from '@/features/feed/components/ReactionBar';
 import { CommentList } from '@/features/feed/components/CommentList';
 import { CommentForm } from '@/features/feed/components/CommentForm';
 import { AnnouncementEditForm } from '@/features/feed/components/AnnouncementEditForm';
+import { BlockedContentPlaceholder } from '@/features/moderation/components/BlockedContentPlaceholder';
+import { ModerationMenu } from '@/features/moderation/components/ModerationMenu';
 import { EditIcon, TrashIcon } from '@/components/icons';
+import { formatAuthor } from '@/utils/formatAuthor';
 import { formatTimestamp } from '@/utils/formatTimestamp';
 
 export default function AnnouncementDetailPage() {
@@ -15,6 +18,7 @@ export default function AnnouncementDetailPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
+  const [blockedFamilyId, setBlockedFamilyId] = useState<string | null>(null);
   const del = useMutation({
     mutationFn: () => deleteAnnouncement(id!),
     onSuccess: () => {
@@ -56,6 +60,17 @@ export default function AnnouncementDetailPage() {
 
   const post = postQuery.data;
 
+  if (blockedFamilyId) {
+    return (
+      <Layout>
+        <BlockedContentPlaceholder familyId={blockedFamilyId} familyName={formatAuthor(post.authorName)} />
+        <p className="mt-8 text-sm">
+          <Link to="/feed" className="text-brand-primary underline-offset-4 hover:underline">Back to feed</Link>
+        </p>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <article className="space-y-3 rounded-lg bg-surface-card p-5 shadow-lift">
@@ -83,6 +98,15 @@ export default function AnnouncementDetailPage() {
                 {del.isPending ? 'Deleting…' : 'Delete'}
               </button>
             </div>
+          )}
+          {!post.isAuthor && !editing && (
+            <ModerationMenu
+              targetType="announcement"
+              targetId={post.id}
+              authorId={post.authorId}
+              authorName={post.authorName}
+              onBlocked={setBlockedFamilyId}
+            />
           )}
         </header>
         {editing ? (

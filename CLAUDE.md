@@ -95,6 +95,7 @@ Only the dispatcher writes the `status` field on a feature file. Leads can reque
 - **Commit convention**: Conventional Commits (`feat(area): …`, `fix:`, `chore:`, `vault:` for vault-only changes).
 - **Branch naming**: `feat/<slug>`, `fix/<slug>`, `vault/<topic>`.
 - **No TODOs without a feature file** — if it's worth a TODO, it's worth a feature file.
+- **Visual changes need before/after screenshots.** Any PR touching UI/layout/styling gets `docs/screenshots/<slug>/{before,after}.png` committed to the branch and linked in the PR body — see `fofafu_vault/standards/engineering-standards.md` for the exact convention. This applies whether or not the work went through a formal `/dispatch`.
 - **All work flows through the dispatcher.** If you find yourself doing work for a human without a feature file, stop and `/new-feature` first.
 
 ## When you (Claude or a subagent) are activated

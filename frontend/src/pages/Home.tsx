@@ -8,6 +8,7 @@ import { AnnouncementCard } from '@/features/feed/components/AnnouncementCard';
 import { listAnnouncements, feedKeys, type FeedPage as FeedPageDTO } from '@/api/announcements';
 import { getRecentCommunity, communityKeys } from '@/api/community';
 import { getMyFamily, familyKeys } from '@/api/family';
+import { useFamilyDisplayName } from '@/hooks/useFamilyDisplayName';
 
 const COMMUNITY_LIMIT = 12;
 
@@ -19,6 +20,7 @@ function initialBadge(name: string) {
 
 export default function HomePage() {
   const user = useAuthStore((s) => s.user);
+  const familyName = useFamilyDisplayName();
 
   const feed = useQuery<FeedPageDTO>({
     queryKey: [...feedKeys.page, null],
@@ -44,11 +46,11 @@ export default function HomePage() {
             <div className="-mt-7 flex flex-col items-center px-4 pb-5 text-center">
               <Avatar
                 avatarUrl={myFamily.data?.avatarUrl}
-                name={user?.name}
+                name={familyName}
                 size="lg"
                 className="h-14 w-14 border-4 border-surface-card bg-surface-warm text-2xl font-bold"
               />
-              <div className="mt-2 font-semibold leading-tight">{user?.name ?? 'You'}</div>
+              <div className="mt-2 font-semibold leading-tight">{familyName || 'You'}</div>
               {user && (
                 <div className="mt-0.5 text-xs text-ink-muted">
                   {user.city}, {user.state}
@@ -109,17 +111,17 @@ export default function HomePage() {
                       <img
                         src={fam.avatarUrl}
                         alt=""
-                        className="relative z-0 h-8 w-8 rounded-full object-cover"
+                        className="pointer-events-none h-8 w-8 rounded-full object-cover"
                       />
                     ) : (
                       <span
                         aria-hidden="true"
-                        className="relative z-0 flex h-8 w-8 items-center justify-center rounded-full bg-surface-warm text-sm font-bold text-brand-primary"
+                        className="pointer-events-none flex h-8 w-8 items-center justify-center rounded-full bg-surface-warm text-sm font-bold text-brand-primary"
                       >
                         {initialBadge(fam.name)}
                       </span>
                     )}
-                    <span className="relative z-0 min-w-0 flex-1">
+                    <span className="pointer-events-none min-w-0 flex-1">
                       <span className="block max-w-[24ch] truncate text-sm font-semibold">
                         {fam.name}
                       </span>
@@ -133,7 +135,7 @@ export default function HomePage() {
                           <Link
                             to={`/family/${fam.id}?requestSlot=${fam.nextFreeSlotId}`}
                             title="Open playdate slot — click to request"
-                            className="relative z-10 inline-flex items-center gap-1 rounded-full border border-brand-warm/50 bg-brand-warm/20 px-2 py-0.5 text-[10px] font-bold text-[#8a5a12] hover:bg-brand-warm/30"
+                            className="pointer-events-auto relative z-10 inline-flex items-center gap-1 rounded-full border border-brand-warm/50 bg-brand-warm/20 px-2 py-0.5 text-[10px] font-bold text-[#8a5a12] hover:bg-brand-warm/30"
                           >
                             🗓 Playdate
                           </Link>
