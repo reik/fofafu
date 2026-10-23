@@ -10,6 +10,7 @@
 // here (it would also break direct navigation to a blocked family's own
 // profile page, which v1's unblock UX needs to stay reachable).
 import { corsHeaders, json, supabaseForRequest } from "../_shared/client.ts";
+import { type FamilyRow, nextFreeSlotsByFamily, parseLimit, toListedFamily } from "../_shared/familyListing.ts";
 import type { SupabaseClient } from "jsr:@supabase/supabase-js@2";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -38,8 +39,7 @@ export async function handleRequest(req: Request, supabase: SupabaseClient): Pro
 
   const url = new URL(req.url);
   const rawQ = url.searchParams.get("q") ?? "";
-  const limitParam = url.searchParams.get("limit");
-  const pageSize = limitParam ? Number(limitParam) : 20;
+  const pageSize = parseLimit(url.searchParams.get("limit"), 20);
 
   // rawQ is interpolated into PostgREST's .or() filter DSL below, where
   // comma/paren/quote/backslash have syntactic meaning (they can inject
@@ -60,19 +60,10 @@ export async function handleRequest(req: Request, supabase: SupabaseClient): Pro
   const { data, error } = await query;
   if (error) return json({ error: error.message }, 500);
 
-  return json((data ?? []).map((row) => {
-    const isOwner = viewer === row.user_id;
-    return {
-      id: row.id,
-      ownerId: row.user_id,
-      name: row.name,
-      bio: row.bio,
-      kidCount: isOwner ? row.kid_count : null,
-      avatarUrl: row.avatar_url,
-      isOwner,
-      updatedAt: row.updated_at,
-    };
-  }));
+  // Same row shape and slot lookup as community/index.ts.
+  const rows = (data ?? []) as FamilyRow[];
+  const slots = await nextFreeSlotsByFamily(supabase, rows.map((row) => row.id), url.searchParams.get("now"));
+  return json(rows.map((row) => toListedFamily(row, viewer === row.user_id, slots.get(row.id))));
 }
 
 // Guarded so importing this module from a test doesn't also try to bind a

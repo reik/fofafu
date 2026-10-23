@@ -14,6 +14,7 @@ const { closeDb } = await import('../src/db.js');
 const { testInbox } = await import('../src/services/email.service.js');
 const { resetCoachRateLimitForTests } = await import('../src/services/coach/rateLimit.js');
 const { setClaudeClientForTests } = await import('../src/services/coach/claudeClient.js');
+const { logger } = await import('../src/utils/logger.js');
 
 const app = buildApp();
 type Json = Record<string, unknown>;
@@ -215,5 +216,18 @@ describe('reply-coach feature', () => {
     assert.deepEqual(res.body['categories'], []);
     assert.equal(res.body['reasoning'], '');
     assert.equal(res.body['rewrite'], null);
+  });
+
+  it('should_log_the_error_category_when_the_claude_client_fails', async (t) => {
+    const jwt = await register(userA);
+    const { default: Anthropic } = await import('@anthropic-ai/sdk');
+    setClaudeClientForTests({
+      async coach() { throw Anthropic.APIError.generate(429, { type: 'error' }, 'rate limited', {}); },
+    });
+    const warn = t.mock.method(logger, 'warn');
+
+    await call('POST', '/api/comments/coach', { draft: 'anything' }, { authorization: `Bearer ${jwt}` });
+
+    assert.equal(warn.mock.calls[0]?.arguments[0]?.['category'], 'rate_limited');
   });
 });

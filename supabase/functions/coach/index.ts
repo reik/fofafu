@@ -181,6 +181,83 @@ function buildUserMessage(input: CoachInput): string {
   return `Draft comment:\n${input.draft}${context}`;
 }
 
+// coach-verdict-tool: verdict arrives as a forced `submit_coach_verdict`
+// tool call. Mirrors COACH_VERDICT_TOOL in backend claudeClient.ts.
+const COACH_VERDICT_TOOL = {
+  name: "submit_coach_verdict",
+  description:
+    "Submit the Reply Coach verdict for the draft comment. Always call this exactly once. " +
+    'Use verdict "ok" with empty categories, empty reasoning, and null rewrite when the draft is fine ' +
+    'or you are uncertain; use "suggest" only with one-sentence reasoning and a one-sentence rewrite.',
+  input_schema: {
+    type: "object" as const,
+    properties: {
+      verdict: { type: "string", enum: ["ok", "suggest"] },
+      categories: {
+        type: "array",
+        items: { type: "string" },
+        description: 'Harm patterns, e.g. "minimization", "savior-framing". Empty when verdict is "ok".',
+      },
+      reasoning: {
+        type: "string",
+        description: 'One sentence on why the phrasing can land hard, never naming the category. Empty when "ok".',
+      },
+      rewrite: {
+        type: ["string", "null"],
+        description: "One sentence in the author's own voice. Null when verdict is \"ok\".",
+      },
+    },
+    required: ["verdict", "categories", "reasoning", "rewrite"],
+    additionalProperties: false,
+  },
+};
+
+function isCoachResponse(value: unknown): value is CoachResponse {
+  if (typeof value !== "object" || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    (v.verdict === "ok" || v.verdict === "suggest") &&
+    Array.isArray(v.categories) && v.categories.every((c) => typeof c === "string") &&
+    typeof v.reasoning === "string" &&
+    (v.rewrite === null || typeof v.rewrite === "string")
+  );
+}
+
+// ── coachErrors.ts (categories + classifier, mirrored verbatim) ─────────────
+
+type CoachErrorCategory =
+  | "rate_limited" | "overloaded" | "upstream_error" | "timeout" | "network" | "auth" | "bad_request"
+  | "refusal" | "truncated" | "no_tool_call" | "invalid_verdict" | "unknown";
+
+interface CoachErrorInfo {
+  category: CoachErrorCategory;
+  retryable: boolean;
+  status?: number;
+}
+
+class CoachClientError extends Error {
+  constructor(readonly category: CoachErrorCategory, message: string) {
+    super(`[coach] ${category}: ${message}`);
+    this.name = "CoachClientError";
+  }
+}
+
+function classifyStatus(status: number): CoachErrorInfo {
+  if (status === 429) return { category: "rate_limited", retryable: true, status };
+  if (status === 529) return { category: "overloaded", retryable: true, status };
+  if (status >= 500) return { category: "upstream_error", retryable: true, status };
+  if (status === 401 || status === 403) return { category: "auth", retryable: false, status };
+  return { category: "bad_request", retryable: false, status };
+}
+
+function classifyCoachError(err: unknown): CoachErrorInfo {
+  if (err instanceof CoachClientError) return { category: err.category, retryable: false };
+  if (err instanceof Anthropic.APIConnectionTimeoutError) return { category: "timeout", retryable: true };
+  if (err instanceof Anthropic.APIConnectionError) return { category: "network", retryable: true };
+  if (err instanceof Anthropic.APIError && typeof err.status === "number") return classifyStatus(err.status);
+  return { category: "unknown", retryable: false };
+}
+
 let anthropicSingleton: Anthropic | null = null;
 
 async function liveCoach(input: CoachInput): Promise<CoachResponse> {
@@ -192,6 +269,8 @@ async function liveCoach(input: CoachInput): Promise<CoachResponse> {
     max_tokens: 512,
     system: [{ type: "text", text: COACH_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
     messages: [{ role: "user", content: buildUserMessage(input) }],
+    tools: [COACH_VERDICT_TOOL],
+    tool_choice: { type: "tool", name: COACH_VERDICT_TOOL.name },
   });
 
   if (response.usage) {
@@ -199,11 +278,20 @@ async function liveCoach(input: CoachInput): Promise<CoachResponse> {
       response.usage.input_tokens * INPUT_USD_PER_TOKEN + response.usage.output_tokens * OUTPUT_USD_PER_TOKEN,
     );
   }
-  const block = response.content[0];
-  if (!block || block.type !== "text" || !("text" in block) || !block.text) {
-    throw new Error("[coach] liveCoach: unexpected response shape from Anthropic client");
+  // stop_reason is a plain string here: SDK 0.32's union predates "refusal".
+  const stopReason: string | null = response.stop_reason;
+  if (stopReason === "refusal") throw new CoachClientError("refusal", "model declined to coach this draft");
+  if (stopReason === "max_tokens") {
+    throw new CoachClientError("truncated", "response hit max_tokens before the verdict completed");
   }
-  return JSON.parse(block.text) as CoachResponse;
+  const block = response.content.find((b) => b.type === "tool_use" && b.name === COACH_VERDICT_TOOL.name);
+  if (!block || block.type !== "tool_use") {
+    throw new CoachClientError("no_tool_call", "response did not call submit_coach_verdict");
+  }
+  if (!isCoachResponse(block.input)) {
+    throw new CoachClientError("invalid_verdict", "tool input failed the CoachResponse shape");
+  }
+  return block.input;
 }
 
 async function coach(input: CoachInput, userId: string): Promise<CoachResponse> {
@@ -248,9 +336,10 @@ Deno.serve(async (req) => {
     return json(result, 200);
   } catch (err) {
     // Never log the draft, threadContext, or any user-supplied field — only
-    // the error class/message.
+    // the error category/class/message.
+    const { category, retryable, status } = classifyCoachError(err);
     const message = err instanceof Error ? err.message : "unknown error";
-    console.warn(JSON.stringify({ msg: "coach client failure", message }));
+    console.warn(JSON.stringify({ msg: "coach client failure", category, retryable, status, message }));
     return json(SILENT_FALLBACK, 200);
   }
 });

@@ -13,6 +13,7 @@
 // to "my blocks only" -- see supabase/functions/moderation/index.ts) and
 // filter them out of this listing specifically.
 import { corsHeaders, json, supabaseForRequest } from "../_shared/client.ts";
+import { type FamilyRow, nextFreeSlotsByFamily, parseLimit, toListedFamily } from "../_shared/familyListing.ts";
 import type { SupabaseClient } from "jsr:@supabase/supabase-js@2";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -41,8 +42,7 @@ export async function handleRequest(req: Request, supabase: SupabaseClient): Pro
   if (!userId) return json({ error: "Not authenticated" }, 401);
 
   const url = new URL(req.url);
-  const limitParam = url.searchParams.get("limit");
-  const pageSize = limitParam ? Number(limitParam) : 12;
+  const pageSize = parseLimit(url.searchParams.get("limit"), 12);
 
   const excluded = await blockedFamilyIds(supabase);
 
@@ -56,40 +56,11 @@ export async function handleRequest(req: Request, supabase: SupabaseClient): Pro
   const { data, error } = await query;
   if (error) return json({ error: error.message }, 500);
 
-  const rows = data ?? [];
-  const today = new Date().toISOString().slice(0, 10);
-
-  // One slot lookup per row rather than a single grouped query: pageSize is
-  // capped at a handful of families (Home dashboard's Community sidebar), so
-  // N+1 here trades a little latency for reusing the plain PostgREST client
-  // instead of hand-writing a correlated-subquery RPC.
-  const nextFreeSlotIds = await Promise.all(rows.map(async (row) => {
-    const { data: slot } = await supabase
-      .from("availability_slots")
-      .select("id")
-      .eq("family_id", row.id)
-      .eq("status", "free")
-      .gte("date", today)
-      .order("date", { ascending: true })
-      .order("start_time", { ascending: true })
-      .limit(1)
-      .maybeSingle();
-    return slot?.id ?? null;
-  }));
-
-  return json(rows.map((row, i) => ({
-    id: row.id,
-    ownerId: row.user_id,
-    name: row.name,
-    bio: row.bio,
-    kidCount: null,
-    avatarUrl: row.avatar_url,
-    isOwner: false,
-    updatedAt: row.updated_at,
-    city: row.city,
-    state: row.state,
-    nextFreeSlotId: nextFreeSlotIds[i],
-  })));
+  // Same row shape and slot lookup as search/index.ts. `isOwner` is always
+  // false here: the caller's own family is excluded by the query above.
+  const rows = (data ?? []) as FamilyRow[];
+  const slots = await nextFreeSlotsByFamily(supabase, rows.map((row) => row.id), url.searchParams.get("now"));
+  return json(rows.map((row) => toListedFamily(row, false, slots.get(row.id))));
 }
 
 // Guarded so importing this module from a test doesn't also try to bind a
