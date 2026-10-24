@@ -5,6 +5,7 @@ team: company
 
 > Navigation: [[kanban/engineering]] · [[kanban/design]] · [[kanban/marketing]] · [[README]] · [[protocols/dispatch]]
 ## Backlog
+- [ ] [[features/comment-classification-pipeline]] — classify draft comments before publish with per-category guardrails; extends [[features/reply-coach-live]]
 - [ ] [[features/auth-password-reset-ui]] — frontend gap surfaced by a user report ("I don't see Forgot password anymore"): the link/pages were never built even though the Supabase-backed API functions already exist
 - [ ] [[features/navbar-component-extraction]] — fast-follow from [[features/header-nav-redesign]]'s code review: extract NavTrackItem/AccountChip out of the 238-line Navbar() per ui-designer's already-named component anatomy
 - [ ] [[features/auth-user-name-semantics]] — product decision needed: AuthUser.name is a household name, not a person's name, made newly visible by [[features/header-nav-redesign]]
