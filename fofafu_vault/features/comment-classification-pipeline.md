@@ -24,7 +24,11 @@ links:
 - **Prompt chaining, not an agent loop and not MCP.** The category list is fixed and each category maps to a fixed handler. Routing is a plain `switch` in code, not an LLM decision.
 - **Tool calling is the structured-output mechanism** for each stage, with `tool_choice: auto` plus strict tool schemas (or structured outputs). Forced `tool_choice` is not accepted on the newer models (see [[features/coach-verdict-tool]] out-of-scope note).
 - **Runs before publish.** Coach-first: the first flag is a nudge in the composer. If the author submits again without changing the flagged text, the post is blocked.
-- **`question` means anything a user wants to ask the community.** No topic restriction. A question gets source references where a curated source applies, and is never refused for being off-topic.
+- **`question` means anything a user wants to ask the community.** No topic restriction and no curated source set, so a question is never refused for being off-topic. In v1 the `question` handler is moderation only; source references are a follow-up feature (see Out of scope).
+- **Hard block, edit-only.** A blocked draft has no override and no appeal in v1. The author must change the flagged text.
+- **Enforced server-side.** `POST /announcement/:id/comments` is where comments are inserted, so the block is enforced there, not only in the composer. `/coach` returns a short-lived signed verdict token (HMAC over user id, hash of the normalized draft, verdict, expiry). The comment POST verifies the token instead of calling the model again, so the nudge and the block can never disagree. A POST with no valid token runs the pipeline itself (fail-open on model error).
+- **Proposed models (pending confirmation):** `claude-haiku-5-5` for classify and moderation; a flagged-as-blocking or low-confidence verdict gets a second opinion from `claude-sonnet-5-5` before it can block, because a hard block makes false positives costly.
+- **Proposed home (pending confirmation):** the pipeline lives in a new shared module under `supabase/functions/_shared/`, used by both `coach` (nudge) and `announcement` (enforce). No new edge function.
 - **Fail-open on model errors.** A classifier outage, timeout, refusal, or invalid output never blocks a post. Only the deterministic pre-checks and a completed model verdict can block.
 
 ## Pipeline
@@ -50,8 +54,8 @@ draft
 - [ ] Stage 1 classifier returns `{category, flags, confidence}` through a tool whose `input_schema` is validated with Zod; `tool_choice` is `auto` and a missing or invalid tool call is treated as a failure, not parsed from text.
 - [ ] Every draft is classified before publish; the composer shows the nudge on the first flagged submit.
 - [ ] A second submit with the flagged text unchanged is blocked with a clear, warm message (copy owned by ux-writer). Editing the flagged text clears the block and re-runs the check.
+- [ ] The block is enforced in `POST /announcement/:id/comments` via the signed verdict token; a direct API call with flagged text is rejected the same way as the composer.
 - [ ] `update` drafts are checked for child-identifying information and case details; `support` drafts reuse the existing coach tone check.
-- [ ] `question` drafts get source references only from a curated allowlist; the model returns source ids and the code renders the links. Model-generated URLs are never shown.
 - [ ] A `crisis` classification shows support resources and flags the comment for an admin; it is not silently blocked.
 - [ ] Moderation filter runs on every category.
 - [ ] Any model failure falls back to publishing, logs a categorized error (reuse `CoachErrorCategory`), and is covered by tests.
@@ -60,6 +64,8 @@ draft
 
 ## Out of scope
 
+- Source references for `question` drafts (follow-up feature; with open-ended questions there is no curated set yet, and model-generated URLs are never shown).
+- Override or appeal flow for blocked drafts.
 - After-publish auto-hiding (stays out of scope in [[features/moderation-report-block]]).
 - An MCP server or an agent loop for the `question` handler.
 - Admin queue UI for flagged `crisis` comments (the data lands; the UI is separate).
@@ -67,11 +73,12 @@ draft
 
 ## Open questions
 
-- What is the curated source set for `question` references: seeded from `fofafu_vault` / `docs/user-guide.md`, or from an external list the user supplies?
-- What is the block UX: hard block with edit-only, or block with an "appeal" that sends the draft to an admin?
-- Which model per stage? The coach still pins `claude-3-5-haiku-20241022`; the classifier should start on a current small model.
-- Does the Supabase edge function (`supabase/functions/coach/`) host the pipeline, or does a new function do?
-- Slicing: stage 0 + stage 1 + block-on-repeat first; the per-category handlers as follow-up features.
+- ~~Curated source set for `question`~~ **Resolved (2026-10-24):** questions are open-ended, no curated set. References are deferred.
+- ~~Block UX~~ **Resolved (2026-10-24):** hard block, edit-only.
+- ~~Slicing~~ **Resolved (2026-10-24):** slice 1 = stage 0 pre-checks + stage 1 classifier + coach-first/block-on-unchanged; each category handler is a later feature.
+- Model per stage: confirm Haiku 5.5 with a Sonnet 5.5 second opinion before a block (proposed above). The coach still pins `claude-3-5-haiku-20241022`; moving it is a separate chore.
+- Home: confirm shared module used by `coach` and `announcement` (proposed above).
+- Rate limit, cost cap and holdback state in `coach` are per-isolate memory, so the cost cap is only approximate. Acceptable for slice 1, or does it need a table first?
 
 <!-- The sections below are written by team-leads during dispatch. -->
 
