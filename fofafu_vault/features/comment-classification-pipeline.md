@@ -2,7 +2,7 @@
 slug: comment-classification-pipeline
 title: Comment Classification Pipeline
 owner: engineering
-collaborators: []
+collaborators: [design]
 status: drafting
 priority: P2
 created: 2026-10-24
