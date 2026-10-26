@@ -1096,6 +1096,65 @@ Distinction from reply-coach rule 3 ("never name the category"): these strings n
 ### Accessibility
 *(filled by a11y-auditor)*
 
+### Design-lead notes
+
+Spec-pass audit, 2026-10-26, design-lead. Only `### Microcopy` exists. `### Visual` and `### Accessibility` were not run. Nothing in ux-writer's table was edited. Defects below are for a ux-writer fix pass; cross-team items are for tech-lead.
+
+**Verdict: Microcopy is a strong first pass (voice, "never say" list and the no-override rule hold up) but has 6 copy defects and 4 contract-coupled gaps. It is not buildable for the nudge consequence line, the block panel or the crisis panel as written.**
+
+#### A. Copy defects for the ux-writer (D1 to D10)
+
+Checked against `### Backend` section 5 (enforcement mapping) and `### Frontend` sections 2 and 7.
+
+- **D1 `pipeline.nudge.consequence` is false in several cases (blocking).** "If you post it as it is, it won't go through." appears under every nudge. Backend mints a blockable token only for: stage-0 flags; or model-sourced `pii`/`child_identifying`/`hostile` that Sonnet confirms; and only with `ENFORCE` on and `COMMENT_VERDICT_SECRET` set. It is untrue for `medical_legal_advice`-only (nudge-only by design), for any unconfirmed model flag (Sonnet off or erroring), in shadow mode, and for degraded verdicts. The client cannot tell these apart: it sees `flags`, not the token `v`. Fix is two parts. (1) Ask backend to add a client-visible boolean (e.g. `willBlock`, same as Frontend R4) so the client picks the line. (2) Ux-writer writes two variants: `consequence.blockable` (keep the current line) and `consequence.advisory` (e.g. "This is a suggestion. The choice is yours." or no line). Until the boolean exists, the safe default is the advisory variant, because a promised block that never comes erodes trust more than a block that was not announced. The `medical_legal_advice` nudge must never use the blockable line.
+- **D2 Block panel can name the wrong reason (blocking).** Block body is picked by the precedence `child_identifying, pii, medical_legal_advice, hostile` over `classification.flags`. Backend rebuilds the 422 body from `cl`, and the blocking set is classifier flags intersected with Sonnet's `confirmedFlags`. With flags `[medical_legal_advice, hostile]` where only `hostile` blocks, precedence shows the medical/legal body for a hostile block; `[pii, hostile]` with only `hostile` confirmed shows the contact-details body. Copy rule: the block body is chosen from blockable flags only (`pii`, `child_identifying`, `hostile`). Ask backend to either narrow `cl.flags` in blocked bodies to the confirmed blocking set or add `blockingFlags`.
+- **D3 Dead strings.** `medical_legal_advice` can never be the sole blocking flag (nudge-only), so `pipeline.block.medical_legal_advice.body` and `pipeline.block.reason.medical_legal` are unreachable in slice 1 unless `TONE_BLOCKS`-style flags change. Mark them "not shipped (nudge-only flag)" so frontend does not wire dead copy and a reader does not assume medical advice blocks.
+- **D4 Missing generic bodies, nudge and block (blocking).** Frontend R9(b) found the block gap; it is wider. Rollout order is `PRECHECK` first, then `CLASSIFY`. With stage 0 only, `classification` is `null` or has no flags, and `categories` holds rule/flag names that must not be rendered. So both a `comment_flagged` and a `comment_blocked` can arrive with nothing to select a body. Add `pipeline.nudge.generic.body` and `pipeline.block.generic.body` (neutral: "Something in your comment may need a change. Could you look it over?" level, no category named). The frontend fallback of title plus `how` only is not acceptable for a nudge: it would show an eyebrow with no content.
+- **D5 `pipeline.a11y.nudge` says "hasn't posted yet" but the nudge usually appears while typing.** Confirmed: `/coach` nudges arrive before any post attempt, so this implies the author tried to post. Provide two keys: `pipeline.a11y.nudge.typing` (no mention of posting, e.g. "We have a note about your comment, just below.") and `pipeline.a11y.nudge.submit` (keeps "hasn't posted yet", for the 422 `comment_flagged` path). Region label `A note about your comment` is fine for both.
+- **D6 Crisis panel is wrong after publish.** Frontend section 2 keeps the crisis resources mounted after a 201 and form reset. `pipeline.crisis.not_blocked` ("Your comment hasn't been blocked. You can post it whenever you're ready.") and `pipeline.a11y.crisis` are then false or confusing. Add a post-publish variant (e.g. "Your comment is posted.", or drop the line) and a matching live-region string. Also decide wording for the 422 `comment_flagged`-for-crisis path (Frontend R2), where the first press does not post: `not_blocked` ("post it whenever you're ready") is still correct there.
+- **D7 `pipeline.check.unavailable` should not sit in the table.** The "RESERVED, NOT SHIPPED" row is one copy-paste from being wired into `gateCopy.ts`. Move it out of the string table into the "not shipped" prose. Fail-open stays silent; agreed with the recommendation. Also correct the `checking_slow` note: "The client must time out and fail open" contradicts Frontend R9(c) (the client cannot abort a POST that may already have inserted the comment; fail-open is the server's job). The client shows the slow line and keeps waiting.
+- **D8 `pipeline.submit.checking` note vs the state machine.** The note says "`Posting…` still follows" a "Checking…" label. Frontend section 2 uses one label or the other for a single POST: "Checking…" when no token was sent, "Posting…" when a token was sent. State that in the note; there is no sequence.
+- **D9 `pipeline.block.mistake` ("Try rewording it a little.") conflicts with the `pii`/`child_identifying` bodies**, which say take the details out. Rewording does not remove a phone number. Restrict `mistake` to `hostile` (and generic), or reword to "Try changing it a little." Also `pipeline.nudge.child_identifying.body` ends "protects them", where "them" is ambiguous; use "protects the children."
+- **D10 Crisis resource links have no strings.** Links must open in a new tab (navigating away loses the draft), so each link needs an accessible name that includes the new-tab fact. Ask for the link-label convention (e.g. `pipeline.crisis.link.newtab` suffix, or `tel:` links with no suffix) when the product owner supplies `{{CRISIS_RESOURCES}}`. Still blocking for crisis; nothing invented.
+
+Verified and fine, no action: button label is `Comment`/`Posting…` (`CommentForm.tsx:104`), and the strings use "post" only as the generic verb or reference the shipped label correctly. `Keep mine` in `CoachChip` (`CoachChip.tsx:60`) stays truthful under default config: tone-only `suggest` is minted `v:'ok'`, flag verdicts carry `rewrite:null` and use `GateNotice`, so the chip and the no-override policy never overlap. **Standing coupling:** if `COMMENT_PIPELINE_TONE_BLOCKS` is ever turned on, `Keep mine` becomes a lie and the chip needs a copy change first. Record in the flag's rollout note. `settings.coach.help` ("You can always post your original.") is already inaccurate for safety flags, but no settings UI is shipped (no matches in `frontend/src`), so the reword is deferred to the settings feature; it should also say that turning the coach off does not turn off safety checks on the comment POST. `pipeline.error.generic` and the widened `Could not post.` are agreed by frontend-dev (R9e): remove the "include only if" condition. Voice rules pass otherwise (no exclamation marks, no emoji, no category names, no "appeal/override").
+
+#### B. Contract-coupled gaps for tech-lead (not copy)
+
+1. **Crisis versus flags precedence is unspecified.** Frontend picks `nudge` when `flags` is non-empty and `crisis` when `category==='crisis'`. Backend section 5 says a crisis draft containing a stage-0 phone number keeps its flags but is `ok`/never nudged. Rule needed: `crisis` wins over any flag nudge, else the author sees "won't go through" on a draft that cannot be blocked.
+2. D1 and D2 need a backend response change (`willBlock`; blocking-flags set). Frontend R4 already asked for the former.
+3. Frontend R2 (short crisis draft with no prior `/coach` call shows no resources) is still open with backend.
+4. Crisis handling cannot ship until the product owner supplies `{{CRISIS_RESOURCES}}`; `crisisResources.ts` must not contain `{{` (test already planned).
+
+#### C. Do ui-designer and a11y-auditor have to run before BUILD? Yes, both, scoped.
+
+**ui-designer (required, blocks `GateNotice` build; one short pass, no new color tokens expected).** Frontend section 8 says "no redesign", but the panel is a new surface with three variants, and the nudge reuses `CoachChip` while block and crisis do not fit that card. Produce `### Visual` with:
+1. Anatomy for `GateNotice kind=nudge|blocked|crisis` on the `CoachChip` card (`rounded-lg bg-surface-card p-4 shadow-lift`): eyebrow (mono kicker), block title (weight, not size), body, reason, `how`, `mistake`, crisis resource list and emergency line. Spacing from the scale only.
+2. How `blocked` differs from `nudged` without color alone (title plus eyebrow text); whether any `feedback.*` accent is used (default: none, `ink.lead` text per the 2026-09-07 recurrence note).
+3. Crisis panel layout with the resource list: link styling that passes contrast (no `brand.primary` as text), 44px hit targets (`size.hitTarget.min`), a calm, non-alarm tone (no warning color).
+4. Visual state of the `aria-disabled` Comment button while `blocked`, and the `checking_slow` line placement beside the button.
+5. Placement in the composer (above or below the submit row; see a11y tab order) and the replace-not-stack rule for `CoachChip`.
+6. Mobile (320px) behavior and longest-string fit against the `max` values.
+
+**a11y-auditor (required at spec stage before build; build-stage audit in a browser afterward).** Produce `### Accessibility` as numbered requirements with blocking tags, covering:
+1. `aria-live` polite versus alert for the block announcement, given focus returns to the textarea after a 422 (avoid the textarea's `aria-describedby` and the live region reading the same message twice).
+2. Tab order: shipped DOM is textarea, chip controls, submit (drift from reply-coach spec section 1); crisis resource links are new tab stops that would sit between the textarea and Comment. Rule on panel position (before or after the submit row) and whether a skip is needed.
+3. The `blocked` Comment button: `aria-disabled` plus `aria-describedby`, re-announce on repeat click (clear and re-set), and whether `aria-busy` on a button during `Checking…` is reliably announced or needs a different cue (nothing is announced during checking by spec).
+4. Textarea `aria-describedby` and `aria-invalid` while blocked; `readOnly` (not `disabled`) while submitting.
+5. Crisis: new-tab link names, `tel:` links, persistence of the panel after a 201 and reset (live-region behavior, focus not stolen), and the emergency line.
+6. Region labels and roles (`aside role=region` with the `pipeline.a11y.region.*` labels), heading semantics for the block title, no category names in the accessible tree.
+7. Contrast and target-size requirements to hand ui-designer (4.5:1 body and links, 3:1 focus ring, 44px targets).
+8. Reduced motion on any panel entrance.
+
+#### D. Routing recommendation
+
+1. Ux-writer fix pass for D1 to D10 (small, targeted; the table stays ux-writer's).
+2. ui-designer and a11y-auditor in parallel (a11y spec-stage works from `### Frontend` section 7 and hands contrast/target-size constraints to ui-designer, as in the reply-coach precedent), then design-lead re-audit.
+3. BUILD pass (frontend-dev) starts after the design sections exist. Backend and API-layer work (`edgeClient`, `coach.ts`, `announcements.ts`, `useCoach`, `normalizeDraft`, `composerPhase`) does not depend on design and may start earlier. Nudge/blocked `GateNotice` build waits on Visual plus Accessibility; crisis build also waits on `{{CRISIS_RESOURCES}}`.
+4. After build: a11y-auditor build-stage audit (axe plus keyboard, in a browser), screenshots under `docs/screenshots/comment-classification-pipeline/`, then design-lead aggregation.
+
+**Is design a blocker for engineering drafting -> speced? No**, provided tech-lead records the two contract changes from D1 and D2 (the `willBlock` boolean and blocking-flags set) and gap B1 in the acceptance criteria. Design IS a blocker for speced -> building of the `GateNotice` UI and for shipping crisis handling.
+
 ## Marketing — Spec
 
 ### Launch copy
