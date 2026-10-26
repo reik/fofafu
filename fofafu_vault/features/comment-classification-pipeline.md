@@ -88,7 +88,195 @@ draft
 *(filled by backend-dev)*
 
 ### Frontend
-*(filled by frontend-dev)*
+
+**Spec pass 2026-10-26 (no production code or tests written yet).** Slice 1 only: stage 0 pre-checks + stage 1 classifier + coach-first / block-on-unchanged. Per-category handlers (question refs, update privacy, etc.) are later features; the composer only needs to render whatever the server returns. Grounded in: `frontend/src/features/feed/components/{CommentForm.tsx,CommentForm.test.tsx}`, `CoachChip/{CoachChip.tsx,useCoach.ts,index.ts}` + tests, `frontend/src/api/{coach.ts,announcements.ts,edgeClient.ts}`, `frontend/src/tests/{msw-server.ts,setup.ts,render.tsx,a11y.ts}`, `[[features/reply-coach]]` (Frontend / Microcopy Part 3 / Accessibility).
+
+#### 1. Shared contract as consumed (producer = backend-dev; any drift is a consumer-side fix)
+
+- `POST /coach` request unchanged (`CoachRequest` in `frontend/src/api/coach.ts`). Response = existing `{verdict, categories, reasoning, rewrite}` plus `classification: {category, flags, confidence}`, `verdictToken`, `expiresAt`.
+- `POST /announcement/:id/comments` body `{content, verdictToken?}`. Outcomes: `201` CommentDTO; `422 {error:'comment_flagged', ...verdict fields, verdictToken, expiresAt}`; `422 {error:'comment_blocked', ...verdict fields}`; anything else (network, 4xx/5xx, malformed 422) = generic failure.
+- Assumption to confirm with backend: "...verdict fields" on the 422 bodies includes `classification` (the composer needs `category` to pick crisis copy and `flags` to pick nudge copy). If `classification` is absent on a 422, the client falls back to the generic nudge copy.
+- The client never hashes and never judges token expiry. It only decides "is this token bound to the text currently in the box" (section 4); the server decides validity and expiry. Clock skew therefore cannot cause a false block.
+
+#### 2. Composer state machine
+
+Seven phases. `phase` is a **derived value** (pure function `deriveComposerPhase` in `CommentGate/composerPhase.ts`), not a stored enum. Stored facts are each bound to the normalized text they were produced for, so invalidation by editing is automatic and cannot desync.
+
+| Phase | Meaning | Visible UI | Submit button |
+|---|---|---|---|
+| `idle` | No current verdict for this text (empty, short, verdict ok, coach 404/flag off, coach failed silently) | nothing (same as today) | enabled |
+| `checking` | `/coach` request in flight | **nothing rendered, nothing announced** (reply-coach a11y §7: never announce loading) | enabled (never gated on coach state, as shipped) |
+| `nudged` | A flagged verdict is current for this exact normalized text and a token is held | One panel at a time (ux-writer `### Microcopy` "Where the strings render"): `GateNotice kind="nudge"` when `flags` is non-empty (it **replaces** `CoachChip` even if a `rewrite` came back); `GateNotice kind="crisis"` when `category==='crisis'`; `CoachChip` only for a tone-only `suggest` with no flags | enabled |
+| `blocked` | Server answered `comment_blocked` for this exact normalized text | `GateNotice kind="blocked"` (edit-only: no override, no appeal, no "post anyway") | `aria-disabled="true"`, click is a no-op that re-announces |
+| `editing` | A verdict/block/error existed, the normalized text has since changed; old facts dropped; debounce pending | nothing (prior notice removed) | enabled |
+| `submitting` | Comment mutation pending | textarea `readOnly` (not `disabled`, focus kept). Button label: `pipeline.submit.checking` ("Checking…") + `aria-busy="true"` when the POST carried **no token** (the server runs the model itself, so the author is waiting on a check); "Posting…" (existing) when a token was sent (server only verifies the HMAC). After ~3 s without a response, show the visible `pipeline.submit.checking_slow` line beside the button (not announced; a11y to confirm) | `disabled` (existing) |
+| `error` | Network/5xx/other non-gate failure | existing `role="alert"` serverError line in the same slot; draft untouched | enabled (retry) |
+
+Precedence when several facts are live: `submitting` > `blocked` > `error` > `nudged` > `checking` > `editing` > `idle`.
+
+Transitions (event -> effect):
+
+| From | Event | To | Notes |
+|---|---|---|---|
+| idle/editing | debounce fires (600 ms, draft >= 20 normalized chars) or blur | checking | existing `useCoach` rules unchanged |
+| checking | response, verdict ok, no flags | idle | token (if any) is stored but a non-flagged verdict is not "nudged" |
+| checking | response flagged (`verdict==='suggest'` or `classification.flags.length>0` or `category==='crisis'`) | nudged | store `{forNormalized, token, expiresAt, classification, rewrite, reasoning}` |
+| checking | 404 / 429 / network / abort / zod parse failure | idle | silent, as shipped; 404 still cached per session (`seen404`) |
+| checking | draft changes | editing -> checking | in-flight request aborted (existing) and stale responses ignored (see section 4) |
+| nudged | normalized text changes | editing | token and verdict dropped |
+| nudged | whitespace-only change | nudged | normalization absorbs it (matches server) |
+| nudged | "Use this" / "Edit" | editing | rewrite applied via `setValue` (existing), re-check follows |
+| nudged | "Keep mine" | nudged (chip hidden) | verdict and token **kept**; see risk R1 |
+| any but submitting | Comment clicked | submitting | `coach.cancel()` first so a late `/coach` reply cannot flip state mid-submit |
+| submitting | 201 | idle | invalidate `feedKeys.comments`, `reset({content:''})`, drop all facts (existing behavior) |
+| submitting | 422 `comment_flagged` | nudged | adopt verdict + new token bound to the text that was sent; focus -> textarea |
+| submitting | 422 `comment_blocked` | blocked | focus -> textarea; token kept but unused |
+| submitting | other failure | error | draft, verdict and token kept so a retry sends the same token |
+| blocked | normalized text changes | editing | **this is the "editing clears the block" rule**; then debounce -> checking -> (idle or nudged) |
+| blocked | whitespace-only change | blocked | same normalization as server |
+| blocked | Comment clicked | blocked | no network call; live region re-announces; focus -> textarea |
+| error | text changes | editing | error line cleared |
+| error | Comment clicked | submitting | retry |
+
+A `checking` result can produce `nudged` but never `blocked`; only a POST outcome blocks. That keeps "nudge and block can never disagree" because both come from the server.
+
+The `crisis` category: `GateNotice kind="crisis"` shows support resources and never disables or hides submit. If the draft is published (201) after a crisis verdict, the resources notice stays mounted after the form reset until the next edit or until the user leaves the page (otherwise the resources vanish at the moment the person posts). That persistence is a default for ux-writer/a11y to confirm.
+
+#### 3. Ownership
+
+| Concern | Owner |
+|---|---|
+| RHF field `content`, Zod `Schema` (min 1, max 2000, unchanged), textarea ref/focus helpers, mutation, submit handler | `CommentForm` |
+| Debounce, abort, 404 cache, dismissed-rewrite memory, `/coach` call, **verdict fact + token store** | `useCoach` (extended; existing return fields untouched) |
+| `blocked` / `error` / `editing` facts, `deriveComposerPhase`, announcement text selection | new `useCommentGate` in `CommentGate/` |
+| Tone rewrite card (Use this / Edit / Keep mine / Why this?) | `CoachChip` unchanged |
+| Flag nudge, blocked message, crisis resources (no rewrite controls) | new `GateNotice` |
+
+No TanStack Query for `/coach` (same rationale as reply-coach: ephemeral, no cache key). TanStack Query stays for the comment mutation and the `feedKeys.comments` invalidation. No Zustand store: all of this is one composer instance's UI state and dies with the form. Keep the mutation's default `retry: 0` (an automatic retry of a POST after a 5xx could double-post).
+
+#### 4. Verdict token: storage, sending, invalidation
+
+- Stored in `useCoach` in a `useRef`-backed fact (mirrored to state only where a render depends on it): `{ forNormalized, token, expiresAt, verdict, category, flags, confidence, rewrite, reasoning }`. In memory only: never in Zustand, localStorage, the URL or logs.
+- Normalization: extract the existing private `normalize` from `useCoach.ts` (`text.trim().replace(/\s+/g, ' ')`) into `frontend/src/utils/normalizeDraft.ts` and reuse it everywhere. It must stay byte-for-byte equivalent to the server's rule (trim + collapse whitespace, no case folding, no Unicode normalization). A shared vector list (`'  a  b '` -> `'a b'`, `'a\n\nb'`, tab, NBSP ` `) goes into the frontend unit test and is mirrored in backend tests so the two cannot drift silently.
+- API: `useCoach` returns `tokenFor(currentDraft): string | undefined`, which is the stored token only when `normalizeDraft(currentDraft) === forNormalized`. Called in the submit handler and passed through mutation variables, so the token sent is bound to the exact content sent.
+- Invalidation: (a) `tokenFor` returns `undefined` on any normalized mismatch, so a stale token is never sent; (b) an effect on the normalized draft clears the verdict fact and the `blocked`/`error` facts when it changes; (c) a response whose `forNormalized` no longer equals the latest draft (tracked in a `latestDraftRef`) is discarded; (d) 201 clears everything. A new token from a 422 `comment_flagged` replaces the old one via `useCoach.adoptVerdict(verdict, sentContent)`, so the `/coach` path and the POST path share one store.
+- Raw `content` is what is POSTed (not the normalized string); the server normalizes for its own hash.
+- Short drafts (< 20 normalized chars) never call `/coach`, so they carry no token; a flagged short draft (e.g. a PII regex hit) is caught by the 422 `comment_flagged` path on first submit. That path must work with no prior nudge. Do not lower `MIN_DRAFT_LENGTH`; the cost lever stays server-side.
+
+#### 5. API layer changes
+
+`frontend/src/api/edgeClient.ts` (modify): `EdgeErrorShape` and `EdgeApiError` gain an optional `body?: unknown`; `edgeRequest` passes the parsed JSON body when `!res.ok`. Today the 422 payload (verdict, token) is dropped because only `.error` survives. Optional field, so every existing `new EdgeApiError({status, error})` and `err.message` call site (MessageComposer, SlotForm, ReportModal, etc.) is unaffected.
+
+`frontend/src/api/coach.ts` (modify):
+
+```ts
+export const CoachCategory = z.enum(['question','update','support','celebration','crisis','other']).catch('other');
+export const CoachClassification = z.object({
+  category: CoachCategory,            // unknown future category degrades to 'other' instead of failing the parse
+  flags: z.array(z.string()),
+  confidence: z.number(),
+});
+const VerdictFields = z.object({
+  verdict: z.enum(['ok','suggest']),
+  categories: z.array(z.string()),
+  reasoning: z.string(),
+  rewrite: z.string().nullable(),
+  classification: CoachClassification.optional(),
+});
+export const CoachResponseSchema = VerdictFields.extend({
+  verdictToken: z.string().optional(),
+  expiresAt: z.string().optional(),
+});
+```
+
+New fields are `.optional()` so the existing msw fixtures in `CommentForm.test.tsx` and `useCoach.test.ts` (which return only the four old fields) still parse, and a frontend deployed ahead of the function degrades to today's behavior. `VerdictFields` is exported for reuse. `CoachRequest` and `coachComment` signature unchanged.
+
+`frontend/src/api/announcements.ts` (modify):
+
+```ts
+export interface CreateCommentInput { content: string; verdictToken?: string }
+export class CommentGateError extends EdgeApiError {
+  kind: 'flagged' | 'blocked';
+  verdict: z.infer<typeof VerdictFields>;
+  verdictToken?: string;
+  expiresAt?: string;
+}
+export async function createComment(announcementId: string, input: CreateCommentInput): Promise<CommentDTO>
+```
+
+`createComment` catches `EdgeApiError` with `status === 422`, `safeParse`s `err.body` against a discriminated union on `error` (`'comment_flagged'` requires `verdictToken` + `expiresAt`; `'comment_blocked'` does not), and rethrows `CommentGateError`. Anything that fails to parse is rethrown as the original `EdgeApiError` (generic failure, draft preserved). Because `CommentGateError extends EdgeApiError`, any caller still doing `err instanceof EdgeApiError ? err.message` keeps working; `CommentForm` checks `CommentGateError` first. The body only includes `verdictToken` when defined (do not send `verdictToken: undefined`). `feedKeys` untouched.
+
+#### 6. Error handling that preserves the draft
+
+- The draft is held by RHF and only reset in the mutation's `onSuccess` (as shipped). 422, network error, 5xx, parse error and token expiry never reset or unmount the form.
+- `edgeRequest` calls `JSON.parse` on the response text, so a non-JSON 5xx body throws a `SyntaxError` (not an `EdgeApiError`). `CommentForm` already maps non-`EdgeApiError` to `'Could not post.'`; keep that fallback. Gate-related copy must not show raw server strings like `comment_flagged`.
+- While `submitting` the textarea is `readOnly` so text typed during the request cannot be wiped by the post-success `reset`.
+- Token expired between nudge and resubmit: the server ignores it, re-runs the pipeline and answers `comment_flagged` with a fresh token. The user sees the nudge again rather than a block. Accepted; no client clock logic.
+- Fail-open stays server-side. The client never blocks on its own: `blocked` is entered only from a 422 `comment_blocked`.
+
+#### 7. Keyboard, focus, aria-live (hand-off to a11y-auditor)
+
+Defaults proposed by frontend; a11y-auditor owns the final call in `### Accessibility`.
+
+- Focus never moves into a notice. Notices that arrive from typing (debounced or blur-triggered `/coach`) do not touch focus. After a 422 from a button click, focus returns to the textarea with the caret at the end, reusing `focusTextareaAtEnd()` in `CommentForm.tsx`. The notices have no focus-stealing controls, so the author can keep editing immediately.
+- Announcement: reuse the one-shot pattern already in `CoachChip.tsx` (an `aria-live="polite"` `sr-only` div whose `textContent` is set on mount, never `assertive`). `GateNotice` mounts the same way, one announcement per absent -> present transition. The live-region text is ux-writer's short status string (`pipeline.a11y.nudge` / `.block` / `.crisis`), not a copy of the visible panel, and the visible panel itself is not a live region, so nothing is read twice. Region labels are `pipeline.a11y.region.{nudge,block,crisis}`. Polite vs alert for `block` is a11y-auditor's decision (ux-writer deferred it too); default here is polite. For `blocked`, a repeat click on the aria-disabled button re-announces by clearing and re-setting the live region text, because a silent no-op after a button press would fail 4.1.3. The `checking` phase announces nothing.
+- `GateNotice` is a labeled region (`<aside role="region" aria-label=...>`, same as `CoachChip`'s "Suggested rewrite"). The label strings come from ux-writer.
+- The textarea gets `aria-describedby={noticeId}` while a notice is shown, and `aria-invalid="true"` while `blocked`, so a screen reader landing back in the textarea hears why.
+- The blocked submit button uses `aria-disabled="true"` plus `aria-describedby` to the notice (not `disabled`) so it stays discoverable and explains itself.
+- Category and flag names (`pii`, `child_identifying`, `crisis`, ...) are never rendered or placed in any accessible name (same rule as reply-coach voice rule 3 / a11y §6). Flags may only select which ux-writer string to show.
+- Existing drift to settle: `[[features/reply-coach]]` `### Accessibility` §1 specifies tab order textarea -> submit -> chip, but the shipped `CommentForm.tsx` renders `CoachChip` before the submit row (lines 94-96 vs 97-106), i.e. textarea -> chip controls -> submit. `GateNotice` goes in the same slot. Blocked and nudge notices have no tab stops; the crisis resources do (links), so a11y should rule on the order for that case.
+- Target size and contrast: reuse `CoachChip` classes (`h-10` controls, `bg-surface-card`, `text-ink-lead`, `text-ink-muted`). No new colors.
+
+#### 8. Visuals
+
+No redesign (ui-designer not routed). `GateNotice` reuses `CoachChip`'s card: `rounded-lg bg-surface-card p-4 shadow-lift`, `font-mono text-xs text-ink-muted` eyebrow, `text-ink-lead` body, `cn()` for variant classes. The blocked variant is distinguished by copy and eyebrow text, not color alone; any accent would use the existing `feedback-*` tokens only if design signs off. Strings (nudge per flag, blocked, crisis, resources list and links) come verbatim from ux-writer's `### Microcopy`, via one `CommentGate/gateCopy.ts` constants module; no copy is invented in code, and no phone numbers or URLs are hard-coded until ux-writer supplies them. Screenshots: Phase 3 captures `docs/screenshots/comment-classification-pipeline/before.png` against the unmodified composer first, then `after.png` per state (nudge, blocked, crisis), and records in this section whether they were captured live. Nothing captured in this spec pass because no UI changed.
+
+#### 9. Files
+
+Create (all under `frontend/src/`):
+- `utils/normalizeDraft.ts`, `utils/normalizeDraft.test.ts` (shared vectors)
+- `features/feed/components/CommentGate/composerPhase.ts` + `composerPhase.test.ts` (table-driven: every row of the transition table)
+- `features/feed/components/CommentGate/useCommentGate.ts` + `useCommentGate.test.ts`
+- `features/feed/components/CommentGate/GateNotice.tsx` + `GateNotice.test.tsx` (3 kinds, live region one-shot, no category text in DOM, axe)
+- `features/feed/components/CommentGate/gateCopy.ts`, `crisisResources.ts` (ux-writer content), `index.ts`
+
+Modify:
+- `api/edgeClient.ts` (+ case in `api/edgeClient.test.ts`: error carries parsed `body`)
+- `api/coach.ts` (schema above)
+- `api/announcements.ts` (`createComment`, `CommentGateError`; new `announcements.test.ts` cases for 201 / 422 flagged / 422 blocked / malformed 422 / 500)
+- `features/feed/components/CoachChip/useCoach.ts` (verdict/token fact, `tokenFor`, `adoptVerdict`, `cancel`, `status`, `latestDraftRef` stale guard, import `normalizeDraft`); `suggestion` shape deliberately unchanged so the existing `useCoach.test.ts` `toEqual({rewrite, reasoning})` assertions still pass; export `normalize`-using tests stay green
+- `features/feed/components/CoachChip/index.ts` (no change expected unless new exports are wanted)
+- `features/feed/components/CommentForm.tsx` (submit guard for blocked, `coach.cancel()`, token in mutation variables, `CommentGateError` branch in `onError`, `readOnly` while submitting, aria wiring, render `GateNotice`)
+- `features/feed/components/CommentForm.test.tsx` (new cases below)
+- `tests/msw-server.ts` (handler factories below; also fix the stale comment at line 91 that still lists coach as legacy Express)
+
+#### 10. MSW handlers needed
+
+`server.listen({ onUnhandledRequest: 'error' })` (`tests/setup.ts`) means every new test that types >= 20 chars must register a `/coach` handler, or the run fails. Add to `handlers` in `tests/msw-server.ts` (inline `server.use(http.post(...))` stays fine for one-offs, as the current tests do):
+- `coachOk()`; `coachSuggest(overrides?)` (tone, with `rewrite`, `verdictToken`, `expiresAt`, `classification`)
+- `coachFlagged({ flags, token })` (flag, no rewrite); `coachCrisis()`; `coachWithToken(token)` for bound-token assertions
+- `commentCreated(content?)` -> 201 CommentDTO
+- `commentFlagged422({ token, flags, category })`; `commentBlocked422()`
+- `commentServerError()` (500 `{error:'boom'}`); `commentNetworkError()` (`HttpResponse.error()`); `commentNonJson500()` (exercises the `SyntaxError` path)
+- Request-capture helper to assert the POST body does/doesn't contain `verdictToken`, and that the token equals the one `/coach` issued for the same normalized text.
+
+#### 11. Test cases the frontend needs (qa-engineer owns the plan; listed so the files above are justified)
+
+Phase table coverage in `composerPhase.test.ts`; in `CommentForm.test.tsx`: coach flagged -> nudge -> unchanged submit sends token -> 422 blocked -> blocked notice, button aria-disabled, no second request on click; edit blocked text -> notice gone -> new `/coach` call -> new token; whitespace-only edit stays blocked; short flagged draft -> 422 flagged with no prior nudge -> nudge + token kept -> second submit sends that token; crisis shows resources and submit stays enabled; 500 and network error keep the textarea value and send the same token on retry; `readOnly` while pending; stale `/coach` reply for an older draft is ignored; token never sent after text changed; existing 5 tests untouched and green; axe checks for nudge, blocked, crisis; live region fires once per mount.
+
+#### 12. Risks and open questions
+
+- **R1 "Keep mine" semantics.** Today "Keep mine" means "post it anyway". ux-writer already settled that flag nudges have no dismiss control (`### Microcopy` section 1), so `GateNotice` has none and replaces `CoachChip` whenever `flags` is non-empty. Still open: does a tone-only `suggest` with no flags also hard-block on unchanged resubmit? Client behavior is identical either way (server decides), but if yes, `CoachChip`'s "Keep mine" would mislead and needs a copy change. Needs tech-lead/backend confirmation.
+- **R9 Copy gaps and drift against ux-writer's `### Microcopy`.** (a) `pipeline.a11y.nudge` says "Your comment hasn't posted yet", which is accurate for a nudge that arrives from the 422 on submit but slightly off when the nudge appears while typing (from `/coach`, before any post attempt). Either ux-writer adds a typing-time variant or confirms the string. (b) No generic block body exists: a `comment_blocked` whose `classification.flags` is empty (e.g. a stage 0 deterministic length/blocklist hit) has no string; ask for `pipeline.block.generic.body`. Until then the client falls back to the `pipeline.block.title` + `pipeline.block.how` lines only. (c) ux-writer's `pipeline.submit.checking_slow` says "the client must time out and fail open"; the client **cannot** safely abort the POST on a timeout, because the comment may already be inserted and a retry would double-post. Fail-open is the server's job; the client shows the slow line and keeps waiting. (d) `{{CRISIS_RESOURCES}}` is a placeholder the product owner must fill; `crisisResources.ts` must not ship containing `{{`, and a unit test asserts that. Crisis handling is blocked on that content. (e) I agree to widen `Could not post.`: network failure (a `TypeError` from `fetch`) -> `pipeline.error.network`; 5xx or non-`EdgeApiError` -> `pipeline.error.generic`; 4xx `EdgeApiError` other than the two gate 422s keep showing the server message as today. (f) Flag precedence for which body shows when several fire: ux-writer recommends `child_identifying`, `pii`, `medical_legal_advice`, `hostile`; engineering owns the final order, so it lives in one constant in `gateCopy.ts` and is for tech-lead to confirm; `pipeline.flag.multiple` is appended when more than one fired.
+- **R2 Crisis on the POST path.** Crisis is non-blocking, so the author only sees resources if `/coach` ran first (>= 20 chars and not dismissed by a failure). A short crisis draft submitted straight away would publish with no resources shown unless the server answers 422 `comment_flagged` once for crisis with no token. Ask backend. The client already handles a `comment_flagged` with `category==='crisis'`.
+- **R3 Normalization drift** between `normalizeDraft.ts` and the Deno shared module. Failure mode is soft (token ignored, user re-nudged instead of blocked) but silently defeats the block. Mitigated by shared vectors in both test suites.
+- **R4 No client-side "would this block?" signal.** The client infers "flagged" from `verdict`, `classification.flags` and `category`. If backend adds a different gating rule, the nudge may not show even though a resubmit would block. Suggest backend add an explicit boolean; until then the 422 is the source of truth and the worst case is a block with no prior nudge.
+- **R5 Edge Function not yet deployed with new fields:** handled by `.optional()` on new schema fields; once deployed, tighten to required in a follow-up.
+- **R6 Rate limit / cost cap are per-isolate** (feature Open question): a 429 or 5xx from `/coach` leaves `idle`, so under heavy load nudges appear inconsistently; the POST path still enforces.
+- **R7 Pre-existing:** `edgeRequest` has no 422-aware path and does `JSON.parse` unguarded; only the `body` passthrough is added here, not a general rework. Draft loss on navigation away from `AnnouncementDetail.tsx` (which mounts `CommentForm`) is pre-existing and out of scope.
+- **R8 Scope creep guard:** DMs (`MessageComposer.tsx`) are out of scope for v1 and must not be wired to the gate.
+
+Status of Phase 3 assets: none captured in this pass (spec only).
 
 ### Test plan
 *(filled by qa-engineer)*
