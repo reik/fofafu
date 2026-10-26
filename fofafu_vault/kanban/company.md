@@ -5,6 +5,7 @@ team: company
 
 > Navigation: [[kanban/engineering]] · [[kanban/design]] · [[kanban/marketing]] · [[README]] · [[protocols/dispatch]]
 ## Backlog
+- [ ] [[features/comment-classification-pipeline]] — SPECED 2026-10-26 (spec pass: backend, frontend, test plan, microcopy audited by tech-lead + design-lead). Awaiting human product decisions (a)-(d), a ux-writer fix pass (D1-D10) and ui-designer + a11y-auditor before the visible GateNotice build; backend + API layer can start first. Extends [[features/reply-coach-live]]
 - [ ] [[features/auth-password-reset-ui]] — frontend gap surfaced by a user report ("I don't see Forgot password anymore"): the link/pages were never built even though the Supabase-backed API functions already exist
 - [ ] [[features/navbar-component-extraction]] — fast-follow from [[features/header-nav-redesign]]'s code review: extract NavTrackItem/AccountChip out of the 238-line Navbar() per ui-designer's already-named component anatomy
 - [ ] [[features/auth-user-name-semantics]] — product decision needed: AuthUser.name is a household name, not a person's name, made newly visible by [[features/header-nav-redesign]]
@@ -16,7 +17,6 @@ team: company
 - [ ] [[features/mobile-expo-bootstrap]] — Phase 4 mobile
 
 ## In Progress
-- [ ] [[features/comment-classification-pipeline]] — classify draft comments before publish with per-category guardrails; extends [[features/reply-coach-live]]
 - [ ] [[features/migrate-render-to-vercel-supabase]] — eng-infra-4 (frontend supabase-js auth swap) + eng-infra-5 (frontend Edge Function wiring for announcements/family/community/search) both closed to Review; frontend 132/132 tests green, tsc/build clean. Same-day correction: an earlier attempt to delete the old Express auth endpoints was a production regression (would have broken messages/playdates/uploads/coach auth entirely), caught before merge — reverted, and auth.middleware.ts now accepts a Supabase session token as a fallback alongside the legacy JWT. Backend 147/147 tests pass, tsc clean. Phase 5 parent (eng-infra-1) remains building — eng-infra-3/6/7/8 still outstanding
 
 ## Review
