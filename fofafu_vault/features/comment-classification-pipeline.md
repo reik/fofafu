@@ -27,8 +27,8 @@ links:
 - **`question` means anything a user wants to ask the community.** No topic restriction and no curated source set, so a question is never refused for being off-topic. In v1 the `question` handler is moderation only; source references are a follow-up feature (see Out of scope).
 - **Hard block, edit-only.** A blocked draft has no override and no appeal in v1. The author must change the flagged text.
 - **Enforced server-side.** `POST /announcement/:id/comments` is where comments are inserted, so the block is enforced there, not only in the composer. `/coach` returns a short-lived signed verdict token (HMAC over user id, hash of the normalized draft, verdict, expiry). The comment POST verifies the token instead of calling the model again, so the nudge and the block can never disagree. A POST with no valid token runs the pipeline itself (fail-open on model error).
-- **Proposed models (pending confirmation):** `claude-haiku-5-5` for classify and moderation; a flagged-as-blocking or low-confidence verdict gets a second opinion from `claude-sonnet-5-5` before it can block, because a hard block makes false positives costly.
-- **Proposed home (pending confirmation):** the pipeline lives in a new shared module under `supabase/functions/_shared/`, used by both `coach` (nudge) and `announcement` (enforce). No new edge function.
+- **Models (settled 2026-10-26):** `claude-haiku-5-5` for classify and moderation; a flagged-as-blocking or low-confidence verdict gets a second opinion from `claude-sonnet-5-5` before it can block, because a hard block makes false positives costly.
+- **Home (settled 2026-10-26):** the pipeline lives in a new shared module under `supabase/functions/_shared/`, used by both `coach` (nudge) and `announcement` (enforce). No new edge function.
 - **Fail-open on model errors.** A classifier outage, timeout, refusal, or invalid output never blocks a post. Only the deterministic pre-checks and a completed model verdict can block.
 
 ## Pipeline
@@ -76,8 +76,8 @@ draft
 - ~~Curated source set for `question`~~ **Resolved (2026-10-24):** questions are open-ended, no curated set. References are deferred.
 - ~~Block UX~~ **Resolved (2026-10-24):** hard block, edit-only.
 - ~~Slicing~~ **Resolved (2026-10-24):** slice 1 = stage 0 pre-checks + stage 1 classifier + coach-first/block-on-unchanged; each category handler is a later feature.
-- Model per stage: confirm Haiku 5.5 with a Sonnet 5.5 second opinion before a block (proposed above). The coach still pins `claude-3-5-haiku-20241022`; moving it is a separate chore.
-- Home: confirm shared module used by `coach` and `announcement` (proposed above).
+- ~~Model per stage~~ **Resolved (2026-10-26):** Haiku 5.5 with a Sonnet 5.5 second opinion before a block. The coach still pins `claude-3-5-haiku-20241022`; moving it is a separate chore.
+- ~~Home~~ **Resolved (2026-10-26):** shared module in `supabase/functions/_shared/`, used by `coach` and `announcement`.
 - Rate limit, cost cap and holdback state in `coach` are per-isolate memory, so the cost cap is only approximate. Acceptable for slice 1, or does it need a table first?
 
 <!-- The sections below are written by team-leads during dispatch. -->
