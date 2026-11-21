@@ -12,32 +12,32 @@ function LoginView() {
   return <div>please sign in</div>;
 }
 
+function renderGuardedApp() {
+  renderWithProviders(
+    <Routes>
+      <Route element={<RequireAuth />}>
+        <Route path="/" element={<ProtectedView />} />
+      </Route>
+      <Route path="/login" element={<LoginView />} />
+    </Routes>,
+    { route: '/' },
+  );
+}
+
 describe('RequireAuth', () => {
   it('redirects to /login when no token is in the store', () => {
     useAuthStore.getState().clear();
-    renderWithProviders(
-      <Routes>
-        <Route path="/" element={<RequireAuth><ProtectedView /></RequireAuth>} />
-        <Route path="/login" element={<LoginView />} />
-      </Routes>,
-      { route: '/' },
-    );
+    renderGuardedApp();
     expect(screen.getByText(/please sign in/i)).toBeInTheDocument();
     expect(screen.queryByText(/secret/i)).not.toBeInTheDocument();
   });
 
-  it('renders the protected children when a token exists', () => {
+  it('renders the nested route when a token exists', () => {
     useAuthStore.getState().setAuth({
       token: 'real-jwt',
       user: { id: 'u1', email: 'a@b.com', name: 'X', city: 'Y', state: 'Z' },
     });
-    renderWithProviders(
-      <Routes>
-        <Route path="/" element={<RequireAuth><ProtectedView /></RequireAuth>} />
-        <Route path="/login" element={<LoginView />} />
-      </Routes>,
-      { route: '/' },
-    );
+    renderGuardedApp();
     expect(screen.getByText(/secret/i)).toBeInTheDocument();
   });
 });

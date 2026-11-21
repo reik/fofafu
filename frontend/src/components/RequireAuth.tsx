@@ -1,12 +1,15 @@
-import type { ReactNode } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth';
 
-export function RequireAuth({ children }: { children: ReactNode }) {
+/**
+ * Layout route that guards every nested route behind a signed-in session.
+ * Mount it as a pathless parent: `{ element: <RequireAuth />, children: [...] }`.
+ */
+export function RequireAuth() {
   const token = useAuthStore((s) => s.token);
   const location = useLocation();
   if (!token) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
-  return <>{children}</>;
+  return <Outlet />;
 }
