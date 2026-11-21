@@ -3,14 +3,17 @@ import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider, createMemoryRouter } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth';
-import { routes } from './router';
+import { providerFutureFlags, routerFutureFlags, routes } from './router';
 
 function mountApp(initialPath: string) {
-  const router = createMemoryRouter(routes, { initialEntries: [initialPath] });
+  const router = createMemoryRouter(routes, {
+    initialEntries: [initialPath],
+    future: routerFutureFlags,
+  });
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <RouterProvider router={router} future={providerFutureFlags} />
     </QueryClientProvider>,
   );
   return router;
