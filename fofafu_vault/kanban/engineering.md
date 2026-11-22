@@ -5,7 +5,6 @@ team: engineering
 
 > Navigation: [[kanban/company]] · [[teams/engineering]] · [[standards/engineering-standards]]
 ## Backlog
-- [ ] [[features/auth-password-reset-ui]] @engineering — no "Forgot password?" link or /forgot-password, /reset-password pages exist on the frontend, even though the Supabase-backed API functions (requestPasswordReset/updatePassword in api/auth.ts) already do; pure frontend gap, no backend work needed
 - [ ] [[features/navbar-component-extraction]] @engineering — fast-follow from header-nav-redesign's code review must-fix #2: extract NavTrackItem/AccountChip out of the 238-line Navbar()
 - [ ] [[features/auth-user-name-semantics]] @engineering — product decision needed: AuthUser.name is a household name, not a person's name
 - [ ] eng-infra-9 [[features/staging-environment]] @engineering — dedicated staging Supabase project + separate Vercel deployment so seeding/migration work never touches production data
@@ -18,6 +17,7 @@ team: engineering
 - [ ] eng-mobile-1 [[features/mobile-expo-bootstrap]] @engineering — Phase 4: mobile workspace + shared API client (deferred)
 
 ## In Progress
+- [ ] [[features/auth-password-reset-ui]] @engineering — no "Forgot password?" link or /forgot-password, /reset-password pages exist on the frontend, even though the Supabase-backed API functions (requestPasswordReset/updatePassword in api/auth.ts) already do; pure frontend gap, no backend work needed
 
 ## Review
 - [ ] [[features/router-provider-refactor]] @engineering — `App.tsx` + `BrowserRouter` replaced by `src/router.tsx` (typed `routes` table, `createAppRouter`) and `<RouterProvider>` in `main.tsx`; the ten hand-wrapped `<RequireAuth>` routes collapse into one pathless `Outlet` layout route; new `RouteError` `errorElement`. Tests written first (`router.test.tsx` 6, `RouteError.test.tsx` 3, `RequireAuth.test.tsx` updated). vitest 403/403 in 51 files, `tsc --noEmit` clean, `vite build` clean (255.57 kB, unchanged). Playwright not run (no `frontend/.env` in this worktree); no URL or page markup changed. Follow-ups: hoist `Layout` into a layout route; `RequireAuth` still drops `search`/`hash` on redirect (pre-existing).

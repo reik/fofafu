@@ -51,6 +51,12 @@ describe('app router', () => {
     expect(router.state.location.pathname).toBe('/register');
   });
 
+  it('should_serve_forgot_password_to_signed_out_visitors', () => {
+    const router = mountApp('/forgot-password');
+    expect(router.state.location.pathname).toBe('/forgot-password');
+    expect(screen.getByRole('heading', { name: /reset your password/i })).toBeInTheDocument();
+  });
+
   it('should_redirect_unknown_paths_to_home_when_authenticated', () => {
     signIn();
     const router = mountApp('/definitely-not-a-page');

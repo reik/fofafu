@@ -7,6 +7,11 @@ import { useAuthStore } from '@/stores/auth';
 import { LoginForm } from './LoginForm';
 
 describe('LoginForm', () => {
+  it('should_link_to_forgot_password', () => {
+    renderWithProviders(<LoginForm />);
+    expect(screen.getByRole('link', { name: /forgot password/i })).toHaveAttribute('href', '/forgot-password');
+  });
+
   it('stores the Supabase session in the auth store on successful login', async () => {
     server.use(handlers.loginOk());
     renderWithProviders(<LoginForm />);
