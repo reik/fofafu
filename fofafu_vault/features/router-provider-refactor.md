@@ -3,7 +3,7 @@ slug: router-provider-refactor
 title: Router Provider Refactor
 owner: engineering
 collaborators: []
-status: review
+status: shipped
 priority: P2
 created: 2026-11-21
 target: null
