@@ -3,7 +3,7 @@ slug: auth-password-reset-ui
 title: Password reset UI — forgot + reset password pages
 owner: engineering
 collaborators: []
-status: drafting
+status: building
 priority: P1
 created: 2026-08-22
 target: null
@@ -20,8 +20,8 @@ Password reset has shipped on the backend twice over — once as Express endpoin
 
 ## Acceptance criteria
 
-- [ ] Login page shows a "Forgot password?" link near/under the password field (placement reference: `~/dev/fofa/frontend/src/pages/LoginPage.tsx`), routing to `/forgot-password`.
-- [ ] `/forgot-password` page: email field, calls the existing `requestPasswordReset(email)` (`frontend/src/api/auth.ts`), always shows the same generic confirmation regardless of whether the account exists (no enumeration — matches the message already returned by `requestPasswordReset`).
+- [x] Login page shows a "Forgot password?" link near/under the password field (placement reference: `~/dev/fofa/frontend/src/pages/LoginPage.tsx`), routing to `/forgot-password`.
+- [x] `/forgot-password` page: email field, calls the existing `requestPasswordReset(email)` (`frontend/src/api/auth.ts`), always shows the same generic confirmation regardless of whether the account exists (no enumeration — matches the message already returned by `requestPasswordReset`).
 - [ ] `/reset-password` page: hosts the post-magic-link flow. Supabase's client auto-detects the recovery session from the redirect URL (`detectSessionInUrl`, on by default), so this page does **not** need to parse a manual `?token=` param the way `~/dev/fofa`'s Express-backed `ResetPasswordPage` does — that part of the reference implementation does not port faithfully and needs adapting, not copying. New-password field, calls the existing `updatePassword(newPassword)`, shows success/error, redirects to `/login` (or `/`) on success.
 - [ ] Both routes registered in `App.tsx`; visual style matches the existing auth pages (single-column, ≤480px, centered, tokens from `fofafu_vault/standards/design-system.md`).
 - [ ] At least one Vitest smoke test per new page, following `LoginForm.test.tsx` / `RegisterForm.test.tsx` conventions (msw at the network boundary, not module mocks).
@@ -44,7 +44,13 @@ Password reset has shipped on the backend twice over — once as Express endpoin
 *(filled by backend-dev)*
 
 ### Frontend
-*(filled by frontend-dev)*
+
+**Delivery: two PRs, because screenshots plus both halves would exceed the 16-file limit.**
+
+1. **Forgot password (this PR).** "Forgot password?" link in `LoginForm`; `ForgotPasswordForm` + `pages/ForgotPassword.tsx` (public route `/forgot-password`, signed-in visitors redirect to `/`); `ForgotPasswordPayload` Zod schema in `api/auth.ts`. Shows the generic confirmation from `requestPasswordReset` for every valid email (no enumeration) and a separate alert if the request itself fails. `App.tsx` no longer exists: routes live in `src/router.tsx` (see [[features/router-provider-refactor]]). Tests: `ForgotPasswordForm.test.tsx` (5), `LoginForm.test.tsx` (+1), `router.test.tsx` (+1); vitest 410/410, tsc clean. Screenshots: `docs`-style assets under `.github/pr-assets/forgot-password-*.png`.
+2. **Reset password (next PR).** `/reset-password`: new-password + confirm fields, `updatePassword`, wait for the auth store's `initialized` flag (Supabase parses the recovery token from the URL hash itself), expired-link state when there is no recovery session.
+
+Link colour uses `text-brand-primary-pressed`, not `text-brand-primary` (the latter is ~3.4:1 on the cream surface).
 
 ### Test plan
 *(filled by qa-engineer)*

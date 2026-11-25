@@ -5,7 +5,6 @@ team: engineering
 
 > Navigation: [[kanban/company]] · [[teams/engineering]] · [[standards/engineering-standards]]
 ## Backlog
-- [ ] [[features/auth-password-reset-ui]] @engineering — no "Forgot password?" link or /forgot-password, /reset-password pages exist on the frontend, even though the Supabase-backed API functions (requestPasswordReset/updatePassword in api/auth.ts) already do; pure frontend gap, no backend work needed
 - [ ] [[features/navbar-component-extraction]] @engineering — fast-follow from header-nav-redesign's code review must-fix #2: extract NavTrackItem/AccountChip out of the 238-line Navbar()
 - [ ] [[features/auth-user-name-semantics]] @engineering — product decision needed: AuthUser.name is a household name, not a person's name
 - [ ] eng-infra-9 [[features/staging-environment]] @engineering — dedicated staging Supabase project + separate Vercel deployment so seeding/migration work never touches production data
@@ -18,6 +17,7 @@ team: engineering
 - [ ] eng-mobile-1 [[features/mobile-expo-bootstrap]] @engineering — Phase 4: mobile workspace + shared API client (deferred)
 
 ## In Progress
+- [ ] [[features/auth-password-reset-ui]] @engineering — no "Forgot password?" link or /forgot-password, /reset-password pages exist on the frontend, even though the Supabase-backed API functions (requestPasswordReset/updatePassword in api/auth.ts) already do; pure frontend gap, no backend work needed
 
 ## Review
 - [ ] eng-frontend-20 [[features/reply-coach]] @engineering — CoachChip composer integration: `frontend/src/api/coach.ts` + `CoachChip/{CoachChip.tsx,useCoach.ts,index.ts}` wired into `CommentForm.tsx`, targeting the `coach` Supabase Edge Function (not the dead Express route — see the feature file's Decisions entry, this repo's backend migrated mid-flight and neither doc said so until now); `threadContext` skipped for v1 (zero behavioral difference against the mock, avoids prop-drilling comment data through `AnnouncementDetail.tsx` for nothing observable); Accept pill uses `bg-brand-primary-pressed` per the existing `brand-contrast.test.ts` static scan. Frontend 156/156 (+18 new: `useCoach.test.ts`, `CoachChip.test.tsx`, +4 `CommentForm.test.tsx` cases incl. one axe-core check), `tsc --noEmit` clean, no regressions. `frontend/e2e/composer.spec.ts` written but not run — this worktree has no `.env` (only `.env.example`), so the dev server can't boot, and the spec also depends on `REPLY_COACH_ENABLED=true` being set as a Supabase Edge Function secret, which isn't checkable from here.

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AuthError, login as loginApi, LoginPayload } from '@/api/auth';
 import { cn } from '@/utils/cn';
 
@@ -40,6 +40,11 @@ export function LoginForm() {
         <label htmlFor="login-password" className="block text-sm font-medium">Password</label>
         <input id="login-password" type="password" autoComplete="current-password" {...register('password')} className={inputCls} />
         {errors.password && <p className="text-feedback-error text-xs">{errors.password.message}</p>}
+        <p className="text-sm">
+          <Link to="/forgot-password" className="font-semibold text-brand-primary-pressed underline-offset-4 hover:underline">
+            Forgot password?
+          </Link>
+        </p>
       </div>
 
       {serverError && <p role="alert" className="text-feedback-error text-sm">{serverError}</p>}

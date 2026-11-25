@@ -3,6 +3,7 @@ import type { RouteObject } from 'react-router-dom';
 import LoginPage from '@/pages/Login';
 import RegisterPage from '@/pages/Register';
 import VerifyEmailPage from '@/pages/VerifyEmail';
+import ForgotPasswordPage from '@/pages/ForgotPassword';
 import HomePage from '@/pages/Home';
 import FamilyMePage from '@/pages/FamilyMe';
 import FamilyViewPage from '@/pages/FamilyView';
@@ -23,6 +24,7 @@ export const routes = [
       { path: '/login', element: <LoginPage /> },
       { path: '/register', element: <RegisterPage /> },
       { path: '/verify-email', element: <VerifyEmailPage /> },
+      { path: '/forgot-password', element: <ForgotPasswordPage /> },
       {
         element: <RequireAuth />,
         children: [

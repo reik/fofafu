@@ -16,6 +16,11 @@ export const LoginPayload = z.object({
 });
 export type LoginPayload = z.infer<typeof LoginPayload>;
 
+export const ForgotPasswordPayload = z.object({
+  email: z.string().email('That does not look like an email.').max(254),
+});
+export type ForgotPasswordPayload = z.infer<typeof ForgotPasswordPayload>;
+
 /**
  * We cannot tell "wrong password" apart from "pre-existing (pre-migration)
  * account with no Supabase Auth record" from the client — Supabase returns
