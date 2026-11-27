@@ -1,5 +1,19 @@
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
+import { MEDIA_MD } from './useMediaQuery';
+
+const MESSAGES_PATH = /^\/messages(\/[^/]+)?$/;
+
+/**
+ * At md and wider, /messages and /messages/:userId are one page whose
+ * centre column takes focus when the selected conversation changes
+ * (fofafu_vault/features/messages-two-pane.md, Accessibility req 15).
+ * Moving focus to <main> there would undo that and send keyboard users
+ * back to the top of the conversation list.
+ */
+function isMessagesPaneSwitch(from: string, to: string): boolean {
+  return MESSAGES_PATH.test(from) && MESSAGES_PATH.test(to) && window.matchMedia(MEDIA_MD).matches;
+}
 
 /**
  * Moves keyboard focus to the page's `<main>` landmark whenever the route
@@ -14,12 +28,18 @@ import { useLocation } from 'react-router-dom';
 export function useFocusMainOnRouteChange(): void {
   const location = useLocation();
   const isInitialRender = useRef(true);
+  const previousPathname = useRef(location.pathname);
 
   useEffect(() => {
+    const from = previousPathname.current;
+    previousPathname.current = location.pathname;
+
     if (isInitialRender.current) {
       isInitialRender.current = false;
       return;
     }
+
+    if (isMessagesPaneSwitch(from, location.pathname)) return;
 
     if (location.hash) {
       // Anchor jump — let the browser place focus on the target element.

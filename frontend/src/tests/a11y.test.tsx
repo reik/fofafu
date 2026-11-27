@@ -9,6 +9,7 @@
  */
 import { describe, it, beforeEach, afterEach } from 'vitest';
 import { cleanup } from '@testing-library/react';
+import { Routes, Route } from 'react-router-dom';
 import { http, HttpResponse } from 'msw';
 import { renderWithProviders } from '@/tests/render';
 import { server, FUNCTIONS_BASE } from '@/tests/msw-server';
@@ -24,7 +25,6 @@ import FamilyViewPage from '@/pages/FamilyView';
 import FeedPage from '@/pages/Feed';
 import AnnouncementDetailPage from '@/pages/AnnouncementDetail';
 import MessagesPage from '@/pages/Messages';
-import MessageThreadPage from '@/pages/MessageThread';
 import SearchPage from '@/pages/Search';
 
 const family = {
@@ -146,7 +146,12 @@ describe('a11y — pages have no axe-core violations', () => {
 
   it('MessageThread', async () => {
     withAuth();
-    const { container } = renderWithProviders(<MessageThreadPage />, { route: '/messages/00000000-0000-0000-0000-000000000002' });
+    const { container } = renderWithProviders(
+      <Routes>
+        <Route path="/messages/:userId" element={<MessagesPage />} />
+      </Routes>,
+      { route: '/messages/00000000-0000-0000-0000-000000000002' },
+    );
     await settle();
     await expectNoA11yViolations(container);
   });

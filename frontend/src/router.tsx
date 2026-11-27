@@ -10,7 +10,6 @@ import FamilyViewPage from '@/pages/FamilyView';
 import FeedPage from '@/pages/Feed';
 import AnnouncementDetailPage from '@/pages/AnnouncementDetail';
 import MessagesPage from '@/pages/Messages';
-import MessageThreadPage from '@/pages/MessageThread';
 import SearchPage from '@/pages/Search';
 import PlaydatesPage from '@/pages/PlaydatesPage/PlaydatesPage';
 import AdminPage from '@/pages/AdminPage/AdminPage';
@@ -33,8 +32,10 @@ export const routes = [
           { path: '/family/:id', element: <FamilyViewPage /> },
           { path: '/feed', element: <FeedPage /> },
           { path: '/post/:id', element: <AnnouncementDetailPage /> },
+          // One page for both, so choosing a conversation at md+ never
+          // remounts the list (messages-two-pane, Accessibility req 14).
           { path: '/messages', element: <MessagesPage /> },
-          { path: '/messages/:userId', element: <MessageThreadPage /> },
+          { path: '/messages/:userId', element: <MessagesPage /> },
           { path: '/search', element: <SearchPage /> },
           { path: '/playdates', element: <PlaydatesPage /> },
           { path: '/admin', element: <AdminPage /> },
