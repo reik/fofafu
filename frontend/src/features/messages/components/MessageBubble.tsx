@@ -1,23 +1,44 @@
 import type { MessageDTO } from '@/api/messages';
 import { cn } from '@/utils/cn';
+import { formatAuthor } from '@/utils/formatAuthor';
 import { formatTimestamp } from '@/utils/formatTimestamp';
 import { ModerationMenu } from '@/features/moderation/components/ModerationMenu';
 
-interface Props {
+interface MessageBubbleProps {
   message: MessageDTO;
+  /** Spoken before a received message. Falls back to the message's own sender name. */
+  senderName?: string;
+  /**
+   * Show the time under the text. A conversation that groups messages under
+   * its own time dividers passes false; the time then stays for screen
+   * readers only.
+   */
+  showTime?: boolean;
 }
 
-export function MessageBubble({ message }: Props) {
+export function MessageBubble({ message, senderName, showTime = true }: MessageBubbleProps) {
+  const sender = message.mine ? 'You' : (senderName ?? formatAuthor(message.fromName));
+
   return (
     <div className={cn('group flex items-start gap-1', message.mine ? 'justify-end' : 'justify-start')}>
       <div
         className={cn(
-          'max-w-[80%] rounded-lg px-3 py-2 shadow-lift',
-          message.mine ? 'bg-brand-primary/10 text-ink-lead' : 'bg-surface-card',
+          'max-w-[80%] rounded-lg px-4 py-3 text-sm shadow-lift',
+          message.mine ? 'bg-brand-primary-pressed text-white' : 'bg-surface-card text-ink-lead',
         )}
       >
-        <p className="whitespace-pre-line text-sm">{message.content}</p>
-        <time className="mt-1 block text-[10px] font-mono tracking-wide text-ink-muted">
+        <p className="whitespace-pre-line">
+          {/* The side and colour show who wrote it; this says it in words. */}
+          <span className="sr-only">{sender}: </span>
+          <span>{message.content}</span>
+        </p>
+        <time
+          dateTime={message.createdAt}
+          className={cn(
+            showTime ? 'mt-1 block font-mono text-[10px] tracking-wide' : 'sr-only',
+            message.mine ? 'text-white' : 'text-ink-muted',
+          )}
+        >
           {formatTimestamp(message.createdAt)}
         </time>
       </div>

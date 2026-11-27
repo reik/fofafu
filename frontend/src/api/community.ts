@@ -54,6 +54,27 @@ export async function getRecentCommunity(limit?: number, now?: string): Promise<
   return z.array(ListedFamilyDTO).parse(data);
 }
 
+export const SUGGESTION_REASONS = ['same_city', 'same_state', 'open_slot', 'recent'] as const;
+export type SuggestionReason = (typeof SUGGESTION_REASONS)[number];
+
+/**
+ * A `community/suggested` row: why the server picked this family. A reason
+ * this build doesn't know yet reads as null, so the row still renders, just
+ * without a reason line.
+ */
+export const SuggestedFamilyDTO = ListedFamilyDTO.extend({
+  reason: z.enum(SUGGESTION_REASONS).nullish().catch(null),
+});
+export type SuggestedFamilyDTO = z.infer<typeof SuggestedFamilyDTO>;
+
+/** Ranked server-side (supabase/functions/community/suggested.ts); at most 3 rows. */
+export async function getSuggestedFamilies(now?: string): Promise<SuggestedFamilyDTO[]> {
+  const qs = now !== undefined ? `?${new URLSearchParams({ now }).toString()}` : '';
+  const data = await edgeRequest<unknown>(FN, `/suggested${qs}`);
+  return z.array(SuggestedFamilyDTO).parse(data);
+}
+
 export const communityKeys = {
   recent: (limit: number | undefined) => ['community', 'recent', limit ?? 'default'] as const,
+  suggested: ['community', 'suggested'] as const,
 };
