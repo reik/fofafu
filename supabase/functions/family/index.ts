@@ -3,7 +3,13 @@
 //   GET   /family/me     -> getMyFamily
 //   GET   /family/:id    -> getFamily (id = family id OR owner's user id)
 //   PATCH /family/me     -> patchFamily
+//
+// `city` / `state` (fofafu_vault/features/messages-two-pane.md) are
+// additive, trimmed, and null when blank. families stores them as NOT NULL
+// DEFAULT '' (20260711020000_family_location.sql), so '' means "not given".
+// Not editable through PATCH here; they come from sign-up metadata.
 import { corsHeaders, json, supabaseForRequest } from "../_shared/client.ts";
+import type { SupabaseClient } from "jsr:@supabase/supabase-js@2";
 
 interface FamilyRow {
   id: string;
@@ -13,6 +19,13 @@ interface FamilyRow {
   kid_count: number | null;
   avatar_url: string | null;
   updated_at: string;
+  city?: string | null;
+  state?: string | null;
+}
+
+function blankToNull(value: string | null | undefined): string | null {
+  const trimmed = typeof value === "string" ? value.trim() : "";
+  return trimmed === "" ? null : trimmed;
 }
 
 function toDTO(row: FamilyRow, viewerUserId: string | null) {
@@ -26,13 +39,14 @@ function toDTO(row: FamilyRow, viewerUserId: string | null) {
     avatarUrl: row.avatar_url,
     isOwner,
     updatedAt: row.updated_at,
+    city: blankToNull(row.city),
+    state: blankToNull(row.state),
   };
 }
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-
-  const supabase = supabaseForRequest(req);
+// Pulled out of Deno.serve so tests can call it directly with a fake
+// SupabaseClient, same pattern as community/index.ts's handleRequest.
+export async function handleRequest(req: Request, supabase: SupabaseClient): Promise<Response> {
   const { data: userData } = await supabase.auth.getUser();
   const userId = userData.user?.id ?? null;
 
@@ -93,4 +107,13 @@ Deno.serve(async (req) => {
   }
 
   return json({ error: "Not found" }, 404);
-});
+}
+
+// Guarded so importing this module from a test doesn't also try to bind a
+// real network port -- see admin/index.ts's identical guard comment.
+if (import.meta.main) {
+  Deno.serve(async (req) => {
+    if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+    return handleRequest(req, supabaseForRequest(req));
+  });
+}

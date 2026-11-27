@@ -1,5 +1,6 @@
 // Ports backend/src/controllers/community.controller.ts + community.routes.ts.
 // GET /community/recent?limit=N
+// GET /community/suggested?limit=N&now=... -> see suggested.ts
 //
 // Block-aware filtering (fofafu_vault/features/moderation-report-block.md,
 // dispatch contract D): `families` rows can't be hidden from a blocker via
@@ -15,26 +16,19 @@
 import { corsHeaders, json, supabaseForRequest } from "../_shared/client.ts";
 import { type FamilyRow, nextFreeSlotsByFamily, parseLimit, toListedFamily } from "../_shared/familyListing.ts";
 import type { SupabaseClient } from "jsr:@supabase/supabase-js@2";
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-async function blockedFamilyIds(supabase: SupabaseClient): Promise<string[]> {
-  const { data, error } = await supabase.from("blocks").select("blocked_family_id");
-  if (error) throw new Error(error.message);
-  // Defensive UUID filter, same reasoning as search/index.ts's own query
-  // sanitization: these ids get interpolated into a PostgREST .not(...,"in",
-  // "(...)") filter string below, so only well-formed UUID characters
-  // (which can't contain the DSL's own comma/paren/quote syntax) are let
-  // through.
-  return (data ?? [])
-    .map((r: { blocked_family_id: string }) => r.blocked_family_id)
-    .filter((id: string) => UUID_RE.test(id));
-}
+import { blockedFamilyIds, serviceRoleClient } from "./blocks.ts";
+import { handleSuggested } from "./suggested.ts";
 
 // Pulled out of Deno.serve so tests can call it directly with a fake
 // SupabaseClient instead of needing a live network + Postgres, same pattern
-// as supabase/functions/admin/index.ts's handleRequest.
-export async function handleRequest(req: Request, supabase: SupabaseClient): Promise<Response> {
+// as supabase/functions/admin/index.ts's handleRequest. `serviceClient` is
+// only called by /suggested, for the one blocked-by lookup blocks.ts
+// explains; tests inject a fake.
+export async function handleRequest(
+  req: Request,
+  supabase: SupabaseClient,
+  serviceClient: () => SupabaseClient = serviceRoleClient,
+): Promise<Response> {
   if (req.method !== "GET") return json({ error: "Not found" }, 404);
 
   const { data: userData } = await supabase.auth.getUser();
@@ -42,6 +36,11 @@ export async function handleRequest(req: Request, supabase: SupabaseClient): Pro
   if (!userId) return json({ error: "Not authenticated" }, 401);
 
   const url = new URL(req.url);
+  // Any other path keeps answering as /recent, as it always has.
+  if (url.pathname.split("/").filter(Boolean).at(-1) === "suggested") {
+    return handleSuggested(supabase, userId, url, serviceClient);
+  }
+
   const pageSize = parseLimit(url.searchParams.get("limit"), 12);
 
   const excluded = await blockedFamilyIds(supabase);
