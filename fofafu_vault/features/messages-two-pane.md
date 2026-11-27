@@ -67,7 +67,51 @@ Targets the Supabase Edge Functions stack (`supabase/functions/`), not legacy `b
 **Tests**: `community/suggested.test.ts` (36): 401/404, each exclusion and the exact filters sent, each ranking tier and `reason`, case/whitespace matching, the city-needs-state rule, no-family and blank-location callers, slot-within-tier, the updated_at tiebreak, `now`, limit default/clamp/fallback, pool size/order, slot lookups only for survivors, `[]`, row keys, and the fail-closed 500s. `family/index.test.ts` (10): city/state present/blank/missing/trimmed, owner-id lookup, key set, kidCount still owner-only, 404, `/me`, 401. Full suite: `deno test --allow-env` in `supabase/functions` → 205 passed, 0 failed. `deno check` is clean on the changed files.
 
 ### Frontend
-*(filled by frontend-dev)*
+
+*frontend-dev, 2026-11-27. Built against the 10:51 dispatcher rulings, which win over Visual/Microcopy where they differ (md = list + pane, lg adds the right column; no header "⋯"; suggestion name is plain text with one Message tab stop; each right-column card is its own `<aside>`; "joined {year}" omitted).*
+
+**Two PRs, both against `master`, A first.** One PR can't hold it under the 16-file limit once screenshots and vault files ride along.
+
+| PR | Files (frontend + screenshots) | What it ships |
+|---|---|---|
+| **A: building blocks** (13) | `api/community.ts`, `api/family.ts`, `hooks/useMediaQuery.ts`, `features/messages/components/{MessageBubble,MessageComposer,AboutFamilyCard,SuggestedFamiliesCard}.tsx` + their 4 `.test.tsx`, `docs/screenshots/messages-two-pane/{before-mobile,after-mobile}.png` | `GET /community/suggested` client (`SuggestedFamilyDTO`, unknown `reason` → null via `.catch(null)`, `communityKeys.suggested`); `FamilyDTO.city/state` `.nullish()` + `familyLocation()`; shared bubble/composer restyle and a11y fixes, visible today on the existing thread page; the two right-column cards (built and tested, not mounted until B). |
+| **B: the page** (12, plus the e2e spec) | `router.tsx`, `pages/Messages.tsx`, `pages/Messages.test.tsx`, deleted `pages/MessageThread.tsx` + `pages/MessageThread.test.tsx` (its two blocked-partner tests moved into `Messages.test.tsx`), `tests/a11y.test.tsx`, `hooks/useFocusMainOnRouteChange.ts`, `features/messages/components/{ConversationList,ConversationPane}.tsx`, `features/messages/hooks/useConversationPane.ts`, `docs/screenshots/messages-two-pane/{before,after}.png` | Both routes mount `MessagesPage`. At md+ it's one page: `<nav>` list, centre `<section>`, and at lg the right column. Below md it's still two pages (list, or conversation with "← All messages"). |
+
+**How it works**
+- `useMediaQuery` (`useSyncExternalStore` on `matchMedia`) picks what *mounts*, not just what shows. Below md the rails and the md+ layout aren't in the DOM, and below lg the cards don't fetch. The grid keeps the 240px right track at lg even when both cards render nothing, so the centre never changes width.
+- Focus (reqs 15–16): `useFocusMainOnRouteChange` skips `/messages(/:id)?` ↔ `/messages(/:id)?` at md+. `useConversationPane` focuses the centre `<section tabIndex=-1>` when `partnerId` changes, never on first mount. The section's name comes from the thread list, then `family/:id`, then the messages, then "A former member", so it exists in every state, including while loading.
+- History: `<ol>`/`<li>` per message. Each TimeDivider is `aria-hidden` and sits inside the next message's `<li>`. The bubble has an sr-only "You:" / "{name}:" and an sr-only `<time>` (`showTime={false}`). The scroll region is `role="region" aria-label="Messages" tabIndex=0` and has no live region. It's pinned to the newest message with `scrollTop` (no `flex-col-reverse`, no smooth scroll).
+- One persistent `role="status"` per open conversation: "New message from {name}" / "{n} new messages from {name}", only for inbound arrivals after load, never on a switch. "Message sent" after a send. It's worked out while rendering against the last message list seen, not synced in an effect.
+- Filter status is mounted from the start, empty while the box is empty, and settles 500ms after typing. The no-match text goes through it. The filter text survives choosing a conversation (same page instance).
+- "Families to say hi to" renders **only** when the query succeeded with ≥1 row. Tests cover pending (`delay('infinite')`), 500 and `[]`, each asserting no heading and an empty container. Sending a first message invalidates `communityKeys.suggested`.
+- About card: `getFamily(partnerId)` + `getAvailability(ownerId)`. Free slots that haven't started yet, soonest first, max 3. Open playdates wait until the block list has settled, so a blocked partner never flashes Request chips and availability is never fetched for them. 404 → "hasn't set up their page" (or "no longer available" when the thread name is null).
+
+**Deviations, for design-lead**
+1. **Row time is compact, not `formatTimestamp`**: "10:53am" today, "Thu" within 6 days, "Nov 18", then "Nov 18, 2025". At 240px the full `11/26/2026 9:10am` cut family names down to one letter (first after-capture). This matches the mock's "Mon" / "Oct 2". `<time dateTime>` keeps the exact value.
+2. Composer auto-grow uses `[field-sizing:content]` (Chromium today). Other browsers keep a one-row field that scrolls up to `max-h-40`. No JS resize.
+3. Selected-row non-colour cue (a11y req 4): `border-l-4 border-brand-primary-pressed` (other rows get a transparent 4px border so nothing shifts).
+4. The input border is `/70` and the placeholder is `text-ink-muted` on both inputs (a11y reqs 2–3, which override Visual's `/30`).
+5. Header avatar, location line and the mobile thread page: PaneHeader replaces "Conversation / With {name}" below md (Visual N-2). The page keeps one h1 "Messages", sr-only there and at md+.
+6. Search's `GRID` isn't moved into a shared export (budget). The messages grid is a local copy with the lg track and `textarea` added to the scroll-margin list.
+7. **Names wrap in both 240px rails; they are no longer cut to one line** (dispatcher follow-up after the first after-capture cut them to a few letters).
+   - ConversationList row: the name gets the full text width, `line-clamp-2 break-words`. The last-message preview stays one line with `truncate`. The compact time or unread badge now sits beside the preview, not the name.
+   - SuggestedFamiliesCard row: the name is `line-clamp-2 break-words` and the reason line wraps (`break-words`). Message moved under the text (`-ml-2` keeps the label aligned) and keeps its 44px target. Rows are taller, but the name and reason are readable at 240px.
+
+**Not done / gaps**
+- Suggestion errors aren't logged: the repo has no logger util, and `console.*` is banned. Create one under its own feature if wanted.
+- Req 17 (re-activating the selected row re-focuses the centre) isn't built (NON-BLOCKING).
+- Enter-to-send isn't added (composer submits via the button as before), so the IME clause of req 25 doesn't apply.
+- `frontend/e2e/messages-pages.spec.ts` will break in PR B: it expects "No messages yet.", an h1 "Conversation", and the exact label "Message". Owned by e2e-test-writer. e2e isn't in CI.
+- **Pre-existing bug (not from this feature):** `useFocusMainOnRouteChange` never fires between *different* pages. Each page renders its own `<Layout>`, so a page change remounts it and the first-render guard skips. I checked with a throwaway `createMemoryRouter` probe: HomeStub → FeedStub leaves focus on `body`. So a11y req 15 test (d) ("/messages/u1 → / focuses #main") can't pass anywhere today. It needs its own feature (e.g. call the hook from a persistent route layout). The skip rule here only matters inside `MessagesPage`, which is persistent.
+
+**Tests.** Written first and confirmed red, then made green. `npx vitest run`: **53 files, 475 passed**. `npx tsc --noEmit` is clean. `npm run build` is clean. There is no `lint` script. New or changed: SuggestedFamiliesCard 16, AboutFamilyCard 12, MessageBubble +5, MessageComposer +6, Messages page 30 (2 old list tests, 2 moved blocked-partner tests, 3 below-md, 18 md+, 5 focus: deep link, row click, while loading, back ×2, from a suggestion). The two rail-wrapping tests were added for the follow-up and seen red first. The a11y sweep's `MessageThread` case now renders a real thread through `<Routes>` instead of "Missing conversation".
+
+**Screenshots.** Owned by the dispatcher (follow-up ruling):
+- `before.png` / `before-mobile.png` are the dispatcher's captures from an `origin/master` export.
+- The dispatcher captures `after.png` / `after-mobile.png` itself, with the same data.
+- frontend-dev does not write to `docs/screenshots/`. My earlier composites were superseded because their "before" thread panels already showed the restyled bubbles and composer.
+- I checked the rail fix locally with a scratch capture in `/tmp` (1280px `/messages`): family names show in full in both rails.
+- Not checked in a real screen reader, or in Firefox or Safari.
 
 ### Test plan
 *(filled by qa-engineer)*
@@ -406,7 +450,7 @@ Render this card only when a conversation is selected. It has no "nothing select
 
 | key | string | notes |
 |---|---|---|
-| messages.about.landmark | Family details | *(sr)* `aria-label` on the right-column `<aside>`. Each card inside is a `<section>` labelled by its own heading. |
+| ~~messages.about.landmark~~ | ~~Family details~~ | **Removed** (dispatcher ruling, Accessibility req 7). The right column has no wrapper label. Each card is its own `<aside aria-labelledby>` pointing at its heading ("About this family" / "Families to say hi to"). |
 | messages.about.heading | About this family | Card `<h2>`. |
 | messages.about.location | {city}, {state} | Same fallback rules as the thread header. |
 | messages.about.joined | joined {year} | **Omit for now.** The mock shows "· joined 2026", but `FamilyDTO` has no created date. Add it only if backend-dev exposes one. Never invent it. |
@@ -433,7 +477,7 @@ Render this card only when a conversation is selected. It has no "nothing select
 | messages.suggest.empty | — *(none, intentionally)* | **No empty-state copy.** User-approved rule (2026-11-27): when no family qualifies, the section is not rendered at all. No heading, no card, no placeholder. |
 | messages.suggest.loading | — *(none)* | Recommended: render nothing until the data arrives, so the heading never appears and then vanishes when the list turns out empty. If ui-designer keeps a skeleton anyway, use the *(sr)* string "Loading families to say hi to…". |
 | messages.suggest.error | — *(none)* | Recommended: hide the section on error. It is an optional nudge, and an error card would draw more attention than the feature deserves. If it must show: "We couldn't load suggestions right now." |
-| messages.suggest.row.name | {familyName} | Links to `/family/{id}`. The accessible name is the family name, same as the Home Community rail. |
+| messages.suggest.row.name | {familyName} | Plain text, not a link (dispatcher ruling 10:51: one tab stop per row, the Message action). |
 | messages.suggest.message | Message | Action link to `/messages/{ownerId}`. |
 | messages.suggest.message.a11y | Message {familyName} | *(sr)* `aria-label`. The visible "Message" sits at the start of the name, as WCAG 2.5.3 requires. |
 
@@ -448,7 +492,20 @@ Render this card only when a conversation is selected. It has no "nothing select
 | `recent` | Recently updated their page | — | Accurate: `recent` means `families.updated_at` (a recent profile edit). Do **not** say "Active now", "New to fofafu" or "Online". If the Open Question changes "recently active" to mean the last post or message, this string needs a new review. |
 | *(unknown / missing)* | — | — | Show no reason line. Don't show a generic filler line. |
 
-Everything below `md` keeps today's strings. The side rails are hidden there, so none of the right-rail strings appear.
+Everything below `md` keeps today's strings. Per the dispatcher's 10:51 breakpoint ruling, the right rail appears only at `lg`+, so the "About this family" and "Families to say hi to" strings render only at `lg`+. The list and center strings render at `md`+.
+
+**Addendum: strings requested by Accessibility (reqs 20–25)**
+
+| key | string | notes |
+|---|---|---|
+| messages.bubble.sender.mine | You: | *(sr)* req 20. `sr-only` prefix inside each of your own bubbles, followed by a space before the body. Goes in the shared `MessageBubble`, so it also applies below `md`. |
+| messages.bubble.sender.theirs | {familyName}: | *(sr)* req 20. Same name source as `messages.thread.landmark` (thread list, then `family/:id`, then `formatAuthor(null)`), so it reads "A former member:" when the name is missing. Never "undefined:". |
+| messages.thread.scroll.label | Messages | *(sr)* req 22. `aria-label` on the MessageScroll `role="region"`. It sits inside the "Conversation with {familyName}" region, so it needs no family name. |
+| messages.thread.announce.one | New message from {familyName} | *(sr)* req 23. Goes in the persistent `role="status"`. No full stop, no message body. |
+| messages.thread.announce.many | {n} new messages from {familyName} | *(sr)* req 23. Use when n ≥ 2 inbound messages arrive in one refetch. Digits, e.g. "3 new messages from Kuratars". |
+| messages.composer.sent | Message sent | *(sr)* req 24. Goes in the same `role="status"` after a successful send. "Message sent" rather than a bare "Sent", because a status heard on its own needs its subject. Errors keep the shipped `role="alert"` strings. |
+| messages.composer.label | Message to {familyName} | *(sr)* req 25. Replaces the *(reuse)* "Message" label in `messages.composer.*` on the md+ pane, and below `md` too if the component is shared. Starts with "Message", so the test `getByRole('textbox', { name: /^Message/ })` holds. Chosen over the a11y draft's "Message {familyName}", which is already the accessible name of the "Families to say hi to" action links. Using the same name on a textbox would make it sound like a button. Same name source and fallback as above. |
+| messages.thread.header.menu.* | — **NOT NEEDED** | Dispatcher ruling: the center header "⋯" is not built (this settles Accessibility req 28). No strings. The `ModerationMenu` on inbound bubbles keeps its shipped strings, unchanged. |
 
 ### Accessibility
 
